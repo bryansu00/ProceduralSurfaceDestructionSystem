@@ -1,11 +1,15 @@
-[gd_scene load_steps=4 format=3 uid="uid://dp25ehwbt0m41"]
+[gd_scene load_steps=6 format=3 uid="uid://dp25ehwbt0m41"]
 
 [ext_resource type="Script" path="res://Player.cs" id="1_pyiov"]
+[ext_resource type="Script" path="res://SpringArm.cs" id="2_swo60"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_3uh8i"]
 size = Vector3(1, 2, 1)
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_jau2j"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_8nrru"]
+size = Vector3(0.5, 0.5, 0.5)
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_pyiov")
@@ -16,5 +20,19 @@ shape = SubResource("BoxShape3D_3uh8i")
 [node name="Pivot" type="Node3D" parent="."]
 
 [node name="CapsuleMesh" type="MeshInstance3D" parent="Pivot"]
+layers = 2
 mesh = SubResource("CapsuleMesh_jau2j")
 skeleton = NodePath("")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Pivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.402366, -0.31074)
+layers = 2
+mesh = SubResource("BoxMesh_8nrru")
+
+[node name="SpringArm" type="SpringArm3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+spring_length = 0.0
+script = ExtResource("2_swo60")
+
+[node name="Camera3D" type="Camera3D" parent="SpringArm"]
+cull_mask = 1048573

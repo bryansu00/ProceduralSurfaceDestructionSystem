@@ -12,10 +12,19 @@ public partial class Player : CharacterBody3D
 
     private Vector3 _targetVelocity = Vector3.Zero;
 
+    private SpringArm3D _springArm;
+
+    public override void _Ready()
+    {
+        base._Ready();
+
+        _springArm = GetNode<SpringArm3D>("SpringArm");
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         // Local variable to store input direction
-        var direction = Vector3.Zero;
+        Vector3 direction = Vector3.Zero;
 
         // Check input and update direction accordingly
         if (Input.IsActionPressed("move_right"))
@@ -29,7 +38,9 @@ public partial class Player : CharacterBody3D
 
         if (!direction.IsZeroApprox())
         {
-            direction = direction.Normalized();
+            // Rotate camera based on the direction of the spring arm and then normalize
+            direction = direction.Rotated(Vector3.Up, _springArm.Rotation.Y).Normalized();
+
             // Setting the basis property will affect the rotation of the node.
             GetNode<Node3D>("Pivot").Basis = Basis.LookingAt(direction);
         }
