@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://ba3oiu1856cl8"]
+
+[ext_resource type="Script" path="res://ProceduralSurface.cs" id="1_pwg00"]
+
+[node name="ProceduralSurface" type="Node3D"]
+script = ExtResource("1_pwg00")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
