@@ -14,11 +14,16 @@ public partial class Player : CharacterBody3D
 
     private SpringArm3D _springArm;
 
+    private float _sensitivity = 0.1f;
+
+    private float _totalPitch = 0.0f;
+
     public override void _Ready()
     {
         base._Ready();
 
         _springArm = GetNode<SpringArm3D>("SpringArm");
+        Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
     public override void _PhysicsProcess(double delta)
@@ -38,11 +43,8 @@ public partial class Player : CharacterBody3D
 
         if (!direction.IsZeroApprox())
         {
-            // Rotate camera based on the direction of the spring arm and then normalize
+            // Rotate camera based on the direction of the camera and then normalize
             direction = direction.Rotated(Vector3.Up, _springArm.Rotation.Y).Normalized();
-
-            // Setting the basis property will affect the rotation of the node.
-            GetNode<Node3D>("Pivot").Basis = Basis.LookingAt(direction);
         }
 
         // Ground velocity
@@ -58,5 +60,28 @@ public partial class Player : CharacterBody3D
         // Move the character
         Velocity = _targetVelocity;
         MoveAndSlide();
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        base._UnhandledInput(@event);
+
+        // Process Mouse Input
+        if (@event is InputEventMouseMotion eventMouseMotion)
+        {
+            float yaw = eventMouseMotion.Relative.X * _sensitivity;
+            float pitch = eventMouseMotion.Relative.Y * _sensitivity;
+
+            // Clamp pitch
+            pitch = Mathf.Clamp(pitch, -90 - _totalPitch, 90 - _totalPitch);
+            _totalPitch += pitch;
+
+            // Perform the rotation to the spring arm
+            _springArm.RotateY(Mathf.DegToRad(-yaw));
+            _springArm.RotateObjectLocal(Vector3.Right, Mathf.DegToRad(-pitch));
+
+            Vector3 direction = Vector3.Forward.Rotated(Vector3.Up, _springArm.Rotation.Y).Normalized();
+            GetNode<Node3D>("Pivot").Basis = Basis.LookingAt(direction);
+        }
     }
 }
