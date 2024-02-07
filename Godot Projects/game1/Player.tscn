@@ -34,3 +34,4 @@ spring_length = 0.0
 
 [node name="Camera3D" type="Camera3D" parent="SpringArm"]
 cull_mask = 1048573
+fov = 90.0

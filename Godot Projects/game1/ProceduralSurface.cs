@@ -29,6 +29,7 @@ public partial class ProceduralSurface : Node3D
         * Insert code here to generate mesh.
         ************************************/
         
+        // Front Face
         verts.Add(new Vector3(0.0f, 0.0f, 0.0f));
         verts.Add(new Vector3(0.0f, 10.0f, 0.0f));
         verts.Add(new Vector3(10.0f, 10.0f, 0.0f));
@@ -52,6 +53,79 @@ public partial class ProceduralSurface : Node3D
         indices.Add(2);
         indices.Add(3);
 
+        // Back Face - Basically duplicate of the front face...
+        verts.Add(new Vector3(10.0f, 0.0f, -1.0f));
+        verts.Add(new Vector3(10.0f, 10.0f, -1.0f));
+        verts.Add(new Vector3(0.0f, 10.0f, -1.0f));
+        verts.Add(new Vector3(0.0f, 0.0f, -1.0f));
+
+        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
+        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
+        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
+        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
+
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+
+        indices.Add(4);
+        indices.Add(5);
+        indices.Add(6);
+
+        indices.Add(4);
+        indices.Add(6);
+        indices.Add(7);
+
+        // Side cap 1
+        verts.Add(new Vector3(0.0f, 0.0f, -1.0f));
+        verts.Add(new Vector3(0.0f, 10.0f, -1.0f));
+        verts.Add(new Vector3(0.0f, 10.0f, 0.0f));
+        verts.Add(new Vector3(0.0f, 0.0f, 0.0f));
+
+        normals.Add(new Vector3(-1.0f, 0.0f, 0.0f));
+        normals.Add(new Vector3(-1.0f, 0.0f, 0.0f));
+        normals.Add(new Vector3(-1.0f, 0.0f, 0.0f));
+        normals.Add(new Vector3(-1.0f, 0.0f, 0.0f));
+
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+
+        indices.Add(8);
+        indices.Add(9);
+        indices.Add(10);
+
+        indices.Add(8);
+        indices.Add(10);
+        indices.Add(11);
+
+        // Side cap 2
+        verts.Add(new Vector3(10.0f, 0.0f, 0.0f));
+        verts.Add(new Vector3(10.0f, 10.0f, 0.0f));
+        verts.Add(new Vector3(10.0f, 10.0f, -1.0f));
+        verts.Add(new Vector3(10.0f, 0.0f, -1.0f));
+
+        normals.Add(new Vector3(1.0f, 0.0f, 0.0f));
+        normals.Add(new Vector3(1.0f, 0.0f, 0.0f));
+        normals.Add(new Vector3(1.0f, 0.0f, 0.0f));
+        normals.Add(new Vector3(1.0f, 0.0f, 0.0f));
+
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(0.0f, 0.0f));
+
+        indices.Add(12);
+        indices.Add(13);
+        indices.Add(14);
+
+        indices.Add(12);
+        indices.Add(14);
+        indices.Add(15);
+
+
         /**********************************/
 
         // Convert Lists to arrays and assign to surface array
@@ -64,5 +138,16 @@ public partial class ProceduralSurface : Node3D
         arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, surfaceArray);
 
         _meshInstance.Mesh = arrayMesh;
+    }
+
+    private void drawSphere(Vector3 position)
+    {
+        var instance = new MeshInstance3D();
+        _meshInstance.AddChild(instance);
+        instance.Position = position;
+        var sphere = new SphereMesh();
+        sphere.Radius = 0.1f;
+        sphere.Height = 0.1f;
+        instance.Mesh = sphere;
     }
 }
