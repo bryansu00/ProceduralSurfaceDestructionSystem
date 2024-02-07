@@ -54,15 +54,15 @@ public partial class ProceduralSurface : Node3D
         indices.Add(3);
 
         // Back Face - Basically duplicate of the front face...
-        verts.Add(new Vector3(10.0f, 0.0f, -1.0f));
-        verts.Add(new Vector3(10.0f, 10.0f, -1.0f));
-        verts.Add(new Vector3(0.0f, 10.0f, -1.0f));
-        verts.Add(new Vector3(0.0f, 0.0f, -1.0f));
+        verts.Add(new Vector3(10.0f, 0.0f, -0.1f));
+        verts.Add(new Vector3(10.0f, 10.0f, -0.1f));
+        verts.Add(new Vector3(0.0f, 10.0f, -0.1f));
+        verts.Add(new Vector3(0.0f, 0.0f, -0.1f));
 
-        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
-        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
-        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
-        normals.Add(new Vector3(0.0f, 0.0f, -1.0f));
+        normals.Add(new Vector3(0.0f, 0.0f, -0.1f));
+        normals.Add(new Vector3(0.0f, 0.0f, -0.1f));
+        normals.Add(new Vector3(0.0f, 0.0f, -0.1f));
+        normals.Add(new Vector3(0.0f, 0.0f, -0.1f));
 
         uvs.Add(new Vector2(0.0f, 0.0f));
         uvs.Add(new Vector2(0.0f, 0.0f));
@@ -78,8 +78,8 @@ public partial class ProceduralSurface : Node3D
         indices.Add(7);
 
         // Side cap 1
-        verts.Add(new Vector3(0.0f, 0.0f, -1.0f));
-        verts.Add(new Vector3(0.0f, 10.0f, -1.0f));
+        verts.Add(new Vector3(0.0f, 0.0f, -0.1f));
+        verts.Add(new Vector3(0.0f, 10.0f, -0.1f));
         verts.Add(new Vector3(0.0f, 10.0f, 0.0f));
         verts.Add(new Vector3(0.0f, 0.0f, 0.0f));
 
@@ -104,8 +104,8 @@ public partial class ProceduralSurface : Node3D
         // Side cap 2
         verts.Add(new Vector3(10.0f, 0.0f, 0.0f));
         verts.Add(new Vector3(10.0f, 10.0f, 0.0f));
-        verts.Add(new Vector3(10.0f, 10.0f, -1.0f));
-        verts.Add(new Vector3(10.0f, 0.0f, -1.0f));
+        verts.Add(new Vector3(10.0f, 10.0f, -0.1f));
+        verts.Add(new Vector3(10.0f, 0.0f, -0.1f));
 
         normals.Add(new Vector3(1.0f, 0.0f, 0.0f));
         normals.Add(new Vector3(1.0f, 0.0f, 0.0f));
@@ -125,6 +125,7 @@ public partial class ProceduralSurface : Node3D
         indices.Add(14);
         indices.Add(15);
 
+        // Should add top and bottom cap
 
         /**********************************/
 
