@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("2D-Implementation")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ec582a45b2eefb585b1cf78fd5faf41f6d09ed4f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3f8eaed82d4957df44565457b7d2f3237547f0d1")]
 [assembly: System.Reflection.AssemblyProductAttribute("2D-Implementation")]
 [assembly: System.Reflection.AssemblyTitleAttribute("2D-Implementation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
