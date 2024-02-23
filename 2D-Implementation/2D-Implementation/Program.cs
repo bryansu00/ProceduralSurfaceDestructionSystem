@@ -1,6 +1,7 @@
 ﻿using Raylib_cs;
 using PSDSystem;
 using System.Numerics;
+using System.IO;
 
 class Program
 {
@@ -28,6 +29,16 @@ class Program
 
         while (!Raylib.WindowShouldClose())
         {
+            if (Raylib.IsKeyPressed(KeyboardKey.Grave))
+            {
+                Console.Write("~");
+                string? input = Console.ReadLine();
+                if (input != null)
+                {
+
+                }
+            }
+
             Raylib.BeginDrawing();
 
             Raylib.ClearBackground(Color.White);
