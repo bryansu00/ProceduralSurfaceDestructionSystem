@@ -1,29 +1,31 @@
 ﻿
 namespace PSDSystem
 {
-    public class SurfaceShape
+    public class SurfaceShape<T> where T : PolygonVertex
     {
-        public List<PolygonPair> Polygons { get; }
+        public List<PolygonPair<T>> Polygons { get; }
 
         public SurfaceShape()
         {
-            Polygons = new List<PolygonPair>();
+            Polygons = new List<PolygonPair<T>>();
         }
+
+        
     }
 
-    public class PolygonPair
+    public class PolygonPair<T> where T : PolygonVertex
     {
-        public Polygon<PolygonVertex> OuterPolygon { get; }
+        public Polygon<T> OuterPolygon { get; }
 
-        public List<Polygon<PolygonVertex>> InnerPolygons { get; }
+        public List<Polygon<T>> InnerPolygons { get; }
 
-        public PolygonPair(Polygon<PolygonVertex>? outerPolygon, List<Polygon<PolygonVertex>>? innerPolygons = null)
+        public PolygonPair(Polygon<T>? outerPolygon, List<Polygon<T>>? innerPolygons = null)
         {
             if (outerPolygon != null) OuterPolygon = outerPolygon;
-            else OuterPolygon = new Polygon<PolygonVertex>();
+            else OuterPolygon = new Polygon<T>();
 
             if (innerPolygons != null) InnerPolygons = innerPolygons;
-            else InnerPolygons = new List<Polygon<PolygonVertex>>();
+            else InnerPolygons = new List<Polygon<T>>();
         }
     }
 }
