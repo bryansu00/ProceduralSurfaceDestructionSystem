@@ -31,7 +31,10 @@ class Program
 
             Raylib.ClearBackground(Color.White);
 
-            //DrawPolygon(polygon, Color.Black);
+            foreach (PolygonGroup<PolygonVertex> group in surface.Polygons)
+            {
+                DrawPolygon(group.OuterPolygon, Color.Black);
+            }
 
             Raylib.EndDrawing();
         }
@@ -82,6 +85,8 @@ class Program
         polygon.InsertVertexAtBack(3);
 
         //Console.WriteLine(String.Join(", ", polygon.ToList()));
+
+        surface.AddOuterPolygon(polygon);
 
         return surface;
     }
