@@ -47,13 +47,17 @@ class Program
         var now = polygon.Head;
         do
         {
-            Raylib.DrawLineEx(polygon.Vertices[now.Data.Center], polygon.Vertices[now.Next.Data.Center], 1.0f, color);
-            Raylib.DrawCircleV(polygon.Vertices[now.Data.Center], 5.0f, color);
-            if (labelVerts)
-            {
-                Raylib.DrawText(now.Data.Center.ToString(), (int)polygon.Vertices[now.Data.Center].X + 5, (int)polygon.Vertices[now.Data.Center].Y + 5, 12, color);
-            }
+            Raylib.DrawLineEx(polygon.Vertices[now.Data.Index], polygon.Vertices[now.Next.Data.Index], 1.0f, color);
+            Raylib.DrawCircleV(polygon.Vertices[now.Data.Index], 5.0f, color);
             now = now.Next;
         } while (now != polygon.Head);
+
+        if (labelVerts)
+        {
+            for (int i = 0; i < polygon.Vertices.Count; i++)
+            {
+                Raylib.DrawText(i.ToString(), (int)polygon.Vertices[i].X + 5, (int)polygon.Vertices[i].Y + 5, 12, color);
+            }
+        }
     }
 }

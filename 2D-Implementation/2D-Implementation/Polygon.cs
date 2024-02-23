@@ -3,27 +3,45 @@ using System.Numerics;
 
 namespace PSDSystem
 {
+    /// <summary>
+    /// Class representing a 2D Polygon
+    /// </summary>
+    /// <typeparam name="T">A vertex class that represent each vertex of a polygon.</typeparam>
     public class Polygon<T> where T : PolygonVertex
     {
+        /// <summary>
+        /// The head node of a vertex of the polygon
+        /// </summary>
         public VertexNode<T>? Head { get; private set; }
 
-        public uint Size { get; private set; }
+        /// <summary>
+        /// The number of vertex in the polygon
+        /// </summary>
+        public uint Count { get; private set; }
 
+        /// <summary>
+        /// The list of vertices the polygon is referring to
+        /// </summary>
         public List<Vector2>? Vertices { get; set; }
 
         public Polygon()
         {
             Head = null;
-            Size = 0;
+            Count = 0;
             Vertices = null;
         }
 
-        public VertexNode<T> InsertVertexAtBack(int center)
+        /// <summary>
+        /// Inserts a vertex with the given index to the polygon
+        /// </summary>
+        /// <param name="index">The index that the vertex will refer to</param>
+        /// <returns>The vertex inserted at the back</returns>
+        /// <exception cref="Exception">Failed to instantiate a Vertex</exception>
+        public VertexNode<T> InsertVertexAtBack(int index)
         {
-            T? data = (T?)Activator.CreateInstance(typeof(T), center);
-
-            if (data == null) throw new Exception();
-
+            T? data = (T?)Activator.CreateInstance(typeof(T), index);
+            if (data == null) throw new Exception("Unable to create an instance of a Vertex!");
+        
             VertexNode<T> newNode = new VertexNode<T>(this, data);
 
             if (Head == null)
@@ -45,11 +63,38 @@ namespace PSDSystem
             }
 
             // Increment size of the polygon
-            Size++;
+            Count++;
 
             return newNode;
         }
 
+        public VertexNode<T> InsertVertexAfter(VertexNode<T> node, int index)
+        {
+            if (node == null || node.Owner != this) throw new InvalidOperationException("Given node does not belong to the Polygon!");
+
+            T? data = (T?)Activator.CreateInstance(typeof(T), index);
+            if (data == null) throw new Exception("Unable to create an instance of a Vertex!");
+
+            VertexNode<T> newNode = new VertexNode<T>(this, data);
+
+            // Link up new node
+            newNode.Previous = node;
+            newNode.Next = node.Next;
+            // Relink the given node
+            node.Next = newNode;
+            // Relink the next node
+            newNode.Next.Previous = newNode;
+
+            // Increment count of the polygon
+            Count++;
+
+            return newNode;
+        }
+
+        /// <summary>
+        /// Convert the polygon to list of indices referring to this.Vertices
+        /// </summary>
+        /// <returns>List of indices</returns>
         public List<int> ToList()
         {
             List<int> toReturn = new List<int>();
@@ -58,7 +103,7 @@ namespace PSDSystem
             var now = Head;
             do
             {
-                toReturn.Add(now.Data.Center);
+                toReturn.Add(now.Data.Index);
                 now = now.Next;
             } while (now != Head);
 
@@ -66,16 +111,26 @@ namespace PSDSystem
         }
     }
 
+    /// <summary>
+    /// Class representing a single vertex of a polygon
+    /// </summary>
     public class PolygonVertex
     {
-        public int Center { get; }
+        /// <summary>
+        /// The index that this vertex refers to
+        /// </summary>
+        public int Index { get; }
 
-        public PolygonVertex(int center)
+        public PolygonVertex(int index)
         {
-            Center = center;
+            Index = index;
         }
     }
 
+    /// <summary>
+    /// Node to hold a vertex
+    /// </summary>
+    /// <typeparam name="T">The vertex that holds the data</typeparam>
     public class VertexNode<T> where T : PolygonVertex
     {
         public T Data { get; }
