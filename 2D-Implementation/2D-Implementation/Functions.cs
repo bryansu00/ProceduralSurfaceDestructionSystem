@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace PSDSystem
 {
-    public static class Functions
+    public static class PSD
     {
         public static List<IntersectionResult<T>>? IntersectCutterAndPolygon<T>(Polygon<T> cutterPolygon, Polygon<T> otherPolygon) where T : PolygonVertex
         {
