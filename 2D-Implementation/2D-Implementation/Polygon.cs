@@ -91,6 +91,46 @@ namespace PSDSystem
             return newNode;
         }
 
+        public void ClipVertex(VertexNode<T> node)
+        {
+            if (node == null || node.Owner != this) throw new InvalidOperationException("Given node does not belong to the Polygon!");
+
+            // Remove the vertex
+            node.Previous.Next = node.Next;
+            node.Next.Previous = node.Previous;
+
+            // Decrement count
+            Count--;
+
+            if (Count == 0)
+            {
+                // Count is 0, thus there should be no head
+                Head = null;
+            }
+            else if (node == Head)
+            {
+                // If it was the head removed, set new head
+                Head = Head.Next;
+            }
+        }
+
+        public void RemoveVerticesWithIndex(int indexToRemove)
+        {
+            if (Head == null) return;
+
+            uint originalCount = Count;
+
+            VertexNode<T> now = Head;
+            for (int i = 0; i < originalCount; i++)
+            {
+                if (now.Data.Index == indexToRemove)
+                {
+                    ClipVertex(now);
+                }
+                now = now.Next;
+            }
+        }
+
         /// <summary>
         /// Convert the polygon to list of indices referring to this.Vertices
         /// </summary>

@@ -15,8 +15,28 @@ class Program
         // Initialize stuff....
         SurfaceShape<PolygonVertex> surface = InitShape();
 
+        Polygon<PolygonVertex> cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = new List<Vector2>();
+
         while (!Raylib.WindowShouldClose())
         {
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            {
+                int verticesIdxAdded = cutter.Vertices.Count;
+                Vector2 mousePos = FlipY(Raylib.GetMousePosition());
+                cutter.Vertices.Add(mousePos);
+                cutter.InsertVertexAtBack(verticesIdxAdded);
+            }
+            else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
+            {
+                if (cutter.Vertices.Count > 0)
+                {
+                    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
+                    int verticesIdxRemoved = cutter.Vertices.Count;
+                    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
+                }
+            }
+
             if (Raylib.IsKeyPressed(KeyboardKey.Grave))
             {
                 Console.Write("~");
@@ -27,6 +47,11 @@ class Program
                 }
             }
 
+            if (Raylib.IsKeyPressed(KeyboardKey.Space))
+            {
+                // Do stuff
+            }
+
             Raylib.BeginDrawing();
 
             Raylib.ClearBackground(Color.White);
@@ -35,6 +60,7 @@ class Program
             {
                 DrawPolygon(group.OuterPolygon, Color.Black);
             }
+            DrawPolygon(cutter, Color.Red);
 
             Raylib.EndDrawing();
         }
