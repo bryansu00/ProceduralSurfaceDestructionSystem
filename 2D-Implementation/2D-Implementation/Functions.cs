@@ -54,7 +54,7 @@ namespace PSDSystem
                     {
                         #region EdgeCase1
                         // ----------------------------------------------------------------------------
-                        // This is extremely unlikely due floating point precision error,
+                        // This is extremely unlikely due to floating point precision error,
                         // but just in case...
                         bool a0IsOnInfiniteRay = t == 0.0f; // a0 is intersecting with the cutter's infinite ray
                         bool a1IsOnInfiniteRay = t == 1.0f;
