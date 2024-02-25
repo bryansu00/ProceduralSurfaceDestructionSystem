@@ -49,7 +49,7 @@ class Program
 
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                var res = PSD.IntersectCutterAndPolygon(cutter, surface.Polygons[0].OuterPolygon);
+                var res = PSD.IntersectCutterAndPolygon(cutter, surface.Polygons[0].OuterPolygon, out Polygon<BooleanVertex>? a, out Polygon<BooleanVertex>? b);
             }
 
             Raylib.BeginDrawing();
