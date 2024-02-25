@@ -16,7 +16,7 @@ namespace PSDSystem
 
         public BooleanVertex(int index) : base(index)
         {
-            IsOutside = false;
+            IsOutside = true;
             Cross = null;
             Processed = false;
         }

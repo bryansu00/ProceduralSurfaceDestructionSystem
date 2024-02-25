@@ -19,27 +19,29 @@ namespace PSDSystem
 
             bool CutterAndPolygonIntersects = false;
 
-            booleanCutter = new Polygon<BooleanVertex>();
-            booleanPolygon = new Polygon<BooleanVertex>();
+            booleanCutter = ConvertPolygonToBooleanList(cutter);
+            booleanPolygon = ConvertPolygonToBooleanList(polygon);
+            if (booleanCutter.Head == null || booleanPolygon.Head == null)
+            {
+                booleanCutter = null;
+                booleanPolygon = null;
+                return -1;
+            }
 
             List<Vector2> polygonVertices = polygon.Vertices;
             List<Vector2> cutterVertices = cutter.Vertices;
 
-            VertexNode<T> polygonNow = polygon.Head;
+            VertexNode<BooleanVertex> polygonNow = booleanPolygon.Head;
             do
             {
                 Vector2 a0 = polygonVertices[polygonNow.Data.Index];
                 Vector2 a1 = polygonVertices[polygonNow.Next.Data.Index];
 
-                VertexNode<BooleanVertex> polygonBoolVertex = booleanPolygon.InsertVertexAtBack(polygonNow.Data.Index);
-
-                VertexNode<T> cutterNow = cutter.Head;
+                VertexNode<BooleanVertex> cutterNow = booleanCutter.Head;
                 do
                 {
                     Vector2 b0 = cutterVertices[cutterNow.Data.Index];
                     Vector2 b1 = cutterVertices[cutterNow.Next.Data.Index];
-
-                    VertexNode<BooleanVertex> cutterBoolVertex = booleanCutter.InsertVertexAtBack(cutterNow.Data.Index);
 
                     // Perform a line calculation
                     int result = PartialLineIntersection(a0, a1, b0, b1, out float t, out float u);
@@ -66,13 +68,13 @@ namespace PSDSystem
 
                         if (u >= 0.0f && u <= 1.0f && a0IsOnInfiniteRay)
                         {
-                            polygonBoolVertex.Data.IsOutside = false;
+                            polygonNow.Data.IsOutside = false;
                             polygonVertexOnEdge = true;
                         }
 
                         if (t >= 0.0f && u <= 1.0f && b0IsOnInfiniteRay)
                         {
-                            cutterBoolVertex.Data.IsOutside = false;
+                            cutterNow.Data.IsOutside = false;
                             cutterVertexOnEdge = true;
                         }
 
@@ -91,13 +93,13 @@ namespace PSDSystem
                                 // Handle edge case where infinite ray of targetNow passes end points b0 and b1,
                                 // by ignoring if the other vertex is CCW or CW (does not matter which) or colinear to the first vertex
                                 // and changing isOutside if not ignored
-                                polygonBoolVertex.Data.IsOutside = !polygonBoolVertex.Data.IsOutside;
+                                polygonNow.Data.IsOutside = !polygonNow.Data.IsOutside;
                             }
 
                             if (polygonIntersectsAPoint == false && t >= 0.0f && u >= 0.0f && u <= 1.0f)
                             {
                                 // infinite ray from polygon's a0 intersects cutter's line segment
-                                polygonBoolVertex.Data.IsOutside = !polygonBoolVertex.Data.IsOutside;
+                                polygonNow.Data.IsOutside = !polygonNow.Data.IsOutside;
                             }
                         }
 
@@ -113,13 +115,13 @@ namespace PSDSystem
                             
                             if (cutterIntersectsAPoint && cutterCrossProductToPolygonLine > 0.0f)
                             {
-                                cutterBoolVertex.Data.IsOutside = !cutterBoolVertex.Data.IsOutside;
+                                cutterNow.Data.IsOutside = !cutterNow.Data.IsOutside;
                             }
 
                             // infinite ray from cutter's b0 intersects cutter's line segment
                             if (cutterIntersectsAPoint == false && u >= 0.0f && t >= 0.0f && t <= 1.0f)
                             {
-                                cutterBoolVertex.Data.IsOutside = !cutterBoolVertex.Data.IsOutside;
+                                cutterNow.Data.IsOutside = !cutterNow.Data.IsOutside;
                             }
                         }
                         // ----------------------------------------------------------------------------
@@ -130,24 +132,21 @@ namespace PSDSystem
                         // polygonNow is on the edge of cutter's line segment
                         if (t >= 0.0f && t <= 1.0f)
                         {
-                            polygonBoolVertex.Data.IsOutside = false;
+                            polygonNow.Data.IsOutside = false;
                         }
                         // cutterNow is on the edge of target's line segment
                         if (u >= 0.0f && u <= 0.0f)
                         {
-                            cutterBoolVertex.Data.IsOutside = false;
+                            cutterNow.Data.IsOutside = false;
                         }
                     }
 
                     cutterNow = cutterNow.Next;
-                } while (cutterNow != cutter.Head);
+                } while (cutterNow != booleanCutter.Head);
 
                 polygonNow = polygonNow.Next;
-            } while (polygonNow != polygon.Head);
+            } while (polygonNow != booleanPolygon.Head);
 
-
-            booleanCutter = null;
-            booleanPolygon = null;
             return 0;
         }
 

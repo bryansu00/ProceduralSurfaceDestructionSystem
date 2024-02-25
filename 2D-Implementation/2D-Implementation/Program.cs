@@ -2,6 +2,8 @@
 using PSDSystem;
 using System.Numerics;
 using System.IO;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 class Program
 {
@@ -50,6 +52,16 @@ class Program
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
                 var res = PSD.IntersectCutterAndPolygon(cutter, surface.Polygons[0].OuterPolygon, out Polygon<BooleanVertex>? a, out Polygon<BooleanVertex>? b);
+                if (a != null)
+                {
+                    Console.WriteLine("Cutter:");
+                    PrintBooleanList(a);
+                }
+                if (b != null)
+                {
+                    Console.WriteLine("Other:");
+                    PrintBooleanList(b);
+                }
             }
 
             Raylib.BeginDrawing();
@@ -91,6 +103,31 @@ class Program
                 Raylib.DrawText(i.ToString(), (int)toUse.X + 5, (int)toUse.Y + 5, 12, color);
             }
         }
+    }
+
+    public static void PrintBooleanList(Polygon<BooleanVertex> polygon)
+    {
+        if (polygon.Head == null) return;
+
+        StringBuilder sb = new StringBuilder();
+        VertexNode<BooleanVertex> now = polygon.Head;
+        do
+        {
+            sb.Append(now.Data.Index);
+
+            sb.Append(", Outside: ");
+            sb.Append(now.Data.IsOutside);
+
+            sb.Append(", Cross: ");
+            if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
+            else sb.Append("None");
+
+            sb.Append("\n");
+
+            now = now.Next;
+        } while (now != polygon.Head);
+
+        Console.Write(sb.ToString());
     }
 
     public static SurfaceShape<PolygonVertex> InitShape()
