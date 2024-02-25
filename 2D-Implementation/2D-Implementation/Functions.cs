@@ -6,8 +6,10 @@ namespace PSDSystem
 {
     public static class PSD
     {
-        public static int IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, 
-            out Polygon<BooleanVertex>? booleanCutter, out Polygon<BooleanVertex>? booleanPolygon) where T : PolygonVertex
+        public static int IntersectCutterAndPolygon<T, U>(Polygon<T> cutter, Polygon<T> polygon, 
+            out Polygon<U>? booleanCutter, out Polygon<U>? booleanPolygon) 
+            where T : PolygonVertex
+            where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
             // Intersection cannot performed, return -1 for invalid operation
             if (cutter.Head == null || cutter.Vertices == null || polygon.Head == null || polygon.Vertices == null)
@@ -19,8 +21,8 @@ namespace PSDSystem
 
             bool CutterAndPolygonIntersects = false;
 
-            booleanCutter = ConvertPolygonToBooleanList(cutter);
-            booleanPolygon = ConvertPolygonToBooleanList(polygon);
+            booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
+            booleanPolygon = ConvertPolygonToBooleanList<T, U>(polygon);
             if (booleanCutter.Head == null || booleanPolygon.Head == null)
             {
                 booleanCutter = null;
@@ -28,16 +30,17 @@ namespace PSDSystem
                 return -1;
             }
 
+            // SHOULD MAKE A COPY HERE...
             List<Vector2> polygonVertices = polygon.Vertices;
             List<Vector2> cutterVertices = cutter.Vertices;
 
-            VertexNode<BooleanVertex> polygonNow = booleanPolygon.Head;
+            VertexNode<U> polygonNow = booleanPolygon.Head;
             do
             {
                 Vector2 a0 = polygonVertices[polygonNow.Data.Index];
                 Vector2 a1 = polygonVertices[polygonNow.Next.Data.Index];
 
-                VertexNode<BooleanVertex> cutterNow = booleanCutter.Head;
+                VertexNode<U> cutterNow = booleanCutter.Head;
                 do
                 {
                     Vector2 b0 = cutterVertices[cutterNow.Data.Index];
@@ -49,37 +52,57 @@ namespace PSDSystem
                     // Both line segments are non-colinear, thus t and u can be used to determine if they intersect
                     if (result == 1)
                     {
-                        if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
-                        {
-                            CutterAndPolygonIntersects = true;
-                            // do something here...
-                        }
-
+                        #region EdgeCase1
                         // ----------------------------------------------------------------------------
-                        // This is very unlikely due floating point precision error,
+                        // This is extremely unlikely due floating point precision error,
                         // but just in case...
                         bool a0IsOnInfiniteRay = t == 0.0f; // a0 is intersecting with the cutter's infinite ray
                         bool a1IsOnInfiniteRay = t == 1.0f;
                         bool b0IsOnInfiniteRay = u == 0.0f;
                         bool b1IsOnInfiniteRay = u == 1.0f;
 
-                        bool polygonVertexOnEdge = false;
-                        bool cutterVertexOnEdge = false;
-
-                        if (u >= 0.0f && u <= 1.0f && a0IsOnInfiniteRay)
+                        if (u >= 0.0f && u <= 1.0f)
                         {
-                            polygonNow.Data.IsOutside = false;
-                            polygonVertexOnEdge = true;
+                            // a0 is the intersection point...
+                            if (a0IsOnInfiniteRay)
+                            {
+                                polygonNow.Data.IsOutside = false;
+                                polygonNow.Data.OnEdge = true;
+
+                                CutterAndPolygonIntersects = true;
+                            }
+                            // a1 is the intersection point...
+                            else if (a1IsOnInfiniteRay)
+                            {
+                                polygonNow.Next.Data.IsOutside = false;
+                                polygonNow.Next.Data.OnEdge = true;
+
+                                CutterAndPolygonIntersects = true;
+                            }
                         }
 
-                        if (t >= 0.0f && u <= 1.0f && b0IsOnInfiniteRay)
+                        if (t >= 0.0f && t <= 1.0f)
                         {
-                            cutterNow.Data.IsOutside = false;
-                            cutterVertexOnEdge = true;
+                            // b0 is the intersection point...
+                            if (b0IsOnInfiniteRay)
+                            {
+                                cutterNow.Data.IsOutside = false;
+                                cutterNow.Data.OnEdge = true;
+
+                                CutterAndPolygonIntersects = true;
+                            }
+                            // b0 is the intersection point...
+                            else if (b1IsOnInfiniteRay)
+                            {
+                                cutterNow.Next.Data.IsOutside = false;
+                                cutterNow.Next.Data.OnEdge = true;
+
+                                CutterAndPolygonIntersects = true;
+                            }
                         }
 
                         // Modify polygonBoolVertex.Data.IsOutside value
-                        if (polygonVertexOnEdge == false)
+                        if (polygonNow.Data.OnEdge == false)
                         {
                             bool polygonIntersectsAPoint = b0IsOnInfiniteRay || b1IsOnInfiniteRay;
                             float polygonCrossProductToCuttersLine = 0.0f;
@@ -104,7 +127,7 @@ namespace PSDSystem
                         }
 
                         // Modify cutterBoolVertex.Data.IsOutside value
-                        if (cutterVertexOnEdge == false)
+                        if (cutterNow.Data.OnEdge == false)
                         {
                             bool cutterIntersectsAPoint = a0IsOnInfiniteRay || a1IsOnInfiniteRay;
                             float cutterCrossProductToPolygonLine = 0.0f;
@@ -124,7 +147,19 @@ namespace PSDSystem
                                 cutterNow.Data.IsOutside = !cutterNow.Data.IsOutside;
                             }
                         }
+
                         // ----------------------------------------------------------------------------
+                        #endregion
+
+                        // It should be >= and <= if the edge case was not being handled...
+                        if (t > 0.0f && t < 1.0f && u > 0.0f && u < 1.0f)
+                        {
+                            CutterAndPolygonIntersects = true;
+
+                            Vector2 IntersectionPoint = new Vector2(a0.X + t * (a1.X - a0.X), a0.Y + t * (a1.Y - a0.Y));
+                            // Do something...
+                        }
+                        
                     }
                     // Both line segments are colinear, (This is unlikely due to floating point error, just in case though...)
                     else if (result == 0)
@@ -147,7 +182,16 @@ namespace PSDSystem
                 polygonNow = polygonNow.Next;
             } while (polygonNow != booleanPolygon.Head);
 
-            return 0;
+            if (CutterAndPolygonIntersects)
+            {
+                return 0;
+            }
+            else
+            {
+                booleanCutter = null;
+                booleanPolygon = null;
+                return 0;
+            }
         }
 
         /// <summary>
@@ -187,9 +231,11 @@ namespace PSDSystem
             return -1;
         }
 
-        private static Polygon<BooleanVertex> ConvertPolygonToBooleanList<T>(Polygon<T> polygon) where T : PolygonVertex
+        private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
+            where T : PolygonVertex
+            where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
-            Polygon<BooleanVertex> toReturn = new Polygon<BooleanVertex>();
+            Polygon<U> toReturn = new Polygon<U>();
             toReturn.Vertices = polygon.Vertices;
 
             if (polygon.Head == null) return toReturn;

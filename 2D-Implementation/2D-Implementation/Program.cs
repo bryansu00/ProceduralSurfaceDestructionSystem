@@ -62,6 +62,7 @@ class Program
                     Console.WriteLine("Other:");
                     PrintBooleanList(b);
                 }
+                Console.WriteLine();
             }
 
             Raylib.BeginDrawing();
@@ -91,7 +92,6 @@ class Program
             Vector2 toUseNext = FlipY(polygon.Vertices[now.Next.Data.Index]);
 
             Raylib.DrawLineEx(toUse, toUseNext, 1.0f, color);
-            Raylib.DrawCircleV(toUse, 5.0f, color);
             now = now.Next;
         } while (now != polygon.Head);
 
@@ -100,6 +100,7 @@ class Program
             for (int i = 0; i < polygon.Vertices.Count; i++)
             {
                 Vector2 toUse = FlipY(polygon.Vertices[i]);
+                Raylib.DrawCircleV(toUse, 5.0f, color);
                 Raylib.DrawText(i.ToString(), (int)toUse.X + 5, (int)toUse.Y + 5, 12, color);
             }
         }
