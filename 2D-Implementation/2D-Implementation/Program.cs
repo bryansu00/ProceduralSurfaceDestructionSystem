@@ -45,7 +45,39 @@ class Program
                 string? input = Console.ReadLine();
                 if (input != null)
                 {
+                    string[] args = input.Split();
 
+                    if (args.Length > 0)
+                    {
+                        if (args[0].Equals("test0"))
+                        {
+                            surface = InitShape();
+                            cutter = new Polygon<PolygonVertex>();
+                            cutter.Vertices = new List<Vector2>();
+                            Console.WriteLine("Loaded test0");
+                        }
+                        else if (args[0].Equals("test1"))
+                        {
+                            surface = InitShape();
+                            cutter = new Polygon<PolygonVertex>();
+                            cutter.Vertices = [
+                                new Vector2(250.0f, 150.0f),
+                                new Vector2(250.0f, 50.0f),
+                                new Vector2(550.0f, 50.0f),
+                                new Vector2(550.0f, 250.0f),
+                                new Vector2(450.0f, 250.0f),
+                                new Vector2(450.0f, 150.0f)
+                                ];
+                            cutter.InsertVertexAtBack(0);
+                            cutter.InsertVertexAtBack(1);
+                            cutter.InsertVertexAtBack(2);
+                            cutter.InsertVertexAtBack(3);
+                            cutter.InsertVertexAtBack(4);
+                            cutter.InsertVertexAtBack(5);
+
+                            Console.WriteLine("Loaded test1");
+                        }
+                    }
                 }
             }
 
