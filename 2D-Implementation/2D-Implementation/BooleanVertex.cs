@@ -16,12 +16,15 @@ namespace PSDSystem
 
         public bool OnEdge { get; set; }
 
+        public bool IsAnAddedVertex { get; set; }
+
         public BooleanVertex(int index) : base(index)
         {
             IsOutside = true;
             Cross = null;
             Processed = false;
             OnEdge = false;
+            IsAnAddedVertex = false;
         }
     }
 
@@ -34,5 +37,7 @@ namespace PSDSystem
         public bool Processed { get; set; }
 
         public bool OnEdge { get; set; }
+
+        public bool IsAnAddedVertex { get; set; }
     }
 }

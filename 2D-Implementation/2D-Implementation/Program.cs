@@ -61,6 +61,8 @@ class Program
                         else if (args[0].Equals("test2")) LoadTest2();
                         else if (args[0].Equals("test3")) LoadTest3();
                         else if (args[0].Equals("test4")) LoadTest4();
+                        else if (args[0].Equals("test5")) LoadTest5();
+                        else if (args[0].Equals("test6")) LoadTest6();
                     }
                 }
             }
@@ -247,6 +249,42 @@ class Program
         cutter.InsertVertexAtBack(2);
 
         Console.WriteLine("Loaded test4");
+    }
+
+    static void LoadTest5()
+    {
+        InitShape();
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = [
+            new Vector2(150.0f, 150.0f),
+            new Vector2(150.0f, 550.0f),
+            new Vector2(550.0f, 550.0f),
+            new Vector2(550.0f, 150.0f)
+        ];
+        cutter.InsertVertexAtBack(0);
+        cutter.InsertVertexAtBack(1);
+        cutter.InsertVertexAtBack(2);
+        cutter.InsertVertexAtBack(3);
+
+        Console.WriteLine("Loaded test5");
+    }
+
+    static void LoadTest6()
+    {
+        InitShape();
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = [
+            new Vector2(150.0f, 150.0f),
+            new Vector2(150.0f, 250.0f),
+            new Vector2(550.0f, 250.0f),
+            new Vector2(550.0f, 150.0f)
+        ];
+        cutter.InsertVertexAtBack(0);
+        cutter.InsertVertexAtBack(1);
+        cutter.InsertVertexAtBack(2);
+        cutter.InsertVertexAtBack(3);
+
+        Console.WriteLine("Loaded test6");
     }
 
     static Vector2 FlipY(Vector2 vector)

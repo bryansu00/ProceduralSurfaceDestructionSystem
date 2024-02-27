@@ -32,7 +32,7 @@ namespace PSDSystem
 
             #region IntersectionTest
 
-            List<Tuple<VertexNode<U>, float, VertexNode<U>, float>> intersections = new List<Tuple<VertexNode<U>, float, VertexNode<U>, float>>();
+            List<Tuple<Vector2, VertexNode<U>, float, VertexNode<U>, float>> intersections = new List<Tuple<Vector2, VertexNode<U>, float, VertexNode<U>, float>>();
 
             VertexNode<U> polygonNow = booleanPolygon.Head;
             do
@@ -149,10 +149,12 @@ namespace PSDSystem
                         // ----------------------------------------------------------------------------
                         #endregion
 
+                        // IGNORE VERTEX ON VERTEX INTERSECTIONS, I AM NOT SURE IF THIS IS CORRECT....
                         if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f && !vertexOnVertex)
                         {
+                            Vector2 intersectionPoint = new Vector2(a0.X + t * (a1.X - a0.X), a0.Y + t * (a1.Y - a0.Y));
                             intersections.Add(
-                                new Tuple<VertexNode<U>, float, VertexNode<U>, float>(polygonNow, t, cutterNow, u)
+                                new Tuple<Vector2, VertexNode<U>, float, VertexNode<U>, float>(intersectionPoint, polygonNow, t, cutterNow, u)
                                 );
                         }
                         
@@ -164,11 +166,13 @@ namespace PSDSystem
                         if (t >= 0.0f && t <= 1.0f)
                         {
                             polygonNow.Data.IsOutside = false;
+                            polygonNow.Data.OnEdge = true;
                         }
                         // cutterNow is on the edge of target's line segment
                         if (u >= 0.0f && u <= 0.0f)
                         {
                             cutterNow.Data.IsOutside = false;
+                            cutterNow.Data.OnEdge = true;
                         }
                     }
 
@@ -193,13 +197,61 @@ namespace PSDSystem
 
             foreach (var result in intersections)
             {
-                VertexNode<U> polygonNode = result.Item1;
-                float t = result.Item2;
-                VertexNode<U> cutterNode = result.Item3;
-                float u = result.Item4;
+                Vector2 intersectionPoint = result.Item1;
+                VertexNode<U> polygonNode = result.Item2;
+                float t = result.Item3;
+                VertexNode<U> cutterNode = result.Item4;
+                float u = result.Item5;
 
-                Vector2 IntersectionPoint = new Vector2(polygonVertices[polygonNode.Data.Index].X + t * (polygonVertices[polygonNode.Next.Data.Index].X - polygonVertices[polygonNode.Data.Index].X),
-                    polygonVertices[polygonNode.Data.Index].Y + t * (polygonVertices[polygonNode.Next.Data.Index].Y - polygonVertices[polygonNode.Data.Index].Y));
+                VertexNode<U> nodeAddedToPolygon;
+                VertexNode<U> nodeAddedToCutter;
+
+                // The two if statements will in 99.9% never happen...
+                // but just in case that 0.1% case does happen...
+                if (t == 0.0f) nodeAddedToPolygon = polygonNode;
+                else if (t == 1.0f) nodeAddedToPolygon = polygonNode.Next;
+                else
+                {
+                    // Make sure to insert the intersectionPoint and the correct location
+                    // if the next vertex happens to be another intersectionPoint
+                    while (polygonNode.Next.Data.Cross != null && polygonNode.Next.Data.IsAnAddedVertex &&
+                        SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], intersectionPoint) >
+                        SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], polygonVertices[polygonNode.Next.Data.Index]))
+                    {
+                        polygonNode = polygonNode.Next;
+                    }
+                    // Do the actual insertions
+                    int insertedVertexLocation = polygonVertices.Count;
+                    polygonVertices.Add(intersectionPoint);
+                    nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
+                    nodeAddedToPolygon.Data.IsAnAddedVertex = true;
+                }
+
+                // Do the same thing as above, but with cutter this time
+                if (u == 0.0f) nodeAddedToCutter = cutterNode;
+                else if (u == 1.0f) nodeAddedToCutter = cutterNode.Next;
+                else
+                {
+                    while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
+                        SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint) >
+                        SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]))
+                    {
+                        cutterNode = cutterNode.Next;
+                    }
+                    int insertedVertexLocation = cutterVertices.Count;
+                    cutterVertices.Add(intersectionPoint);
+                    nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
+                    nodeAddedToCutter.Data.IsAnAddedVertex = true;
+                }
+
+                nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;
+                nodeAddedToCutter.Data.Cross = nodeAddedToPolygon;
+
+                nodeAddedToPolygon.Data.IsOutside = false;
+                nodeAddedToPolygon.Data.OnEdge = true;
+
+                nodeAddedToCutter.Data.IsOutside = false;
+                nodeAddedToCutter.Data.OnEdge = true;
             }
 
             return 0;
@@ -263,6 +315,13 @@ namespace PSDSystem
         private static float CrossProduct2D(Vector2 a, Vector2 b)
         {
             return (a.X * b.Y) - (a.Y * b.X);
+        }
+
+        private static float SegmentLengthSquared(Vector2 a, Vector2 b)
+        {
+            float x = b.X - a.X;
+            float y = b.Y - a.Y;
+            return x * x + y * y;
         }
     }
 }
