@@ -57,10 +57,10 @@ class Program
                             InitCutter();
                             Console.WriteLine("Loaded test0");
                         }
-                        else if (args[0].Equals("test1"))
-                        {
-                            LoadTest1();
-                        }
+                        else if (args[0].Equals("test1")) LoadTest1();
+                        else if (args[0].Equals("test2")) LoadTest2();
+                        else if (args[0].Equals("test3")) LoadTest3();
+                        else if (args[0].Equals("test4")) LoadTest4();
                     }
                 }
             }
@@ -197,6 +197,56 @@ class Program
         cutter.InsertVertexAtBack(5);
 
         Console.WriteLine("Loaded test1");
+    }
+
+    static void LoadTest2()
+    {
+        InitShape();
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = [
+            new Vector2(250.0f, 150.0f),
+            new Vector2(250.0f, 50.0f),
+            new Vector2(550.0f, 50.0f),
+            new Vector2(550.0f, 150.0f),
+            ];
+        cutter.InsertVertexAtBack(0);
+        cutter.InsertVertexAtBack(1);
+        cutter.InsertVertexAtBack(2);
+        cutter.InsertVertexAtBack(3);
+
+        Console.WriteLine("Loaded test2");
+    }
+
+    static void LoadTest3()
+    {
+        InitShape();
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = [
+            new Vector2(550.0f, 150.0f),
+            new Vector2(550.0f, 50.0f),
+            new Vector2(250.0f, 50.0f),
+        ];
+        cutter.InsertVertexAtBack(0);
+        cutter.InsertVertexAtBack(1);
+        cutter.InsertVertexAtBack(2);
+
+        Console.WriteLine("Loaded test3");
+    }
+
+    static void LoadTest4()
+    {
+        InitShape();
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = [
+            new Vector2(550.0f, 150.0f),
+            new Vector2(550.0f, 250.0f),
+            new Vector2(250.0f, 250.0f),
+        ];
+        cutter.InsertVertexAtBack(0);
+        cutter.InsertVertexAtBack(1);
+        cutter.InsertVertexAtBack(2);
+
+        Console.WriteLine("Loaded test4");
     }
 
     static Vector2 FlipY(Vector2 vector)
