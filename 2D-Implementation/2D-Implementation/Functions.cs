@@ -62,10 +62,6 @@ namespace PSDSystem
                         bool b0IsOnInfiniteRay = u == 0.0f;
                         bool b1IsOnInfiniteRay = u == 1.0f;
 
-                        // If there is a vertex on vertex intersection...
-                        bool vertexOnVertex = (a0IsOnInfiniteRay || a1IsOnInfiniteRay) &&
-                            (b0IsOnInfiniteRay || b1IsOnInfiniteRay);
-
                         // Check if a0 or a1 is on an edge
                         if (u >= 0.0f && u <= 1.0f)
                         {
@@ -150,8 +146,7 @@ namespace PSDSystem
                         // ----------------------------------------------------------------------------
                         #endregion
 
-                        // IGNORE VERTEX ON VERTEX INTERSECTIONS, I AM NOT SURE IF THIS IS CORRECT....
-                        if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f && !vertexOnVertex)
+                        if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
                         {
                             Vector2 intersectionPoint = new Vector2(a0.X + t * (a1.X - a0.X), a0.Y + t * (a1.Y - a0.Y));
                             intersections.Add(
@@ -224,7 +219,7 @@ namespace PSDSystem
                         polygonNode = polygonNode.Next;
                     }
                     // Do the actual insertions
-                    // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX (BUT NOT ITS EDGE) INTERSECTS THE EDGE
+                    // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX INTERSECTS THE EDGE
                     int insertedVertexLocation = polygonVertices.Count;
                     polygonVertices.Add(intersectionPoint);
                     nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
