@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace PSDSystem
 {
@@ -195,6 +196,8 @@ namespace PSDSystem
                 return cutterIsOutsidePolygon ? 1 : 2;
             }
 
+            // Insert the intersection points
+            List<VertexNode<U>> insertedIntersection = new List<VertexNode<U>>();
             foreach (var result in intersections)
             {
                 Vector2 intersectionPoint = result.Item1;
@@ -252,6 +255,27 @@ namespace PSDSystem
 
                 nodeAddedToCutter.Data.IsOutside = false;
                 nodeAddedToCutter.Data.OnEdge = true;
+
+                insertedIntersection.Add(nodeAddedToPolygon);
+            }
+
+            // Add additional vertices, needed for boolean-subtraction operations
+            foreach (VertexNode<U> node in insertedIntersection)
+            {
+                if (node.Next.Data.IsOutside) continue;
+
+                Vector2 extraInsertionPoint = new Vector2(
+                    (polygonVertices[node.Next.Data.Index].X - polygonVertices[node.Data.Index].X) / 2.0f + polygonVertices[node.Data.Index].X,
+                    (polygonVertices[node.Next.Data.Index].Y - polygonVertices[node.Data.Index].Y) / 2.0f + polygonVertices[node.Data.Index].Y
+                    );
+
+                if (PointIsInsidePolygon(extraInsertionPoint, cutter) == -1)
+                {
+                    int insertedVertexLocation = polygonVertices.Count;
+                    polygonVertices.Add(extraInsertionPoint);
+                    VertexNode<U> addedNode = booleanPolygon.InsertVertexAfter(node, insertedVertexLocation);
+                    addedNode.Data.IsAnAddedVertex = true;
+                }
             }
 
             return 0;
@@ -310,6 +334,65 @@ namespace PSDSystem
                 now = now.Next;
             } while (now != polygon.Head);
             return toReturn;
+        }
+
+        /// <summary>
+        /// Determine if the given point is inside the given polygon
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="point"></param>
+        /// <param name="polygon"></param>
+        /// <returns>Returns 1, if the given point is inside the given polygon.
+        /// Returns 0, if the given point is on the edge or vertex of the given polygon.
+        /// Returns -1, if the given point is outside the given polygon.</returns>
+        private static int PointIsInsidePolygon<T>(Vector2 point, Polygon<T> polygon) where T : PolygonVertex
+        {
+            if (polygon.Head == null || polygon.Vertices == null || polygon.Count < 3) return -1;
+
+            bool between(float p, float a, float b)
+            {
+                return (p >= a && p <= b) || (p <= a && p >= b);
+            }
+
+            List<Vector2> vertices = polygon.Vertices;
+            bool inside = false;
+
+            VertexNode<T> now = polygon.Head;
+            do
+            {
+                Vector2 a = vertices[now.Data.Index];
+                Vector2 b = vertices[now.Next.Data.Index];
+
+                // Corner cases (extremely unlikely due to floating point error)
+                if (point.X == a.X && point.Y == a.Y ||
+                    point.X == b.X && point.Y == b.Y)
+                    return 0;
+                if (a.Y == b.Y && point.Y == a.Y
+                    && between(point.X, a.X, b.X))
+                    return 0;
+
+                if (between(point.Y, a.Y, b.Y)) // If point is inside the vertical range
+                {
+                    // Below is extremly unlikely
+                    if (point.Y == a.Y && b.Y >= a.Y ||
+                        point.Y == b.Y && a.Y >= b.Y)
+                    {
+                        now = now.Next;
+                        continue;
+                    }
+
+                    float c = (a.X - point.X) * (b.Y - point.Y) - (b.X - point.X) * (a.Y - point.Y);
+                    if (c == 0)
+                        return 0;
+                    if ((a.Y < b.Y) == (c > 0))
+                        inside = !inside;
+                }
+
+                now = now.Next;
+
+            } while (now != polygon.Head);
+
+            return inside ? 1 : -1;
         }
 
         private static float CrossProduct2D(Vector2 a, Vector2 b)
