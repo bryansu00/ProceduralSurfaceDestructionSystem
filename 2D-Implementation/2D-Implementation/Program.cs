@@ -9,16 +9,18 @@ class Program
 {
     const int HEIGHT = 720;
 
+    private static Polygon<PolygonVertex> cutter = new Polygon<PolygonVertex>();
+
+    // Initialize stuff....
+    private static SurfaceShape<PolygonVertex> surface = new SurfaceShape<PolygonVertex>();
+
     public static void Main()
     {
         Raylib.InitWindow(1280, HEIGHT, "2D Surface Destruction Testing");
         Raylib.SetTargetFPS(60);
 
-        // Initialize stuff....
-        SurfaceShape<PolygonVertex> surface = InitShape();
-
-        Polygon<PolygonVertex> cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = new List<Vector2>();
+        InitShape();
+        InitCutter();
 
         while (!Raylib.WindowShouldClose())
         {
@@ -51,31 +53,13 @@ class Program
                     {
                         if (args[0].Equals("test0"))
                         {
-                            surface = InitShape();
-                            cutter = new Polygon<PolygonVertex>();
-                            cutter.Vertices = new List<Vector2>();
+                            InitShape();
+                            InitCutter();
                             Console.WriteLine("Loaded test0");
                         }
                         else if (args[0].Equals("test1"))
                         {
-                            surface = InitShape();
-                            cutter = new Polygon<PolygonVertex>();
-                            cutter.Vertices = [
-                                new Vector2(250.0f, 150.0f),
-                                new Vector2(250.0f, 50.0f),
-                                new Vector2(550.0f, 50.0f),
-                                new Vector2(550.0f, 250.0f),
-                                new Vector2(450.0f, 250.0f),
-                                new Vector2(450.0f, 150.0f)
-                                ];
-                            cutter.InsertVertexAtBack(0);
-                            cutter.InsertVertexAtBack(1);
-                            cutter.InsertVertexAtBack(2);
-                            cutter.InsertVertexAtBack(3);
-                            cutter.InsertVertexAtBack(4);
-                            cutter.InsertVertexAtBack(5);
-
-                            Console.WriteLine("Loaded test1");
+                            LoadTest1();
                         }
                     }
                 }
@@ -94,6 +78,7 @@ class Program
                     Console.WriteLine("Other:");
                     PrintBooleanList(b);
                 }
+                Console.WriteLine(res);
                 Console.WriteLine();
             }
 
@@ -113,7 +98,7 @@ class Program
         Raylib.CloseWindow();
     }
 
-    public static void DrawPolygon<T>(Polygon<T> polygon, Color color, bool labelVerts = true) where T : PolygonVertex
+    static void DrawPolygon<T>(Polygon<T> polygon, Color color, bool labelVerts = true) where T : PolygonVertex
     {
         if (polygon.Head == null || polygon.Vertices == null) return;
 
@@ -138,7 +123,7 @@ class Program
         }
     }
 
-    public static void PrintBooleanList(Polygon<BooleanVertex> polygon)
+    static void PrintBooleanList(Polygon<BooleanVertex> polygon)
     {
         if (polygon.Head == null) return;
 
@@ -163,9 +148,15 @@ class Program
         Console.Write(sb.ToString());
     }
 
-    public static SurfaceShape<PolygonVertex> InitShape()
+    static void InitCutter()
     {
-        SurfaceShape<PolygonVertex> surface = new SurfaceShape<PolygonVertex>();
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = new List<Vector2>();
+    }
+
+    static void InitShape()
+    {
+        surface = new SurfaceShape<PolygonVertex>();
 
         List<Vector2> Vertices = [
             new Vector2(150.0f, 150.0f),
@@ -184,11 +175,31 @@ class Program
         //Console.WriteLine(String.Join(", ", polygon.ToList()));
 
         surface.AddOuterPolygon(polygon);
-
-        return surface;
     }
 
-    public static Vector2 FlipY(Vector2 vector)
+    static void LoadTest1()
+    {
+        InitShape();
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = [
+            new Vector2(250.0f, 150.0f),
+            new Vector2(250.0f, 50.0f),
+            new Vector2(550.0f, 50.0f),
+            new Vector2(550.0f, 250.0f),
+            new Vector2(450.0f, 250.0f),
+            new Vector2(450.0f, 150.0f)
+            ];
+        cutter.InsertVertexAtBack(0);
+        cutter.InsertVertexAtBack(1);
+        cutter.InsertVertexAtBack(2);
+        cutter.InsertVertexAtBack(3);
+        cutter.InsertVertexAtBack(4);
+        cutter.InsertVertexAtBack(5);
+
+        Console.WriteLine("Loaded test1");
+    }
+
+    static Vector2 FlipY(Vector2 vector)
     {
         return new Vector2(vector.X, HEIGHT - vector.Y);
     }

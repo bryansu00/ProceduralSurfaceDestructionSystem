@@ -1,6 +1,4 @@
-﻿
-using System.Net.Http.Headers;
-using System.Numerics;
+﻿using System.Numerics;
 
 namespace PSDSystem
 {
@@ -188,9 +186,13 @@ namespace PSDSystem
             }
             else
             {
+                bool cutterIsOutsidePolygon = booleanCutter.Head.Data.IsOutside;
+
                 booleanCutter = null;
                 booleanPolygon = null;
-                return 0;
+
+                // Return 1 if cutter is outside, 2 if it is inside
+                return cutterIsOutsidePolygon ? 1 : 2;
             }
         }
 
