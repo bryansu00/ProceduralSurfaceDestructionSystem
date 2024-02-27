@@ -224,6 +224,7 @@ namespace PSDSystem
                         polygonNode = polygonNode.Next;
                     }
                     // Do the actual insertions
+                    // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX (BUT NOT ITS EDGE) INTERSECTS THE EDGE
                     int insertedVertexLocation = polygonVertices.Count;
                     polygonVertices.Add(intersectionPoint);
                     nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);

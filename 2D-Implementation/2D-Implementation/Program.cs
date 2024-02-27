@@ -92,7 +92,7 @@ class Program
             {
                 DrawPolygon(group.OuterPolygon, Color.Black);
             }
-            DrawPolygon(cutter, Color.Red);
+            DrawPolygon(cutter, Color.Red, true, true);
 
             Raylib.EndDrawing();
         }
@@ -100,7 +100,7 @@ class Program
         Raylib.CloseWindow();
     }
 
-    static void DrawPolygon<T>(Polygon<T> polygon, Color color, bool labelVerts = true) where T : PolygonVertex
+    static void DrawPolygon<T>(Polygon<T> polygon, Color color, bool labelVerts = true, bool labelOnLeft = false) where T : PolygonVertex
     {
         if (polygon.Head == null || polygon.Vertices == null) return;
 
@@ -120,7 +120,8 @@ class Program
             {
                 Vector2 toUse = FlipY(polygon.Vertices[i]);
                 Raylib.DrawCircleV(toUse, 5.0f, color);
-                Raylib.DrawText(i.ToString(), (int)toUse.X + 5, (int)toUse.Y + 5, 12, color);
+                if (labelOnLeft) Raylib.DrawText(i.ToString(), (int)toUse.X - 6, (int)toUse.Y + 6, 12, color);
+                else Raylib.DrawText(i.ToString(), (int)toUse.X + 5, (int)toUse.Y + 5, 12, color);
             }
         }
     }
