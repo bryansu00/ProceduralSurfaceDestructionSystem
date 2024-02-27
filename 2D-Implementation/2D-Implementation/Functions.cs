@@ -10,14 +10,12 @@ namespace PSDSystem
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
             // Intersection cannot performed, return -1 for invalid operation
-            if (cutter.Head == null || cutter.Vertices == null || polygon.Head == null || polygon.Vertices == null)
+            if (cutter.Count < 3 || cutter.Vertices == null || polygon.Count < 3 || polygon.Vertices == null)
             {
                 booleanCutter = null;
                 booleanPolygon = null;
                 return -1;
             }
-
-            bool CutterAndPolygonIntersects = false;
 
             booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
             booleanPolygon = ConvertPolygonToBooleanList<T, U>(polygon);
@@ -31,6 +29,10 @@ namespace PSDSystem
             // SHOULD MAKE A COPY HERE...
             List<Vector2> polygonVertices = polygon.Vertices;
             List<Vector2> cutterVertices = cutter.Vertices;
+
+            #region IntersectionTest
+
+            List<Tuple<VertexNode<U>, float, VertexNode<U>, float>> intersections = new List<Tuple<VertexNode<U>, float, VertexNode<U>, float>>();
 
             VertexNode<U> polygonNow = booleanPolygon.Head;
             do
@@ -59,6 +61,11 @@ namespace PSDSystem
                         bool b0IsOnInfiniteRay = u == 0.0f;
                         bool b1IsOnInfiniteRay = u == 1.0f;
 
+                        // If there is a vertex on vertex intersection...
+                        bool vertexOnVertex = (a0IsOnInfiniteRay || a1IsOnInfiniteRay) &&
+                            (b0IsOnInfiniteRay || b1IsOnInfiniteRay);
+
+                        // Check if a0 or a1 is on an edge
                         if (u >= 0.0f && u <= 1.0f)
                         {
                             // a0 is the intersection point...
@@ -66,19 +73,16 @@ namespace PSDSystem
                             {
                                 polygonNow.Data.IsOutside = false;
                                 polygonNow.Data.OnEdge = true;
-
-                                CutterAndPolygonIntersects = true;
                             }
                             // a1 is the intersection point...
                             else if (a1IsOnInfiniteRay)
                             {
                                 polygonNow.Next.Data.IsOutside = false;
                                 polygonNow.Next.Data.OnEdge = true;
-
-                                CutterAndPolygonIntersects = true;
                             }
                         }
 
+                        // Check if b0 or b1 is on an edge
                         if (t >= 0.0f && t <= 1.0f)
                         {
                             // b0 is the intersection point...
@@ -86,16 +90,12 @@ namespace PSDSystem
                             {
                                 cutterNow.Data.IsOutside = false;
                                 cutterNow.Data.OnEdge = true;
-
-                                CutterAndPolygonIntersects = true;
                             }
                             // b0 is the intersection point...
                             else if (b1IsOnInfiniteRay)
                             {
                                 cutterNow.Next.Data.IsOutside = false;
                                 cutterNow.Next.Data.OnEdge = true;
-
-                                CutterAndPolygonIntersects = true;
                             }
                         }
 
@@ -149,13 +149,11 @@ namespace PSDSystem
                         // ----------------------------------------------------------------------------
                         #endregion
 
-                        // It should be >= and <= if the edge case was not being handled...
-                        if (t > 0.0f && t < 1.0f && u > 0.0f && u < 1.0f)
+                        if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f && !vertexOnVertex)
                         {
-                            CutterAndPolygonIntersects = true;
-
-                            Vector2 IntersectionPoint = new Vector2(a0.X + t * (a1.X - a0.X), a0.Y + t * (a1.Y - a0.Y));
-                            // Do something...
+                            intersections.Add(
+                                new Tuple<VertexNode<U>, float, VertexNode<U>, float>(polygonNow, t, cutterNow, u)
+                                );
                         }
                         
                     }
@@ -179,13 +177,11 @@ namespace PSDSystem
 
                 polygonNow = polygonNow.Next;
             } while (polygonNow != booleanPolygon.Head);
+            #endregion
 
-            if (CutterAndPolygonIntersects)
-            {
-                return 0;
-            }
-            else
-            {
+            if (intersections.Count == 0)
+            { 
+                // No intersection between the two given polygons, thus end function
                 bool cutterIsOutsidePolygon = booleanCutter.Head.Data.IsOutside;
 
                 booleanCutter = null;
@@ -194,6 +190,19 @@ namespace PSDSystem
                 // Return 1 if cutter is outside, 2 if it is inside
                 return cutterIsOutsidePolygon ? 1 : 2;
             }
+
+            foreach (var result in intersections)
+            {
+                VertexNode<U> polygonNode = result.Item1;
+                float t = result.Item2;
+                VertexNode<U> cutterNode = result.Item3;
+                float u = result.Item4;
+
+                Vector2 IntersectionPoint = new Vector2(polygonVertices[polygonNode.Data.Index].X + t * (polygonVertices[polygonNode.Next.Data.Index].X - polygonVertices[polygonNode.Data.Index].X),
+                    polygonVertices[polygonNode.Data.Index].Y + t * (polygonVertices[polygonNode.Next.Data.Index].Y - polygonVertices[polygonNode.Data.Index].Y));
+            }
+
+            return 0;
         }
 
         /// <summary>
