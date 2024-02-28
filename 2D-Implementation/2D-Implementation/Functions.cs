@@ -1,29 +1,26 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Metrics;
 using System.Numerics;
 
 namespace PSDSystem
 {
     public static class PSD
     {
-        public static int IntersectCutterAndPolygon<T, U>(Polygon<T> cutter, Polygon<T> polygon, 
-            out Polygon<U>? booleanCutter, out Polygon<U>? booleanPolygon) 
+        public static int IntersectCutterAndPolygon<T, U>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionResults<U>? intersectionResults) 
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
             // Intersection cannot performed, return -1 for invalid operation
+            intersectionResults = null;
             if (cutter.Count < 3 || cutter.Vertices == null || polygon.Count < 3 || polygon.Vertices == null)
             {
-                booleanCutter = null;
-                booleanPolygon = null;
                 return -1;
             }
 
-            booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
-            booleanPolygon = ConvertPolygonToBooleanList<T, U>(polygon);
+            Polygon<U> booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
+            Polygon<U> booleanPolygon = ConvertPolygonToBooleanList<T, U>(polygon);
             if (booleanCutter.Head == null || booleanPolygon.Head == null)
             {
-                booleanCutter = null;
-                booleanPolygon = null;
                 return -1;
             }
 
@@ -184,27 +181,72 @@ namespace PSDSystem
                 // No intersection between the two given polygons, thus end function
                 bool cutterIsOutsidePolygon = booleanCutter.Head.Data.IsOutside;
 
-                booleanCutter = null;
-                booleanPolygon = null;
-
                 // Return 1 if cutter is outside, 2 if it is inside
                 return cutterIsOutsidePolygon ? 1 : 2;
             }
 
+            intersectionResults = new IntersectionResults<U>(booleanPolygon, booleanCutter, intersections);
+            return 0;
+        }
+
+        /// <summary>
+        /// Perform a partial line intersection computation between two lines
+        /// </summary>
+        /// <param name="a0">Starting point of Line A</param>
+        /// <param name="a1">End point of Line A</param>
+        /// <param name="b0">Starting point of Line B</param>
+        /// <param name="b1">End point of Line B</param>
+        /// <param name="tValue">The t value computed</param>
+        /// <param name="uValue">The u value computed</param>
+        /// <returns>Returns 1 if the given lines are not parallel,
+        /// Returns 0 if the given lines are colinear,
+        /// Returns -1 if the given lines are parallel</returns>
+        private static int PartialLineIntersection(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out float tValue, out float uValue)
+        {
+            float determinant = (a0.X - a1.X) * (b0.Y - b1.Y) - (a0.Y - a1.Y) * (b0.X - b1.X);
+            if (determinant != 0.0f)
+            {
+                tValue = ((a0.X - b0.X) * (b0.Y - b1.Y) - (a0.Y - b0.Y) * (b0.X - b1.X)) / determinant;
+                uValue = ((a1.X - a0.X) * (a0.Y - b0.Y) - (a1.Y - a0.Y) * (a0.X - b0.X)) / determinant;
+                return 1;
+            }
+            else
+            {
+                float top = ((a1.X - a0.X) * (a0.Y - b0.Y) + (a1.Y - a0.Y) * (a0.X - b0.X));
+                if (top == 0.0) // Lines are colinear
+                {
+                    tValue = ((a0.X - b0.X) * (b1.X - b0.X) + (a0.Y - b0.Y) * (b1.Y - b0.Y)) /
+                        ((b1.X - b0.X) * (b1.X - b0.X) + (b1.Y - b0.Y) * (b1.Y - b0.Y));
+                    uValue = ((b0.X - a0.X) * (a1.X - a0.X) + (b0.Y - a0.Y) * (a1.Y - a0.Y)) /
+                        ((a1.X - a0.X) * (a1.X - a0.X) + (a1.Y - a0.Y) * (a1.Y - a0.Y));
+                    return 0;
+                }
+            }
+            tValue = uValue = 0.0f;
+            return -1;
+        }
+
+        public static void InsertIntersectionPoints<T>(IntersectionResults<T> intersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        {
+            if (intersectionResults.PolygonList.Vertices == null || intersectionResults.CutterList.Vertices == null) return;
+
+            List<Vector2> polygonVertices = intersectionResults.PolygonList.Vertices;
+            List<Vector2> cutterVertices = intersectionResults.CutterList.Vertices;
+
             // Insert the intersection points
-            List<VertexNode<U>> insertedIntersection = new List<VertexNode<U>>();
-            foreach (var result in intersections)
+            List<VertexNode<T>> insertedIntersection = new List<VertexNode<T>>();
+            foreach (var result in intersectionResults.Intersections)
             {
                 Vector2 intersectionPoint = result.Item1;
-                VertexNode<U> polygonNode = result.Item2;
+                VertexNode<T> polygonNode = result.Item2;
                 float t = result.Item3;
-                VertexNode<U> cutterNode = result.Item4;
+                VertexNode<T> cutterNode = result.Item4;
                 float u = result.Item5;
 
-                VertexNode<U> nodeAddedToPolygon;
-                VertexNode<U> nodeAddedToCutter;
+                VertexNode<T> nodeAddedToPolygon;
+                VertexNode<T> nodeAddedToCutter;
 
-                // The two if statements will in 99.9% never happen...
+                // The two if statements will in 99.9% of all cases never happen...
                 // but just in case that 0.1% case does happen...
                 if (t == 0.0f) nodeAddedToPolygon = polygonNode;
                 else if (t == 1.0f) nodeAddedToPolygon = polygonNode.Next;
@@ -256,62 +298,23 @@ namespace PSDSystem
             }
 
             // Add additional vertices, needed for boolean-subtraction operations
-            foreach (VertexNode<U> node in insertedIntersection)
+            foreach (VertexNode<T> node in insertedIntersection)
             {
                 if (node.Next.Data.IsOutside) continue;
 
                 Vector2 extraInsertionPoint = new Vector2(
                     (polygonVertices[node.Next.Data.Index].X - polygonVertices[node.Data.Index].X) / 2.0f + polygonVertices[node.Data.Index].X,
                     (polygonVertices[node.Next.Data.Index].Y - polygonVertices[node.Data.Index].Y) / 2.0f + polygonVertices[node.Data.Index].Y
-                    );
+                );
 
-                if (PointIsInsidePolygon(extraInsertionPoint, cutter) == -1)
+                if (PointIsInsidePolygon(extraInsertionPoint, intersectionResults.CutterList) == -1)
                 {
                     int insertedVertexLocation = polygonVertices.Count;
                     polygonVertices.Add(extraInsertionPoint);
-                    VertexNode<U> addedNode = booleanPolygon.InsertVertexAfter(node, insertedVertexLocation);
+                    VertexNode<T> addedNode = intersectionResults.PolygonList.InsertVertexAfter(node, insertedVertexLocation);
                     addedNode.Data.IsAnAddedVertex = true;
                 }
             }
-
-            return 0;
-        }
-
-        /// <summary>
-        /// Perform a partial line intersection computation between two lines
-        /// </summary>
-        /// <param name="a0">Starting point of Line A</param>
-        /// <param name="a1">End point of Line A</param>
-        /// <param name="b0">Starting point of Line B</param>
-        /// <param name="b1">End point of Line B</param>
-        /// <param name="tValue">The t value computed</param>
-        /// <param name="uValue">The u value computed</param>
-        /// <returns>Returns 1 if the given lines are not parallel,
-        /// Returns 0 if the given lines are colinear,
-        /// Returns -1 if the given lines are parallel</returns>
-        private static int PartialLineIntersection(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out float tValue, out float uValue)
-        {
-            float determinant = (a0.X - a1.X) * (b0.Y - b1.Y) - (a0.Y - a1.Y) * (b0.X - b1.X);
-            if (determinant != 0.0f)
-            {
-                tValue = ((a0.X - b0.X) * (b0.Y - b1.Y) - (a0.Y - b0.Y) * (b0.X - b1.X)) / determinant;
-                uValue = ((a1.X - a0.X) * (a0.Y - b0.Y) - (a1.Y - a0.Y) * (a0.X - b0.X)) / determinant;
-                return 1;
-            }
-            else
-            {
-                float top = ((a1.X - a0.X) * (a0.Y - b0.Y) + (a1.Y - a0.Y) * (a0.X - b0.X));
-                if (top == 0.0) // Lines are colinear
-                {
-                    tValue = ((a0.X - b0.X) * (b1.X - b0.X) + (a0.Y - b0.Y) * (b1.Y - b0.Y)) /
-                        ((b1.X - b0.X) * (b1.X - b0.X) + (b1.Y - b0.Y) * (b1.Y - b0.Y));
-                    uValue = ((b0.X - a0.X) * (a1.X - a0.X) + (b0.Y - a0.Y) * (a1.Y - a0.Y)) /
-                        ((a1.X - a0.X) * (a1.X - a0.X) + (a1.Y - a0.Y) * (a1.Y - a0.Y));
-                    return 0;
-                }
-            }
-            tValue = uValue = 0.0f;
-            return -1;
         }
 
         private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 

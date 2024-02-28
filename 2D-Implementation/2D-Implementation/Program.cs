@@ -69,16 +69,14 @@ class Program
 
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                var res = PSD.IntersectCutterAndPolygon(cutter, surface.Polygons[0].OuterPolygon, out Polygon<BooleanVertex>? a, out Polygon<BooleanVertex>? b);
-                if (a != null)
+                var res = PSD.IntersectCutterAndPolygon(cutter, surface.Polygons[0].OuterPolygon, out IntersectionResults<BooleanVertex>? intersectionResults);
+                if (intersectionResults != null)
                 {
+                    PSD.InsertIntersectionPoints(intersectionResults);
                     Console.WriteLine("Cutter:");
-                    PrintBooleanList(a);
-                }
-                if (b != null)
-                {
+                    PrintBooleanList(intersectionResults.CutterList);
                     Console.WriteLine("Other:");
-                    PrintBooleanList(b);
+                    PrintBooleanList(intersectionResults.PolygonList);
                 }
                 Console.WriteLine(res);
                 Console.WriteLine();
