@@ -6,14 +6,23 @@ namespace PSDSystem
 {
     public static class PSD
     {
-        public static int IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionResults<T>? intersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        public enum IntersectionResult
         {
-            // Intersection cannot performed, return -1 for invalid operation
+            FAILED = -1,
+            INTERSECTS = 0,
+            CUTTER_IS_INSIDE = 1,
+            POLYGON_IS_INSIDE = 2,
+            BOTH_OUTSIDE = 3
+        }
+
+        public static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionResults<T>? intersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        {
+            // Intersection cannot performed, return for invalid operation
             if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null || 
                 polygon.Count < 3 || polygon.Head == null || polygon.Vertices == null)
             {
                 intersectionResults = null;
-                return -1;
+                return IntersectionResult.FAILED;
             }
 
             List<Vector2> polygonVertices = polygon.Vertices;
@@ -171,10 +180,10 @@ namespace PSDSystem
             { 
                 // No intersection between the two given polygons, thus end function
                 bool cutterIsOutsidePolygon = cutter.Head.Data.IsOutside;
+                bool polygonIsOutsidePolygon = polygon.Head.Data.IsOutside;
 
-                // Return 1 if cutter is outside, 2 if it is inside
                 intersectionResults = null;
-                return cutterIsOutsidePolygon ? 1 : 2;
+                return cutterIsOutsidePolygon ? (polygonIsOutsidePolygon ? IntersectionResult.BOTH_OUTSIDE : IntersectionResult.POLYGON_IS_INSIDE) : IntersectionResult.CUTTER_IS_INSIDE;
             }
 
             intersectionResults = new IntersectionResults<T>(polygon, cutter, intersections);

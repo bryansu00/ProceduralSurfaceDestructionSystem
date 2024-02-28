@@ -16,6 +16,18 @@ namespace PSDSystem
 
             Polygons.Add(pair);
         }
+
+        public void AddPair(Polygon<T> outerPolygon, List<Polygon<T>> innerPolygons)
+        {
+            PolygonGroup<T> pair = new PolygonGroup<T>(outerPolygon, innerPolygons);
+
+            Polygons.Add(pair);
+        }
+
+        public void RemoveGroup(PolygonGroup<T> group)
+        {
+            Polygons.Remove(group);
+        }
     }
 
     public class PolygonGroup<T> where T : PolygonVertex
