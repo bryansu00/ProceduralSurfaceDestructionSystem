@@ -5,16 +5,16 @@ namespace PSDSystem
 {
     public class IntersectionResults<T> where T : PolygonVertex, IHasBooleanVertexProperties<T>
     {
-        public Polygon<T> PolygonList { get; }
+        public Polygon<T> Polygon { get; }
 
-        public Polygon<T> CutterList { get; }
+        public Polygon<T> Cutter { get; }
 
         public List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>> Intersections { get; }
 
-        public IntersectionResults(Polygon<T> polygonList, Polygon<T> cutterList, List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>> intersections)
+        public IntersectionResults(Polygon<T> polygon, Polygon<T> cutter, List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>> intersections)
         {
-            PolygonList = polygonList;
-            CutterList = cutterList;
+            Polygon = polygon;
+            Cutter = cutter;
             Intersections = intersections;
         }
     }

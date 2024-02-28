@@ -6,39 +6,30 @@ namespace PSDSystem
 {
     public static class PSD
     {
-        public static int IntersectCutterAndPolygon<T, U>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionResults<U>? intersectionResults) 
-            where T : PolygonVertex
-            where U : PolygonVertex, IHasBooleanVertexProperties<U>
+        public static int IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionResults<T>? intersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             // Intersection cannot performed, return -1 for invalid operation
-            intersectionResults = null;
-            if (cutter.Count < 3 || cutter.Vertices == null || polygon.Count < 3 || polygon.Vertices == null)
+            if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null || 
+                polygon.Count < 3 || polygon.Head == null || polygon.Vertices == null)
             {
+                intersectionResults = null;
                 return -1;
             }
 
-            Polygon<U> booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
-            Polygon<U> booleanPolygon = ConvertPolygonToBooleanList<T, U>(polygon);
-            if (booleanCutter.Head == null || booleanPolygon.Head == null)
-            {
-                return -1;
-            }
-
-            // SHOULD MAKE A COPY HERE...
             List<Vector2> polygonVertices = polygon.Vertices;
             List<Vector2> cutterVertices = cutter.Vertices;
 
             #region IntersectionTest
 
-            List<Tuple<Vector2, VertexNode<U>, float, VertexNode<U>, float>> intersections = new List<Tuple<Vector2, VertexNode<U>, float, VertexNode<U>, float>>();
+            List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>> intersections = new List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>>();
 
-            VertexNode<U> polygonNow = booleanPolygon.Head;
+            VertexNode<T> polygonNow = polygon.Head;
             do
             {
                 Vector2 a0 = polygonVertices[polygonNow.Data.Index];
                 Vector2 a1 = polygonVertices[polygonNow.Next.Data.Index];
 
-                VertexNode<U> cutterNow = booleanCutter.Head;
+                VertexNode<T> cutterNow = cutter.Head;
                 do
                 {
                     Vector2 b0 = cutterVertices[cutterNow.Data.Index];
@@ -147,7 +138,7 @@ namespace PSDSystem
                         {
                             Vector2 intersectionPoint = new Vector2(a0.X + t * (a1.X - a0.X), a0.Y + t * (a1.Y - a0.Y));
                             intersections.Add(
-                                new Tuple<Vector2, VertexNode<U>, float, VertexNode<U>, float>(intersectionPoint, polygonNow, t, cutterNow, u)
+                                new Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>(intersectionPoint, polygonNow, t, cutterNow, u)
                                 );
                         }
                         
@@ -170,22 +161,23 @@ namespace PSDSystem
                     }
 
                     cutterNow = cutterNow.Next;
-                } while (cutterNow != booleanCutter.Head);
+                } while (cutterNow != cutter.Head);
 
                 polygonNow = polygonNow.Next;
-            } while (polygonNow != booleanPolygon.Head);
+            } while (polygonNow != polygon.Head);
             #endregion
 
             if (intersections.Count == 0)
             { 
                 // No intersection between the two given polygons, thus end function
-                bool cutterIsOutsidePolygon = booleanCutter.Head.Data.IsOutside;
+                bool cutterIsOutsidePolygon = cutter.Head.Data.IsOutside;
 
                 // Return 1 if cutter is outside, 2 if it is inside
+                intersectionResults = null;
                 return cutterIsOutsidePolygon ? 1 : 2;
             }
 
-            intersectionResults = new IntersectionResults<U>(booleanPolygon, booleanCutter, intersections);
+            intersectionResults = new IntersectionResults<T>(polygon, cutter, intersections);
             return 0;
         }
 
@@ -228,10 +220,10 @@ namespace PSDSystem
 
         public static void InsertIntersectionPoints<T>(IntersectionResults<T> intersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
-            if (intersectionResults.PolygonList.Vertices == null || intersectionResults.CutterList.Vertices == null) return;
+            if (intersectionResults.Polygon.Vertices == null || intersectionResults.Cutter.Vertices == null) return;
 
-            List<Vector2> polygonVertices = intersectionResults.PolygonList.Vertices;
-            List<Vector2> cutterVertices = intersectionResults.CutterList.Vertices;
+            List<Vector2> polygonVertices = intersectionResults.Polygon.Vertices;
+            List<Vector2> cutterVertices = intersectionResults.Cutter.Vertices;
 
             // Insert the intersection points
             List<VertexNode<T>> insertedIntersection = new List<VertexNode<T>>();
@@ -307,21 +299,22 @@ namespace PSDSystem
                     (polygonVertices[node.Next.Data.Index].Y - polygonVertices[node.Data.Index].Y) / 2.0f + polygonVertices[node.Data.Index].Y
                 );
 
-                if (PointIsInsidePolygon(extraInsertionPoint, intersectionResults.CutterList) == -1)
+                if (PointIsInsidePolygon(extraInsertionPoint, intersectionResults.Cutter) == -1)
                 {
                     int insertedVertexLocation = polygonVertices.Count;
                     polygonVertices.Add(extraInsertionPoint);
-                    VertexNode<T> addedNode = intersectionResults.PolygonList.InsertVertexAfter(node, insertedVertexLocation);
+                    VertexNode<T> addedNode = intersectionResults.Polygon.InsertVertexAfter(node, insertedVertexLocation);
                     addedNode.Data.IsAnAddedVertex = true;
                 }
             }
         }
 
-        private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
+        public static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
             Polygon<U> toReturn = new Polygon<U>();
+            // Should be a copy here
             toReturn.Vertices = polygon.Vertices;
 
             if (polygon.Head == null) return toReturn;

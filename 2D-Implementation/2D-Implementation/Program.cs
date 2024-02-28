@@ -28,17 +28,18 @@ class Program
             {
                 int verticesIdxAdded = cutter.Vertices.Count;
                 Vector2 mousePos = FlipY(Raylib.GetMousePosition());
-                cutter.Vertices.Add(mousePos);
-                cutter.InsertVertexAtBack(verticesIdxAdded);
+                InsertCircle(mousePos, 5.0f);
+                //cutter.Vertices.Add(mousePos);
+                //cutter.InsertVertexAtBack(verticesIdxAdded);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
-                if (cutter.Vertices.Count > 0)
-                {
-                    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
-                    int verticesIdxRemoved = cutter.Vertices.Count;
-                    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
-                }
+                //if (cutter.Vertices.Count > 0)
+                //{
+                //    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
+                //    int verticesIdxRemoved = cutter.Vertices.Count;
+                //    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
+                //}
             }
 
             if (Raylib.IsKeyPressed(KeyboardKey.Grave))
@@ -69,14 +70,16 @@ class Program
 
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                var res = PSD.IntersectCutterAndPolygon(cutter, surface.Polygons[0].OuterPolygon, out IntersectionResults<BooleanVertex>? intersectionResults);
+                Polygon<BooleanVertex> booleanCutter = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(cutter);
+                Polygon<BooleanVertex> polygonCutter = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(surface.Polygons[0].OuterPolygon);
+                var res = PSD.IntersectCutterAndPolygon(booleanCutter, polygonCutter, out IntersectionResults<BooleanVertex>? intersectionResults);
                 if (intersectionResults != null)
                 {
                     PSD.InsertIntersectionPoints(intersectionResults);
                     Console.WriteLine("Cutter:");
-                    PrintBooleanList(intersectionResults.CutterList);
+                    PrintBooleanList(intersectionResults.Cutter);
                     Console.WriteLine("Other:");
-                    PrintBooleanList(intersectionResults.PolygonList);
+                    PrintBooleanList(intersectionResults.Polygon);
                 }
                 Console.WriteLine(res);
                 Console.WriteLine();
@@ -284,6 +287,30 @@ class Program
         cutter.InsertVertexAtBack(3);
 
         Console.WriteLine("Loaded test6");
+    }
+
+    static void InsertCircle(Vector2 center, float scale = 1.0f)
+    {
+        cutter = new Polygon<PolygonVertex>();
+        cutter.Vertices = [
+            new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+            new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+            new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+            new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+            new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+            new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+            new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+            new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+        ];
+
+        cutter.InsertVertexAtBack(0);
+        cutter.InsertVertexAtBack(1);
+        cutter.InsertVertexAtBack(2);
+        cutter.InsertVertexAtBack(3);
+        cutter.InsertVertexAtBack(4);
+        cutter.InsertVertexAtBack(5);
+        cutter.InsertVertexAtBack(6);
+        cutter.InsertVertexAtBack(7);
     }
 
     static Vector2 FlipY(Vector2 vector)
