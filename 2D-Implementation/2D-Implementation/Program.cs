@@ -26,20 +26,21 @@ class Program
         {
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                int verticesIdxAdded = cutter.Vertices.Count;
                 Vector2 mousePos = FlipY(Raylib.GetMousePosition());
-                InsertCircle(mousePos, 5.0f);
+                //int verticesIdxAdded = cutter.Vertices.Count;
                 //cutter.Vertices.Add(mousePos);
                 //cutter.InsertVertexAtBack(verticesIdxAdded);
+
+                InsertCircle(mousePos, 5.0f);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
-                //if (cutter.Vertices.Count > 0)
-                //{
-                //    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
-                //    int verticesIdxRemoved = cutter.Vertices.Count;
-                //    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
-                //}
+                if (cutter.Vertices.Count > 0)
+                {
+                    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
+                    int verticesIdxRemoved = cutter.Vertices.Count;
+                    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
+                }
             }
 
             if (Raylib.IsKeyPressed(KeyboardKey.Grave))
@@ -201,6 +202,7 @@ class Program
 
             Polygon<BooleanVertex> booleanCutter = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(cutter);
             List<Polygon<PolygonVertex>> polygonsToRemove = new List<Polygon<PolygonVertex>>();
+            List<Polygon<BooleanVertex>> polygonsToCombineWith = new List<Polygon<BooleanVertex>>();
             List<IntersectionResults<BooleanVertex>> intersections = new List<IntersectionResults<BooleanVertex>>();
             foreach (Polygon<PolygonVertex> inner in groupCutterIsIn.InnerPolygons)
             {
@@ -223,6 +225,7 @@ class Program
                 if (intersectionResults == null) continue;
 
                 polygonsToRemove.Add(inner);
+                polygonsToCombineWith.Add(booleanPolygon);
                 intersections.Add(intersectionResults);
             }
 
@@ -242,7 +245,19 @@ class Program
             }
 
             // Perform polygon addition operations
-            // 
+            List<Polygon<PolygonVertex>> polygonsProduced = PSD.AddPolygons<PolygonVertex, BooleanVertex>(booleanCutter, polygonsToCombineWith, intersections);
+            if (polygonsProduced.Count == 1)
+            {
+                // Only 1 polygon was produced
+                groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
+                Console.WriteLine("Case 1 End With polygon produced");
+            }
+            else
+            {
+                // Multiple polygons was produced
+                Console.WriteLine("Case 1.1 Detected with {0} polygons produced", polygonsProduced.Count);
+                
+            }
 
             InitCutter();
             return;
