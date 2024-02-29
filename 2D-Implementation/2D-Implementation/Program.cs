@@ -96,7 +96,7 @@ class Program
                 DrawPolygon(group.OuterPolygon, Color.Black);
                 foreach (Polygon<PolygonVertex> inner in group.InnerPolygons)
                 {
-                    DrawPolygon(inner, Color.Blue);
+                    DrawPolygon(inner, Color.Blue, false);
                 }
             }
             DrawPolygon(cutter, Color.Red, true, true);
@@ -212,7 +212,11 @@ class Program
                 if (res == PSD.IntersectionResult.CUTTER_IS_INSIDE)
                 {
                     // Cutter is completely inside an inner polygon
-                    InitCutter();
+                    Console.WriteLine("Cutter is inside an inner polygon");
+                    Console.WriteLine("Cutter:");
+                    PrintBooleanList(booleanCutter);
+                    Console.WriteLine("Polygon:");
+                    PrintBooleanList(booleanPolygon);
                     return;
                 }
                 else if (res == PSD.IntersectionResult.POLYGON_IS_INSIDE)
@@ -233,7 +237,6 @@ class Program
             {
                 // No intersection was found, cutter is a new inner
                 groupCutterIsIn.InnerPolygons.Add(cutter);
-                InitCutter();
                 Console.WriteLine("Case 1 End");
                 return;
             }
@@ -259,19 +262,14 @@ class Program
                 
             }
 
-            InitCutter();
             return;
         }
         else if (intersected.Count == 0)
         {
-            InitCutter();
             return;
         }
 
         Console.WriteLine("Case 2 Detected");
-        
-
-        InitCutter();
     }
 
     static void InitCutter()

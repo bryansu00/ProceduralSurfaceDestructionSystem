@@ -184,7 +184,9 @@ namespace PSDSystem
                 bool polygonIsOutsidePolygon = polygon.Head.Data.IsOutside;
 
                 intersectionResults = null;
-                return cutterIsOutsidePolygon ? (polygonIsOutsidePolygon ? IntersectionResult.BOTH_OUTSIDE : IntersectionResult.POLYGON_IS_INSIDE) : IntersectionResult.CUTTER_IS_INSIDE;
+                // TODO FIX THIS LOGIC: THIS IS WRONG AND WILL PRODUCE WRONG RESULTS
+                if (polygonIsOutsidePolygon && cutterIsOutsidePolygon) return IntersectionResult.BOTH_OUTSIDE;
+                return cutterIsOutsidePolygon ? IntersectionResult.POLYGON_IS_INSIDE : IntersectionResult.CUTTER_IS_INSIDE;
             }
 
             intersectionResults = new IntersectionResults<T>(polygon, cutter, intersections);
