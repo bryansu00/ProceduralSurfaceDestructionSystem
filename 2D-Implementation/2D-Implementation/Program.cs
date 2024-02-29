@@ -210,6 +210,7 @@ class Program
                 if (res == PSD.IntersectionResult.CUTTER_IS_INSIDE)
                 {
                     // Cutter is completely inside an inner polygon
+                    InitCutter();
                     return;
                 }
                 else if (res == PSD.IntersectionResult.POLYGON_IS_INSIDE)
@@ -246,7 +247,11 @@ class Program
             InitCutter();
             return;
         }
-        else if (intersected.Count == 0) return;
+        else if (intersected.Count == 0)
+        {
+            InitCutter();
+            return;
+        }
 
         Console.WriteLine("Case 2 Detected");
         
