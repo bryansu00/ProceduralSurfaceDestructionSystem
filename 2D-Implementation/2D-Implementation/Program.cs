@@ -163,13 +163,13 @@ class Program
         // Perform intersection test with cutter against all outer polygons
         PolygonGroup<PolygonVertex>? groupCutterIsIn = null;
 
-        List<Tuple<PolygonGroup<PolygonVertex>, IntersectionResults<BooleanVertex>>> intersected = new List<Tuple<PolygonGroup<PolygonVertex>, IntersectionResults<BooleanVertex>>>();
+        List<Tuple<PolygonGroup<PolygonVertex>, IntersectionPoints<BooleanVertex>>> intersected = new List<Tuple<PolygonGroup<PolygonVertex>, IntersectionPoints<BooleanVertex>>>();
         List<PolygonGroup<PolygonVertex>> groupsToRemove = new List<PolygonGroup<PolygonVertex>>();
         foreach (PolygonGroup<PolygonVertex> polygonGroup in surface.Polygons)
         {
             Polygon<BooleanVertex> booleanCutter = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(cutter);
             Polygon<BooleanVertex> booleanPolygon = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(polygonGroup.OuterPolygon);
-            var res = PSD.IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionResults<BooleanVertex>? intersectionResults);
+            var res = PSD.IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<BooleanVertex>? intersectionResults);
 
             if (res == PSD.IntersectionResult.CUTTER_IS_INSIDE)
             {
@@ -187,7 +187,7 @@ class Program
             if (intersectionResults == null) continue;
 
             groupsToRemove.Add(polygonGroup);
-            intersected.Add(new Tuple<PolygonGroup<PolygonVertex>, IntersectionResults<BooleanVertex>>(polygonGroup, intersectionResults));
+            intersected.Add(new Tuple<PolygonGroup<PolygonVertex>, IntersectionPoints<BooleanVertex>>(polygonGroup, intersectionResults));
         }
 
         // Remove the polygons
@@ -203,11 +203,11 @@ class Program
             Polygon<BooleanVertex> booleanCutter = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(cutter);
             List<Polygon<PolygonVertex>> polygonsToRemove = new List<Polygon<PolygonVertex>>();
             List<Polygon<BooleanVertex>> polygonsToCombineWith = new List<Polygon<BooleanVertex>>();
-            List<IntersectionResults<BooleanVertex>> intersections = new List<IntersectionResults<BooleanVertex>>();
+            List<IntersectionPoints<BooleanVertex>> intersections = new List<IntersectionPoints<BooleanVertex>>();
             foreach (Polygon<PolygonVertex> inner in groupCutterIsIn.InnerPolygons)
             {
                 Polygon<BooleanVertex> booleanPolygon = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(inner);
-                var res = PSD.IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionResults<BooleanVertex>? intersectionResults);
+                var res = PSD.IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<BooleanVertex>? intersectionResults);
 
                 if (res == PSD.IntersectionResult.CUTTER_IS_INSIDE)
                 {

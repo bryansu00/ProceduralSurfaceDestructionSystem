@@ -1,5 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
+using System.Drawing;
 using System.Numerics;
 using System.Text;
 using static PSDSystem.PSD;
@@ -16,25 +18,41 @@ namespace PSDSystem
             POLYGON_IS_INSIDE = 2,
             BOTH_OUTSIDE = 3
         }
+        static bool IsNearlyEqual(float a, float b, float epsilon = 0.00001f)
+        {
+            return MathF.Abs(a - b) <= epsilon;
+        }
 
-        public static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionResults<T>? intersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        /// <summary>
+        /// Intersect a cutter polygon with another polygon and returns the findings between the two
+        /// </summary>
+        /// <typeparam name="T">A vertex class that has boolean vertex properties to represent each vertex of a polygon and store additional results from the intersection test</typeparam>
+        /// <param name="cutter">The cutter polygon</param>
+        /// <param name="polygon">The other polygon</param>
+        /// <param name="intersectionPoints">List of intersection points to return</param>
+        /// <returns>The result from intersecting the two given polygons</returns>
+        public static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             // Intersection cannot performed, return for invalid operation
             if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null || 
                 polygon.Count < 3 || polygon.Head == null || polygon.Vertices == null)
             {
-                intersectionResults = null;
+                intersectionPoints = null;
                 return IntersectionResult.FAILED;
             }
 
+            // Get list of vertices
             List<Vector2> polygonVertices = polygon.Vertices;
             List<Vector2> cutterVertices = cutter.Vertices;
 
+            // Remember the original bool value for these
+            // Needed for determining if cutter is outside of the polygon or vice-versa
             bool originalPolygonOutsideFlag = polygon.Head.Data.IsOutside;
             bool originalCutterOutsideFlag = cutter.Head.Data.IsOutside;
 
             #region IntersectionTest
 
+            // List of intersection point, polygon vertex involved, t value, cutter vertex involved, and u value
             List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>> intersections = new List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>>();
 
             VertexNode<T> polygonNow = polygon.Head;
@@ -59,10 +77,10 @@ namespace PSDSystem
                         // ----------------------------------------------------------------------------
                         // This is extremely unlikely due to floating point precision error,
                         // but just in case...
-                        bool a0IsOnInfiniteRay = t == 0.0f; // a0 is intersecting with the cutter's infinite ray
-                        bool a1IsOnInfiniteRay = t == 1.0f;
-                        bool b0IsOnInfiniteRay = u == 0.0f;
-                        bool b1IsOnInfiniteRay = u == 1.0f;
+                        bool a0IsOnInfiniteRay = IsNearlyEqual(t, 0.0f); // a0 is intersecting with the cutter's infinite ray
+                        bool a1IsOnInfiniteRay = IsNearlyEqual(t, 1.0f);
+                        bool b0IsOnInfiniteRay = IsNearlyEqual(u, 0.0f);
+                        bool b1IsOnInfiniteRay = IsNearlyEqual(u, 1.0f);
 
                         // Check if a0 or a1 is on an edge
                         if (u >= 0.0f && u <= 1.0f)
@@ -187,17 +205,16 @@ namespace PSDSystem
                 bool cutterIsOutsidePolygon = originalCutterOutsideFlag ? cutter.Head.Data.IsOutside : !cutter.Head.Data.IsOutside;
                 bool polygonIsOutsidePolygon = originalPolygonOutsideFlag ? polygon.Head.Data.IsOutside : !polygon.Head.Data.IsOutside;
 
-                intersectionResults = null;
-                // TODO FIX THIS LOGIC: THIS IS WRONG AND WILL PRODUCE WRONG RESULTS
+                intersectionPoints = null;
                 if (polygonIsOutsidePolygon && cutterIsOutsidePolygon) return IntersectionResult.BOTH_OUTSIDE;
                 return cutterIsOutsidePolygon ? IntersectionResult.POLYGON_IS_INSIDE : IntersectionResult.CUTTER_IS_INSIDE;
             }
 
-            intersectionResults = new IntersectionResults<T>(polygon, cutter, intersections);
+            intersectionPoints = new IntersectionPoints<T>(polygon, intersections);
             return 0;
         }
 
-        public static List<Polygon<T>> AddPolygons<T, U>(Polygon<U> center, List<Polygon<U>> polygons, List<IntersectionResults<U>> intersectionResults)
+        public static List<Polygon<T>> AddPolygons<T, U>(Polygon<U> center, List<Polygon<U>> polygons, List<IntersectionPoints<U>> intersectionResults)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
@@ -217,8 +234,7 @@ namespace PSDSystem
             }
 
             // Insert Points
-            InsertIntersectionPoints(intersectionResults);
-
+            InsertIntersectionPoints(center, intersectionResults);
 
             while (true)
             {
@@ -310,7 +326,7 @@ namespace PSDSystem
         private static int PartialLineIntersection(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out float tValue, out float uValue)
         {
             float determinant = (a0.X - a1.X) * (b0.Y - b1.Y) - (a0.Y - a1.Y) * (b0.X - b1.X);
-            if (determinant != 0.0f)
+            if (!IsNearlyEqual(determinant, 0.0f))
             {
                 tValue = ((a0.X - b0.X) * (b0.Y - b1.Y) - (a0.Y - b0.Y) * (b0.X - b1.X)) / determinant;
                 uValue = ((a1.X - a0.X) * (a0.Y - b0.Y) - (a1.Y - a0.Y) * (a0.X - b0.X)) / determinant;
@@ -319,7 +335,7 @@ namespace PSDSystem
             else
             {
                 float top = ((a1.X - a0.X) * (a0.Y - b0.Y) + (a1.Y - a0.Y) * (a0.X - b0.X));
-                if (top == 0.0) // Lines are colinear
+                if (IsNearlyEqual(top, 0.0f)) // Lines are colinear
                 {
                     tValue = ((a0.X - b0.X) * (b1.X - b0.X) + (a0.Y - b0.Y) * (b1.Y - b0.Y)) /
                         ((b1.X - b0.X) * (b1.X - b0.X) + (b1.Y - b0.Y) * (b1.Y - b0.Y));
@@ -332,18 +348,13 @@ namespace PSDSystem
             return -1;
         }
 
-        public static void InsertIntersectionPoints<T>(List<IntersectionResults<T>> allIntersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        public static void InsertIntersectionPoints<T>(Polygon<T> cutter, List<IntersectionPoints<T>> allIntersectionResults) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
-            if (allIntersectionResults.Count == 0) return;
-
-            // Function assumes that all the cutter in IntersectionResults are the same
-            // TODO: FIX THIS IN ORDER TO AVOID THIS ASSUMPTION
-            Polygon<T> cutter = allIntersectionResults[0].Cutter;
-            if (cutter.Vertices == null) return;
+            if (allIntersectionResults.Count == 0 || cutter.Vertices == null) return;
 
             List<VertexNode<T>> insertedCutterIntersection = new List<VertexNode<T>>();
 
-            foreach (IntersectionResults<T> intersectionResults in allIntersectionResults)
+            foreach (IntersectionPoints<T> intersectionResults in allIntersectionResults)
             {
                 foreach (var result in intersectionResults.Intersections)
                 {
@@ -363,8 +374,8 @@ namespace PSDSystem
 
                     // The two if statements will in 99.9% of all cases never happen...
                     // but just in case that 0.1% case does happen...
-                    if (t == 0.0f) nodeAddedToPolygon = polygonNode;
-                    else if (t == 1.0f) nodeAddedToPolygon = polygonNode.Next;
+                    if (IsNearlyEqual(t, 0.0f)) nodeAddedToPolygon = polygonNode;
+                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToPolygon = polygonNode.Next;
                     else
                     {
                         // Make sure to insert the intersectionPoint and the correct location
@@ -384,8 +395,8 @@ namespace PSDSystem
                     }
 
                     // Do the same thing as above, but with cutter this time
-                    if (u == 0.0f) nodeAddedToCutter = cutterNode;
-                    else if (u == 1.0f) nodeAddedToCutter = cutterNode.Next;
+                    if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
+                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToCutter = cutterNode.Next;
                     else
                     {
                         while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
@@ -424,7 +435,7 @@ namespace PSDSystem
                 );
 
                 bool insideAnotherPoly = false;
-                foreach (IntersectionResults<T> intersectionResults in allIntersectionResults)
+                foreach (IntersectionPoints<T> intersectionResults in allIntersectionResults)
                 {
                     if (PointIsInsidePolygon(extraInsertionPoint, intersectionResults.Polygon) != -1)
                     {
@@ -489,11 +500,11 @@ namespace PSDSystem
                 Vector2 a = vertices[now.Data.Index];
                 Vector2 b = vertices[now.Next.Data.Index];
 
-                // Corner cases (extremely unlikely due to floating point error)
-                if (point.X == a.X && point.Y == a.Y ||
-                    point.X == b.X && point.Y == b.Y)
+                // Corner cases
+                if (IsNearlyEqual(point.X, a.X) && IsNearlyEqual(point.Y, a.Y) ||
+                    IsNearlyEqual(point.X, b.X) && IsNearlyEqual(point.Y, b.Y))
                     return 0;
-                if (a.Y == b.Y && point.Y == a.Y
+                if (IsNearlyEqual(a.Y, b.Y) && IsNearlyEqual(point.Y, a.Y)
                     && between(point.X, a.X, b.X))
                     return 0;
 
@@ -508,7 +519,7 @@ namespace PSDSystem
                     }
 
                     float c = (a.X - point.X) * (b.Y - point.Y) - (b.X - point.X) * (a.Y - point.Y);
-                    if (c == 0)
+                    if (IsNearlyEqual(c, 0.0f))
                         return 0;
                     if ((a.Y < b.Y) == (c > 0))
                         inside = !inside;
