@@ -214,6 +214,15 @@ namespace PSDSystem
             return 0;
         }
 
+        /// <summary>
+        /// Perform a boolean addition operation using the given information
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="U"></typeparam>
+        /// <param name="center"></param>
+        /// <param name="polygons"></param>
+        /// <param name="intersectionResults"></param>
+        /// <returns></returns>
         public static List<Polygon<T>> AddPolygons<T, U>(Polygon<U> center, List<Polygon<U>> polygons, List<IntersectionPoints<U>> intersectionResults)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
@@ -284,31 +293,6 @@ namespace PSDSystem
             }
 
             return outputPolygons;
-        }
-
-        static void PrintBooleanList<T>(Polygon<T> polygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
-        {
-            if (polygon.Head == null) return;
-
-            StringBuilder sb = new StringBuilder();
-            VertexNode<T> now = polygon.Head;
-            do
-            {
-                sb.Append(now.Data.Index);
-
-                sb.Append(", Outside: ");
-                sb.Append(now.Data.IsOutside);
-
-                sb.Append(", Cross: ");
-                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
-                else sb.Append("None");
-
-                sb.Append("\n");
-
-                now = now.Next;
-            } while (now != polygon.Head);
-
-            Console.Write(sb.ToString());
         }
 
         /// <summary>
@@ -454,6 +438,13 @@ namespace PSDSystem
             }
         }
 
+        /// <summary>
+        /// Convert the PolygonVertex of the given polygon into a BooleanVertex
+        /// </summary>
+        /// <typeparam name="T">The original PolygonVertex of the given polygon</typeparam>
+        /// <typeparam name="U">The desired BooleanVertex class</typeparam>
+        /// <param name="polygon">The polygon to convert</param>
+        /// <returns>Copy of the given polygon but with BooleanVertex insteadd</returns>
         public static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
@@ -532,16 +523,58 @@ namespace PSDSystem
             return inside ? 1 : -1;
         }
 
+        /// <summary>
+        /// Perform a cross product between two 2D vectors and return the Z value
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         private static float CrossProduct2D(Vector2 a, Vector2 b)
         {
             return (a.X * b.Y) - (a.Y * b.X);
         }
 
+        /// <summary>
+        /// Get squared length of a line segment
+        /// </summary>
+        /// <param name="a">First point of the line segment</param>
+        /// <param name="b">Second point of the line segment</param>
+        /// <returns>Squared length of a line segment</returns>
         private static float SegmentLengthSquared(Vector2 a, Vector2 b)
         {
             float x = b.X - a.X;
             float y = b.Y - a.Y;
             return x * x + y * y;
+        }
+
+        /// <summary>
+        /// Debugging purpose
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="polygon"></param>
+        static void PrintBooleanList<T>(Polygon<T> polygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        {
+            if (polygon.Head == null) return;
+
+            StringBuilder sb = new StringBuilder();
+            VertexNode<T> now = polygon.Head;
+            do
+            {
+                sb.Append(now.Data.Index);
+
+                sb.Append(", Outside: ");
+                sb.Append(now.Data.IsOutside);
+
+                sb.Append(", Cross: ");
+                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
+                else sb.Append("None");
+
+                sb.Append("\n");
+
+                now = now.Next;
+            } while (now != polygon.Head);
+
+            Console.Write(sb.ToString());
         }
     }
 }
