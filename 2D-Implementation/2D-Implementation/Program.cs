@@ -4,6 +4,7 @@ using System.Numerics;
 using System.IO;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using System.Security.Cryptography.X509Certificates;
 
 class Program
 {
@@ -72,19 +73,6 @@ class Program
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
                 HandlePolygonProcessing();
-                //Polygon<BooleanVertex> booleanCutter = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(cutter);
-                //Polygon<BooleanVertex> booleanPolygon = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(surface.Polygons[0].OuterPolygon);
-                //var res = PSD.IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionResults<BooleanVertex>? intersectionResults);
-                //if (intersectionResults != null)
-                //{
-                //    PSD.InsertIntersectionPoints(intersectionResults);
-                //    Console.WriteLine("Cutter:");
-                //    PrintBooleanList(intersectionResults.Cutter);
-                //    Console.WriteLine("Other:");
-                //    PrintBooleanList(intersectionResults.Polygon);
-                //}
-                //Console.WriteLine(res);
-                //Console.WriteLine();
             }
 
             Raylib.BeginDrawing();
@@ -212,11 +200,14 @@ class Program
                 if (res == PSD.IntersectionResult.CUTTER_IS_INSIDE)
                 {
                     // Cutter is completely inside an inner polygon
-                    Console.WriteLine("Cutter is inside an inner polygon");
-                    Console.WriteLine("Cutter:");
-                    PrintBooleanList(booleanCutter);
-                    Console.WriteLine("Polygon:");
-                    PrintBooleanList(booleanPolygon);
+                    // End the loop
+
+                    //Console.WriteLine("Cutter is inside an inner polygon");
+                    //Console.WriteLine("Cutter:");
+                    //PrintBooleanList(booleanCutter);
+                    //Console.WriteLine("Polygon:");
+                    //PrintBooleanList(booleanPolygon);
+
                     return;
                 }
                 else if (res == PSD.IntersectionResult.POLYGON_IS_INSIDE)
@@ -253,13 +244,41 @@ class Program
             {
                 // Only 1 polygon was produced
                 groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
-                Console.WriteLine("Case 1 End With polygon produced");
+                Console.WriteLine("Case 1 Ended with 1 polygon produced");
             }
             else
             {
+                // NOTE: Some optimization can be done in the AddPolygons() function side
+
                 // Multiple polygons was produced
-                Console.WriteLine("Case 1.1 Detected with {0} polygons produced", polygonsProduced.Count);
-                
+                // Find the polygon that is on the outside
+                int outsidePolygonIndex = 0;
+                bool outsidePolygonFound = false;
+                while (!outsidePolygonFound)
+                {
+                    outsidePolygonFound = true;
+                    foreach (Polygon<PolygonVertex> polygon in polygonsProduced)
+                    {
+                        if (polygon == polygonsProduced[outsidePolygonIndex]) continue;
+
+                        Polygon<PolygonVertex> polygonBeingObserved = polygonsProduced[outsidePolygonIndex];
+
+                        if (PSD.PointIsInsidePolygon(polygonBeingObserved.Vertices[polygonBeingObserved.Head.Data.Index], polygon) != -1)
+                        {
+                            outsidePolygonFound = false;
+                            break;
+                        }
+                    }
+
+                    if (!outsidePolygonFound)
+                    {
+                        outsidePolygonIndex++;
+                    }
+                }
+
+                groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
+
+                Console.WriteLine("Case 1.1 Ended with {0} polygons produced from AddPolygons()", polygonsProduced.Count);
             }
 
             return;

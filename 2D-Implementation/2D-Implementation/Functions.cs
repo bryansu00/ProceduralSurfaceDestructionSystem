@@ -473,7 +473,7 @@ namespace PSDSystem
         /// <returns>Returns 1, if the given point is inside the given polygon.
         /// Returns 0, if the given point is on the edge or vertex of the given polygon.
         /// Returns -1, if the given point is outside the given polygon.</returns>
-        private static int PointIsInsidePolygon<T>(Vector2 point, Polygon<T> polygon) where T : PolygonVertex
+        public static int PointIsInsidePolygon<T>(Vector2 point, Polygon<T> polygon) where T : PolygonVertex
         {
             if (polygon.Head == null || polygon.Vertices == null || polygon.Count < 3) return -1;
 
