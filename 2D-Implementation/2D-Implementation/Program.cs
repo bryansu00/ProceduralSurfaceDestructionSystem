@@ -32,7 +32,7 @@ class Program
                 //cutter.Vertices.Add(mousePos);
                 //cutter.InsertVertexAtBack(verticesIdxAdded);
 
-                InsertCircle(mousePos, 5.0f);
+                InsertCircle(mousePos, 10.0f);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
@@ -84,7 +84,7 @@ class Program
                 DrawPolygon(group.OuterPolygon, Color.Black);
                 foreach (Polygon<PolygonVertex> inner in group.InnerPolygons)
                 {
-                    DrawPolygon(inner, Color.Blue, false);
+                    DrawPolygon(inner, Color.Blue, true);
                 }
             }
             DrawPolygon(cutter, Color.Red, true, true);
@@ -315,16 +315,16 @@ class Program
             List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, outerIntersections, innerIntersections);
             if (polygonsProduced.Count <= 1)
             {
-                groupsToKeep.Add(new PolygonGroup<PolygonVertex>(group.OuterPolygon, group.InnerPolygons));
+                //groupsToKeep.Add(new PolygonGroup<PolygonVertex>(group.OuterPolygon, group.InnerPolygons));
 
-                PrintBooleanList(booleanCutter);
-                Console.WriteLine();
-                PrintBooleanList(outerIntersections.Polygon);
-                Console.WriteLine();
-                PrintBooleanList(innerIntersections[0].Polygon);
-                Console.WriteLine();
+                //PrintBooleanList(booleanCutter);
+                //Console.WriteLine();
+                //PrintBooleanList(outerIntersections.Polygon);
+                //Console.WriteLine();
+                //PrintBooleanList(innerIntersections[0].Polygon);
+                //Console.WriteLine();
 
-                //groupsToKeep.Add(new PolygonGroup<PolygonVertex>(polygonsProduced[0], nonIntersectedInnerPolygonsList));
+                groupsToKeep.Add(new PolygonGroup<PolygonVertex>(polygonsProduced[0], nonIntersectedInnerPolygonsList));
                 Console.WriteLine("Case 2 has replaced an outer polygon", polygonsProduced.Count);
             }
             else

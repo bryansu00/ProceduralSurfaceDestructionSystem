@@ -228,22 +228,30 @@ namespace PSDSystem
         {
             if (node.Data.Cross == null) return false;
 
-            // Traversing the outer polygon or the cross happens to be an outer polygon
-            if (node.Owner == outerPolygon || node.Data.Cross.Owner == outerPolygon)
-            {
-                bool traversingInnerPolygon = node.Owner != outerPolygon;
+            var crossback = node.Data.Cross.Next.Data.Cross;
 
-                if (!traversingInnerPolygon && node.Data.Cross.Next.Data.IsOutside) return false;
-                else if (traversingInnerPolygon && !node.Data.Cross.Next.Data.IsOutside) return false;
-                if (node.Data.Cross.Next.Data.Cross == null) return true;
-                var crossback = node.Data.Cross.Next.Data.Cross;
-                if (crossback == node.Next) return false;
-                return true;
+            // Traversing the outer polygon, thus the cross should always be the center, but the crossback is unknown, could either be outer or another polygon
+            if (node.Owner == outerPolygon)
+            {
+                if (node.Data.Cross.Next.Data.IsOutside) return false;
             }
 
             // From this point, we are either traversing the center or any other inner polygon
 
-            return CheckSpecialAdditionCase(node);
+            // Traversing the center, cross can either be outer or inner from here
+            if (node.Owner == center)
+            {
+                if (!node.Data.Cross.Next.Data.IsOutside) return false;
+            }
+            // Traversing an inner here
+            else
+            {
+                if (node.Data.Cross.Next.Data.IsOutside) return false;
+            }
+
+            if (crossback == null) return true;
+            if (crossback == node.Next) return false;
+            return true;
         }
 
         /// <summary>
