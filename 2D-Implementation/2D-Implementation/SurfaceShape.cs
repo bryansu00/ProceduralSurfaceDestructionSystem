@@ -18,6 +18,11 @@ namespace PSDSystem
             Polygons = new List<PolygonGroup<T>>();
         }
 
+        public SurfaceShape(List<PolygonGroup<T>> polygons)
+        {
+            Polygons = polygons;
+        }
+
         /// <summary>
         /// Add a polygon as an outer polygon
         /// </summary>
@@ -56,7 +61,7 @@ namespace PSDSystem
     {
         public Polygon<T> OuterPolygon { get; }
 
-        public List<Polygon<T>> InnerPolygons { get; }
+        public List<Polygon<T>> InnerPolygons { get; set; }
 
         public PolygonGroup(Polygon<T>? outerPolygon, List<Polygon<T>>? innerPolygons = null)
         {
