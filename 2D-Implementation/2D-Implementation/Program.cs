@@ -230,7 +230,7 @@ class Program
             groupCutterIsIn.InnerPolygons = newInnerPolygonsList;
 
             // Perform polygon addition operations
-            List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, polygonsToCombineWith, intersections);
+            List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, intersections);
             if (polygonsProduced.Count == 1)
             {
                 // Only 1 polygon was produced
@@ -269,7 +269,7 @@ class Program
 
                 groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
 
-                Console.WriteLine("Case 1.1 Ended with {0} polygons produced from AddPolygons()", polygonsProduced.Count);
+                Console.WriteLine("Case 1.1 Ended with {0} polygons produced from CombinePolygons()", polygonsProduced.Count);
             }
 
             return;
@@ -285,7 +285,7 @@ class Program
         {
             Polygon<BooleanVertex> booleanCutter = tuple.Item1;
             PolygonGroup<PolygonVertex> group = tuple.Item2;
-            IntersectionPoints<BooleanVertex> intersections = tuple.Item3;
+            IntersectionPoints<BooleanVertex> outerIntersections = tuple.Item3;
 
             List<Polygon<PolygonVertex>> nonIntersectedInnerPolygonsList = new List<Polygon<PolygonVertex>>();
             List<Polygon<BooleanVertex>> polygonsToCombineWith = new List<Polygon<BooleanVertex>>();
@@ -294,13 +294,6 @@ class Program
             {
                 Polygon<BooleanVertex> booleanPolygon = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(inner);
                 var res = PSD.IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<BooleanVertex>? intersectionResults);
-
-                if (res == PSD.IntersectionResult.CUTTER_IS_INSIDE)
-                {
-                    // Cutter is completely inside an inner polygon
-                    // End the loop
-                    return;
-                }
 
                 switch (res)
                 {
@@ -319,7 +312,23 @@ class Program
                 }
             }
 
-            // WIP
+            List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, outerIntersections, innerIntersections);
+            if (polygonsProduced.Count == 1)
+            {
+                groupsToKeep.Add(new PolygonGroup<PolygonVertex>(group.OuterPolygon, nonIntersectedInnerPolygonsList));
+
+                PrintBooleanList(booleanCutter);
+                Console.WriteLine();
+                PrintBooleanList(outerIntersections.Polygon);
+                Console.WriteLine();
+
+                //groupsToKeep.Add(new PolygonGroup<PolygonVertex>(polygonsProduced[0], nonIntersectedInnerPolygonsList));
+                Console.WriteLine("Case 2 has replaced an outer polygon", polygonsProduced.Count);
+            }
+            else
+            {
+                Console.WriteLine("Case 2 has CombinePolygons() produced {0} outer polygons", polygonsProduced.Count);
+            }
         }
 
         surface = new SurfaceShape<PolygonVertex>(groupsToKeep);
