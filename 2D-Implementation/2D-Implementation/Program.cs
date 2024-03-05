@@ -176,14 +176,11 @@ class Program
                     break;
                 case PSD.IntersectionResult.INTERSECTS:
                     intersected.Add(new Tuple<Polygon<BooleanVertex>, PolygonGroup<PolygonVertex>, IntersectionPoints<BooleanVertex>>(booleanCutter, polygonGroup, intersectionResults));
-                    groupsToKeep.Add(polygonGroup);
                     break;
                 default:
                     break;
             }
         }
-
-        if (groupsToKeep.Count > 0) surface = new SurfaceShape<PolygonVertex>(groupsToKeep);
 
         if (groupCutterIsIn != null)
         {
@@ -289,7 +286,43 @@ class Program
             Polygon<BooleanVertex> booleanCutter = tuple.Item1;
             PolygonGroup<PolygonVertex> group = tuple.Item2;
             IntersectionPoints<BooleanVertex> intersections = tuple.Item3;
+
+            List<Polygon<PolygonVertex>> nonIntersectedInnerPolygonsList = new List<Polygon<PolygonVertex>>();
+            List<Polygon<BooleanVertex>> polygonsToCombineWith = new List<Polygon<BooleanVertex>>();
+            List<IntersectionPoints<BooleanVertex>> innerIntersections = new List<IntersectionPoints<BooleanVertex>>();
+            foreach (Polygon<PolygonVertex> inner in group.InnerPolygons)
+            {
+                Polygon<BooleanVertex> booleanPolygon = PSD.ConvertPolygonToBooleanList<PolygonVertex, BooleanVertex>(inner);
+                var res = PSD.IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<BooleanVertex>? intersectionResults);
+
+                if (res == PSD.IntersectionResult.CUTTER_IS_INSIDE)
+                {
+                    // Cutter is completely inside an inner polygon
+                    // End the loop
+                    return;
+                }
+
+                switch (res)
+                {
+                    case PSD.IntersectionResult.POLYGON_IS_INSIDE:
+                        continue;
+                    case PSD.IntersectionResult.BOTH_OUTSIDE:
+                        // Keep the polygon
+                        nonIntersectedInnerPolygonsList.Add(inner);
+                        break;
+                    case PSD.IntersectionResult.INTERSECTS:
+                        polygonsToCombineWith.Add(booleanPolygon);
+                        innerIntersections.Add(intersectionResults);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // WIP
         }
+
+        if (groupsToKeep.Count > 0) surface = new SurfaceShape<PolygonVertex>(groupsToKeep);
     }
 
     static void InitCutter()
