@@ -313,7 +313,7 @@ class Program
             }
 
             List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, outerIntersections, innerIntersections);
-            if (polygonsProduced.Count == 1)
+            if (polygonsProduced.Count <= 1)
             {
                 groupsToKeep.Add(new PolygonGroup<PolygonVertex>(group.OuterPolygon, nonIntersectedInnerPolygonsList));
 
