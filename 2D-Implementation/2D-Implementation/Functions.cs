@@ -223,7 +223,7 @@ namespace PSDSystem
         /// <param name="polygons"></param>
         /// <param name="intersectionResults"></param>
         /// <returns></returns>
-        public static List<Polygon<T>> AddPolygons<T, U>(Polygon<U> center, List<Polygon<U>> polygons, List<IntersectionPoints<U>> intersectionResults)
+        public static List<Polygon<T>> CombinePolygons<T, U>(Polygon<U> center, List<Polygon<U>> polygons, List<IntersectionPoints<U>> intersectionResults)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {

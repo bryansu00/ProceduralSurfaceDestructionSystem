@@ -230,7 +230,7 @@ class Program
             groupCutterIsIn.InnerPolygons = newInnerPolygonsList;
 
             // Perform polygon addition operations
-            List<Polygon<PolygonVertex>> polygonsProduced = PSD.AddPolygons<PolygonVertex, BooleanVertex>(booleanCutter, polygonsToCombineWith, intersections);
+            List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, polygonsToCombineWith, intersections);
             if (polygonsProduced.Count == 1)
             {
                 // Only 1 polygon was produced
@@ -322,7 +322,7 @@ class Program
             // WIP
         }
 
-        if (groupsToKeep.Count > 0) surface = new SurfaceShape<PolygonVertex>(groupsToKeep);
+        surface = new SurfaceShape<PolygonVertex>(groupsToKeep);
     }
 
     static void InitCutter()
