@@ -315,14 +315,16 @@ class Program
             List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, outerIntersections, innerIntersections);
             if (polygonsProduced.Count <= 1)
             {
-                //groupsToKeep.Add(new PolygonGroup<PolygonVertex>(group.OuterPolygon, nonIntersectedInnerPolygonsList));
+                groupsToKeep.Add(new PolygonGroup<PolygonVertex>(group.OuterPolygon, group.InnerPolygons));
 
-                //PrintBooleanList(booleanCutter);
-                //Console.WriteLine();
-                //PrintBooleanList(outerIntersections.Polygon);
-                //Console.WriteLine();
+                PrintBooleanList(booleanCutter);
+                Console.WriteLine();
+                PrintBooleanList(outerIntersections.Polygon);
+                Console.WriteLine();
+                PrintBooleanList(innerIntersections[0].Polygon);
+                Console.WriteLine();
 
-                groupsToKeep.Add(new PolygonGroup<PolygonVertex>(polygonsProduced[0], nonIntersectedInnerPolygonsList));
+                //groupsToKeep.Add(new PolygonGroup<PolygonVertex>(polygonsProduced[0], nonIntersectedInnerPolygonsList));
                 Console.WriteLine("Case 2 has replaced an outer polygon", polygonsProduced.Count);
             }
             else

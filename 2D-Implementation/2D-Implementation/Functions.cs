@@ -224,10 +224,11 @@ namespace PSDSystem
             return true;
         }
 
-        private static bool CheckSpecialSubtractionCase<T>(VertexNode<T> node, Polygon<T> outerPolygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        private static bool CheckSpecialSubtractionCase<T>(VertexNode<T> node, Polygon<T> center, Polygon<T> outerPolygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             if (node.Data.Cross == null) return false;
 
+            // Traversing the outer polygon or the cross happens to be an outer polygon
             if (node.Owner == outerPolygon || node.Data.Cross.Owner == outerPolygon)
             {
                 bool traversingInnerPolygon = node.Owner != outerPolygon;
@@ -239,6 +240,8 @@ namespace PSDSystem
                 if (crossback == node.Next) return false;
                 return true;
             }
+
+            // From this point, we are either traversing the center or any other inner polygon
 
             return CheckSpecialAdditionCase(node);
         }
@@ -354,7 +357,7 @@ namespace PSDSystem
                         continue;
                     }
 
-                    bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point, outerPolygon);
+                    bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point, center, outerPolygon);
 
                     int insertionIndex = newPolygon.Vertices.Count;
                     newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
