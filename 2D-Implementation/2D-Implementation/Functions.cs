@@ -224,6 +224,14 @@ namespace PSDSystem
             return true;
         }
 
+        /// <summary>
+        /// TO DO: FIX ISSUE AROUND THIS SPECIAL CASE
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="node"></param>
+        /// <param name="center"></param>
+        /// <param name="outerPolygon"></param>
+        /// <returns></returns>
         private static bool CheckSpecialSubtractionCase<T>(VertexNode<T> node, Polygon<T> center, Polygon<T> outerPolygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             if (node.Data.Cross == null) return false;
