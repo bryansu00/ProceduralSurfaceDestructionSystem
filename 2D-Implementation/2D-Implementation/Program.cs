@@ -32,7 +32,7 @@ class Program
                 //cutter.Vertices.Add(mousePos);
                 //cutter.InsertVertexAtBack(verticesIdxAdded);
 
-                InsertCircle(mousePos, 10.0f);
+                InsertCircle(mousePos, 5.0f);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
@@ -84,7 +84,7 @@ class Program
                 DrawPolygon(group.OuterPolygon, Color.Black);
                 foreach (Polygon<PolygonVertex> inner in group.InnerPolygons)
                 {
-                    DrawPolygon(inner, Color.Blue, true);
+                    DrawPolygon(inner, Color.Blue, false);
                 }
             }
             DrawPolygon(cutter, Color.Red, true, true);
@@ -276,6 +276,7 @@ class Program
         }
         else if (intersected.Count == 0)
         {
+            surface = new SurfaceShape<PolygonVertex>(groupsToKeep);
             return;
         }
 
@@ -313,22 +314,30 @@ class Program
             }
 
             List<Polygon<PolygonVertex>> polygonsProduced = PSD.CombinePolygons<PolygonVertex, BooleanVertex>(booleanCutter, outerIntersections, innerIntersections);
-            if (polygonsProduced.Count <= 1)
+            if (polygonsProduced.Count == 1)
             {
-                //groupsToKeep.Add(new PolygonGroup<PolygonVertex>(group.OuterPolygon, group.InnerPolygons));
-
-                //PrintBooleanList(booleanCutter);
-                //Console.WriteLine();
-                //PrintBooleanList(outerIntersections.Polygon);
-                //Console.WriteLine();
-                //PrintBooleanList(innerIntersections[0].Polygon);
-                //Console.WriteLine();
-
                 groupsToKeep.Add(new PolygonGroup<PolygonVertex>(polygonsProduced[0], nonIntersectedInnerPolygonsList));
                 Console.WriteLine("Case 2 has replaced an outer polygon", polygonsProduced.Count);
             }
             else
             {
+                for (int i = 0; i < polygonsProduced.Count; i++)
+                {
+                    List<Polygon<PolygonVertex>> innerPolygons = new List<Polygon<PolygonVertex>>();
+
+                    foreach (Polygon<PolygonVertex> innerPolygon in nonIntersectedInnerPolygonsList)
+                    {
+                        if (innerPolygon.Vertices == null || innerPolygon.Head == null) continue;
+
+                        if (PSD.PointIsInsidePolygon(innerPolygon.Vertices[innerPolygon.Head.Data.Index], polygonsProduced[i]) == 1)
+                        {
+                            innerPolygons.Add(innerPolygon);
+                        }
+                    }
+
+                    groupsToKeep.Add(new PolygonGroup<PolygonVertex>(polygonsProduced[i], innerPolygons));
+                }
+
                 Console.WriteLine("Case 2 has CombinePolygons() produced {0} outer polygons", polygonsProduced.Count);
             }
         }
