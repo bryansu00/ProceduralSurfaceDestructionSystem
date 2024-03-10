@@ -68,6 +68,14 @@ namespace PSDSystem
             return newNode;
         }
 
+        /// <summary>
+        /// Insert a vertex after the given node
+        /// </summary>
+        /// <param name="node">The node to insert a vertex after</param>
+        /// <param name="index">The index that the vertex will refer to</param>
+        /// <returns>The vertex inserted</returns>
+        /// <exception cref="InvalidOperationException">The vertex given belongs to a different polygon</exception>
+        /// <exception cref="Exception">Failed to instantiate a Vertex</exception>
         public VertexNode<T> InsertVertexAfter(VertexNode<T> node, int index)
         {
             if (node == null || node.Owner != this) throw new InvalidOperationException("Given node does not belong to the Polygon!");
@@ -91,6 +99,11 @@ namespace PSDSystem
             return newNode;
         }
 
+        /// <summary>
+        /// Remove the given node from the polygon
+        /// </summary>
+        /// <param name="node">The node to remove</param>
+        /// <exception cref="InvalidOperationException">The vertex given belongs to a different polygon</exception>
         public void ClipVertex(VertexNode<T> node)
         {
             if (node == null || node.Owner != this) throw new InvalidOperationException("Given node does not belong to the Polygon!");

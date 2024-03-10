@@ -57,6 +57,10 @@ namespace PSDSystem
         }
     }
 
+    /// <summary>
+    /// Represent a group of polygons on a surface
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class PolygonGroup<T> where T : PolygonVertex
     {
         public Polygon<T> OuterPolygon { get; }
