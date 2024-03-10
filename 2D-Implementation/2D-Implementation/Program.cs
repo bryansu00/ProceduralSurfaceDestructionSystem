@@ -75,7 +75,8 @@ class Program
 
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                
+                PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
+                InitCutter();
             }
 
             Raylib.BeginDrawing();
