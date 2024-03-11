@@ -15,10 +15,22 @@ class Program
     // Initialize stuff....
     private static SurfaceShape<PolygonVertex> surface = new SurfaceShape<PolygonVertex>();
 
+    private static List<int>? triangles = null;
+    private static List<Vector2>? triangleVertices = null;
+
     private static Polygon<PolygonVertex>? testPolygon = null;
+
+    private static List<Color> colors = new List<Color>();
 
     public static void Main()
     {
+        Random rnd = new Random();
+        for (int i = 0; i < 1000; i++)
+        {
+            colors.Add(new Color(rnd.Next(0, 255), rnd.Next(0, 255), rnd.Next(0, 255), 255));
+        }
+
+
         Raylib.InitWindow(1280, HEIGHT, "2D Surface Destruction Testing");
         Raylib.SetTargetFPS(60);
 
@@ -39,7 +51,7 @@ class Program
                 PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
                 InitCutter();
 
-                PSD.TriangulateGroup(surface.Polygons[0]);
+                PSD.TriangulateGroup(surface.Polygons[0], out triangles, out triangleVertices);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
@@ -101,10 +113,24 @@ class Program
             if (testPolygon != null)
                 DrawPolygon(testPolygon, Color.Green, true);
 
+            if (triangles != null && triangleVertices != null)
+                DrawTriangulation(triangles, triangleVertices);
+
             Raylib.EndDrawing();
         }
 
         Raylib.CloseWindow();
+    }
+
+    static void DrawTriangulation(List<int> triangulation, List<Vector2> vertices)
+    {
+        for (int i = 0; i < triangulation.Count; i += 3)
+        {
+            Vector2 a = FlipY(vertices[triangulation[i+2]]);
+            Vector2 b = FlipY(vertices[triangulation[i+1]]);
+            Vector2 c = FlipY(vertices[triangulation[i]]);
+            Raylib.DrawTriangle(a, b, c, colors[i]);
+        }
     }
 
     static void DrawPolygon<T>(Polygon<T> polygon, Color color, bool labelVerts = true, bool labelOnLeft = false) where T : PolygonVertex

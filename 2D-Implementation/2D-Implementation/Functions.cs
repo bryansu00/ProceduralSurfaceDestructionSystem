@@ -283,6 +283,7 @@ namespace PSDSystem
             // Insert Points
             InsertIntersectionPoints(center, intersections);
 
+            // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
             while (true)
             {
                 VertexNode<U>? firstPoint = null, point = null;
@@ -1108,6 +1109,40 @@ namespace PSDSystem
             return output;
         }
 
+        private static bool IsAnEarTip<T>(VertexNode<T> node) where T : PolygonVertex
+        {
+            if (!IsConvex(node)) return false;
+
+            List<Vector2> vertices = node.Owner.Vertices;
+
+            bool isEar = true;
+            VertexNode<T> now = node.Owner.Head;
+            do
+            {
+                // Skip the vertices we are evaluating is one of the triangle
+                if (now.Data.Index == node.Previous.Data.Index ||
+                    now.Data.Index == node.Data.Index ||
+                    now.Data.Index == node.Next.Data.Index)
+                {
+                    now = now.Next;
+                    continue;
+                }
+
+                if (PointIsInsideTriangle(vertices[now.Data.Index],
+                    vertices[node.Previous.Data.Index],
+                    vertices[node.Data.Index],
+                    vertices[node.Next.Data.Index]))
+                {
+                    isEar = false;
+                    break;
+                }
+
+                now = now.Next;
+            } while (now != node.Owner.Head);
+
+            return isEar;
+        }
+
         private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon) where T : PolygonVertex
         {
             if (polygon.Head == null || polygon.Vertices == null) return null;
@@ -1118,39 +1153,7 @@ namespace PSDSystem
             VertexNode<T> now = polygon.Head;
             do
             {
-                if (!IsConvex(now))
-                {
-                    now = now.Next;
-                    continue;
-                }
-
-                bool isEar = true;
-                // Check if there is another vertex inside its triangle
-                VertexNode<T> otherNow = polygon.Head;
-                do
-                {
-                    // Skip the vertices we are evaluating is one of the triangle
-                    if (otherNow.Data.Index == now.Previous.Data.Index ||
-                        otherNow.Data.Index == now.Data.Index ||
-                        otherNow.Data.Index == now.Next.Data.Index)
-                    {
-                        otherNow = otherNow.Next;
-                        continue;
-                    }
-
-                    if (PointIsInsideTriangle(polygon.Vertices[otherNow.Data.Index], 
-                        polygon.Vertices[now.Previous.Data.Index],
-                        polygon.Vertices[now.Data.Index],
-                        polygon.Vertices[now.Next.Data.Index]))
-                    {
-                        isEar = false;
-                        break;
-                    }
-
-                    otherNow = otherNow.Next;
-                } while (otherNow != polygon.Head);
-
-                if (isEar)
+                if (IsAnEarTip(now))
                 {
                     output.Add(now);
                 }
@@ -1162,13 +1165,23 @@ namespace PSDSystem
             return output;
         }
 
-        public static List<T>? TriangulateGroup<T>(PolygonGroup<T> group) where T : PolygonVertex
+        public static void TriangulateGroup<T>(PolygonGroup<T> group, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
         {
-            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null) return null;
+            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
+            {
+                triangles = null;
+                vertices = null;
+                return;
+            }
 
             foreach (Polygon<T> innerPolygon in group.InnerPolygons)
             {
-                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null) return null;
+                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
+                {
+                    triangles = null;
+                    vertices = null;
+                    return;
+                }
             }
 
             // Sort inner polygons from right-most to least right-most
@@ -1187,8 +1200,43 @@ namespace PSDSystem
 
             // Identify the eartips of currentPolygon
             List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
+            // No ear tips was found, thus triangulation is not possible
+            if (earTips == null)
+            {
+                triangles = null;
+                vertices = null;
+                return;
+            }
 
-            return null;
+            List<int> output = new List<int>();
+
+            while (earTips.Count > 0)
+            {
+                // Get the ear to clip
+                VertexNode<T> earToClip = earTips[0];
+
+                // Add the triangles
+                output.Add(earToClip.Previous.Data.Index);
+                output.Add(earToClip.Data.Index);
+                output.Add(earToClip.Next.Data.Index);
+
+                // Clip the ear and remove from the list
+                currentPolygon.ClipVertex(earToClip);
+                earTips.Remove(earToClip);
+
+                // The neighbors may no longer be ears remove them
+                earTips.Remove(earToClip.Previous);
+                earTips.Remove(earToClip.Next);
+
+                // Reprocess the neighbot
+                if (IsAnEarTip(earToClip.Previous))
+                    earTips.Add(earToClip.Previous);
+                if (IsAnEarTip(earToClip.Next))
+                    earTips.Add(earToClip.Next);
+            }
+
+            triangles = output;
+            vertices = currentPolygon.Vertices;
         }
 
         public static List<int>? TriangulateSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
