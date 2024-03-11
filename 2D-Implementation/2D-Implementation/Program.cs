@@ -38,6 +38,8 @@ class Program
 
                 PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
                 InitCutter();
+
+                PSD.TriangulateGroup(surface.Polygons[0]);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {

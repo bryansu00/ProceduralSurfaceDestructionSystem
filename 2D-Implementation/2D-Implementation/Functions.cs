@@ -1010,7 +1010,7 @@ namespace PSDSystem
                 do
                 {
                     // vertex is the same as p or is not convex
-                    if (now == vertexP || !IsConvex(now))
+                    if (now == vertexP || IsConvex(now))
                     {
                         now = now.Next;
                         continue;
@@ -1108,6 +1108,60 @@ namespace PSDSystem
             return output;
         }
 
+        private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon) where T : PolygonVertex
+        {
+            if (polygon.Head == null || polygon.Vertices == null) return null;
+
+            List<VertexNode<T>> output = new List<VertexNode<T>>();
+
+            // It is an eartip if it is convex and there is no other vertices inside its triangle
+            VertexNode<T> now = polygon.Head;
+            do
+            {
+                if (!IsConvex(now))
+                {
+                    now = now.Next;
+                    continue;
+                }
+
+                bool isEar = true;
+                // Check if there is another vertex inside its triangle
+                VertexNode<T> otherNow = polygon.Head;
+                do
+                {
+                    // Skip the vertices we are evaluating is one of the triangle
+                    if (otherNow.Data.Index == now.Previous.Data.Index ||
+                        otherNow.Data.Index == now.Data.Index ||
+                        otherNow.Data.Index == now.Next.Data.Index)
+                    {
+                        otherNow = otherNow.Next;
+                        continue;
+                    }
+
+                    if (PointIsInsideTriangle(polygon.Vertices[otherNow.Data.Index], 
+                        polygon.Vertices[now.Previous.Data.Index],
+                        polygon.Vertices[now.Data.Index],
+                        polygon.Vertices[now.Next.Data.Index]))
+                    {
+                        isEar = false;
+                        break;
+                    }
+
+                    otherNow = otherNow.Next;
+                } while (otherNow != polygon.Head);
+
+                if (isEar)
+                {
+                    output.Add(now);
+                }
+
+                now = now.Next;
+            } while (now != polygon.Head);
+
+            if (output.Count <= 0) return null;
+            return output;
+        }
+
         public static List<T>? TriangulateGroup<T>(PolygonGroup<T> group) where T : PolygonVertex
         {
             if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null) return null;
@@ -1131,7 +1185,8 @@ namespace PSDSystem
                 }
             }
 
-
+            // Identify the eartips of currentPolygon
+            List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
 
             return null;
         }
@@ -1175,6 +1230,39 @@ namespace PSDSystem
                 now = now.Next;
             } while (now != polygon.Head);
             return toReturn;
+        }
+
+        private static bool PointIsInsideTriangle(Vector2 point, Vector2 a, Vector2 b, Vector2 c)
+        {
+            float ABCarea = TriangleArea(a, b, c);
+            if (IsNearlyEqual(ABCarea, 0.0f)) return false;
+
+            // Determine if the vertex is inside the triangle using Barycentric coordinates
+            // u = CAP / ABC
+            float u = TriangleArea(c, a, point) / ABCarea;
+            if (u < 0.0f || u > 1.0f)
+            {
+                return false;
+            }
+            // v = ABP / ABC
+            float v = TriangleArea(a, b, point) / ABCarea;
+            if (v < 0.0f || v > 1.0f)
+            {
+                return false;
+            }
+            // w = BCP / ABC
+            float w = TriangleArea(b, c, point) / ABCarea;
+            if (w < 0.0f || w > 1.0f)
+            {
+                return false;
+            }
+
+            if (IsNearlyEqual(u + v + w, 1.0f))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -1277,7 +1365,7 @@ namespace PSDSystem
             Vector2 b = vertices[node.Data.Index];
             Vector2 c = vertices[node.Next.Data.Index];
 
-            return CrossProduct2D(a - b, c - b) < 0.0f;
+            return CrossProduct2D(a - b, c - b) > 0.0f;
         }
 
         private static float VectorToDiamondAngle(Vector2 v)
