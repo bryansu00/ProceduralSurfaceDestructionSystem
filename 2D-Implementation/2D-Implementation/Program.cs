@@ -46,7 +46,7 @@ class Program
                 //cutter.Vertices.Add(mousePos);
                 //cutter.InsertVertexAtBack(verticesIdxAdded);
 
-                InsertCircle(mousePos, 2.0f);
+                InsertCircle(mousePos, 5.0f);
 
                 PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
                 InitCutter();

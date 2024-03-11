@@ -1184,19 +1184,29 @@ namespace PSDSystem
                 }
             }
 
-            // Sort inner polygons from right-most to least right-most
-            group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
-
-            // Connect the outer polygon with the inner polygons
             Polygon<T> currentPolygon = group.OuterPolygon;
-            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+            // If there is any inner polygons, combined with the outer polygon
+            if (group.InnerPolygons.Count > 0)
             {
-                Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon);
-                if (result != null)
+                // Sort inner polygons from right-most to least right-most
+                group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
+
+                // Connect the outer polygon with the inner polygons
+                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
                 {
-                    currentPolygon = result;
+                    Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon);
+                    if (result != null)
+                    {
+                        currentPolygon = result;
+                    }
                 }
             }
+            else
+            {
+                // Otherwise make a copy
+                currentPolygon = new Polygon<T>(group.OuterPolygon);
+            }
+
 
             // Identify the eartips of currentPolygon
             List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
