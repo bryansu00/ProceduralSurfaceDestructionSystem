@@ -1108,10 +1108,19 @@ namespace PSDSystem
             return output;
         }
 
-        public static Polygon<T> TriangulateGroup<T>(PolygonGroup<T> group) where T : PolygonVertex
+        public static List<T>? TriangulateGroup<T>(PolygonGroup<T> group) where T : PolygonVertex
         {
+            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null) return null;
+
+            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+            {
+                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null) return null;
+            }
+
+            // Sort inner polygons from right-most to least right-most
             group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
 
+            // Connect the outer polygon with the inner polygons
             Polygon<T> currentPolygon = group.OuterPolygon;
             foreach (Polygon<T> innerPolygon in group.InnerPolygons)
             {
@@ -1122,7 +1131,9 @@ namespace PSDSystem
                 }
             }
 
-            return currentPolygon;
+
+
+            return null;
         }
 
         public static List<int>? TriangulateSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
