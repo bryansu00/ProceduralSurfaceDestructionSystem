@@ -15,6 +15,8 @@ class Program
     // Initialize stuff....
     private static SurfaceShape<PolygonVertex> surface = new SurfaceShape<PolygonVertex>();
 
+    private static Polygon<PolygonVertex>? testPolygon = null;
+
     public static void Main()
     {
         Raylib.InitWindow(1280, HEIGHT, "2D Surface Destruction Testing");
@@ -28,23 +30,23 @@ class Program
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
                 Vector2 mousePos = FlipY(Raylib.GetMousePosition());
-                //int verticesIdxAdded = cutter.Vertices.Count;
-                //cutter.Vertices.Add(mousePos);
-                //cutter.InsertVertexAtBack(verticesIdxAdded);
+                int verticesIdxAdded = cutter.Vertices.Count;
+                cutter.Vertices.Add(mousePos);
+                cutter.InsertVertexAtBack(verticesIdxAdded);
 
-                InsertCircle(mousePos, 5.0f);
+                //InsertCircle(mousePos, 5.0f);
 
-                PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                InitCutter();
+                //PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
+                //InitCutter();
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
-                //if (cutter.Vertices.Count > 0)
-                //{
-                //    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
-                //    int verticesIdxRemoved = cutter.Vertices.Count;
-                //    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
-                //}
+                if (cutter.Vertices.Count > 0)
+                {
+                    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
+                    int verticesIdxRemoved = cutter.Vertices.Count;
+                    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
+                }
             }
 
             if (Raylib.IsKeyPressed(KeyboardKey.Grave))
@@ -75,8 +77,9 @@ class Program
 
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                InitCutter();
+                //PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
+                //InitCutter();
+                testPolygon = PSD.ConnectOuterAndInnerPolygon(surface.Polygons[0].OuterPolygon, cutter);
             }
 
             Raylib.BeginDrawing();
@@ -92,6 +95,9 @@ class Program
                 }
             }
             DrawPolygon(cutter, Color.Red, true, true);
+
+            if (testPolygon != null)
+                DrawPolygon(testPolygon, Color.Green, true);
 
             Raylib.EndDrawing();
         }

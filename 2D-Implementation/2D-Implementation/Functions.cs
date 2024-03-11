@@ -915,7 +915,7 @@ namespace PSDSystem
             return 0;
         }
 
-        private static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon) where T : PolygonVertex
+        public static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon) where T : PolygonVertex
         {
             if (outerPolygon.Count < 3 || outerPolygon.Head == null || outerPolygon.Vertices == null ||
                 innerPolygon.Count < 3 || innerPolygon.Head == null || innerPolygon.Vertices == null) return null;
@@ -946,7 +946,7 @@ namespace PSDSystem
             float shortestLength = float.MaxValue; // arbitrarily large value
             VertexNode<T>? closestLineSegment = null;
             Vector2? closestIntersectionPoint = null;
-            now = innerPolygon.Head;
+            now = outerPolygon.Head;
             do
             {
                 int IndexA = now.Data.Index;
@@ -955,8 +955,8 @@ namespace PSDSystem
                 // Intersection should only be computed if
                 // outerPolygonVertices[aIdx].y is below or on the ray and
                 // outerPolygonVertices[bIdx].y is above or on the ray
-                if (outerVertices[IndexA].Y > pointRightOfInnerVertex.Y ||
-                    outerVertices[IndexB].Y < pointRightOfInnerVertex.Y)
+                if (outerVertices[IndexA].Y < pointRightOfInnerVertex.Y ||
+                    outerVertices[IndexB].Y > pointRightOfInnerVertex.Y)
                 {
                     now = now.Next;
                     continue;
@@ -982,7 +982,7 @@ namespace PSDSystem
                 }
 
                 now = now.Next;
-            } while (now != innerPolygon.Head);
+            } while (now != outerPolygon.Head);
 
             // No intersection was found
             if (closestLineSegment == null || closestIntersectionPoint == null) return null;
