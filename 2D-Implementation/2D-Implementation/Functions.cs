@@ -926,7 +926,8 @@ namespace PSDSystem
             // Find the bridge
 
             // Get the right-most vertex of the inner polygon
-            if (innerPolygon.RightMostVertex == null) return null;
+            if (innerPolygon.RightMostVertex == null) 
+                return null;
             VertexNode<T> rightMostInnerVertex = innerPolygon.RightMostVertex;
 
             // Create a point directly to the right of the right-most hole vertex
@@ -977,7 +978,8 @@ namespace PSDSystem
             } while (now != outerPolygon.Head);
 
             // No intersection was found
-            if (closestLineSegment == null || closestIntersectionPoint == null) return null;
+            if (closestLineSegment == null || closestIntersectionPoint == null)
+                return null;
 
             // Select point P to be the endpoint of the closest edge with the largest x-value
             VertexNode<T> vertexP = closestLineSegment;
@@ -989,74 +991,82 @@ namespace PSDSystem
             // Look at each reflex vertices of the outer polygon, except P
             // If all of these vertices are outside the triangle (M, I, P),
             // then M and P are mutually visible
+            VertexNode<T> visibleOuterVertex = vertexP;
+
             float MIPArea = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]);
             if (IsNearlyEqual(MIPArea, 0.0f))
             {
-                // M and P are colinear
-                return null;
+                // M and P are colinear, there might be a vertex that is on the line segment M & P, but
+                // for now assume M and P are visible for the time being
+
+                // TODO: Check if there is a vertex on line segment M & P 
+                Console.WriteLine("ConnectOuterAndInnerPolygon<T>() found M and P to be colinear, doing some unsafe stuff, please fix when possible.");
             }
-
-            bool MandPareVisible = true;
-            List<VertexNode<T>> possibleRVertices = new List<VertexNode<T>>();
-            now = outerPolygon.Head;
-            do
+            else
             {
-                // vertex is the same as p or is not convex
-                if (now == vertexP || !IsConvex(now))
+                bool MandPareVisible = true;
+                List<VertexNode<T>> possibleRVertices = new List<VertexNode<T>>();
+                now = outerPolygon.Head;
+                do
                 {
-                    now = now.Next;
-                    continue;
-                }
-
-                // Determine if the vertex is inside the triangle (M, I, P) using Barycentric coordinates
-                // u = CAP / ABC
-                float u = TriangleArea(outerVertices[vertexP.Data.Index], innerVertices[rightMostInnerVertex.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
-                if (u < 0.0f || u > 1.0f)
-                {
-                    now = now.Next;
-                    continue;
-                }
-                // v = ABP / ABC
-                float v = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[now.Data.Index]) / MIPArea;
-                if (v < 0.0f || v > 1.0f)
-                {
-                    now = now.Next;
-                    continue;
-                }
-                // w = BCP / ABC
-                float w = TriangleArea(closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
-                if (w < 0.0f || w > 1.0f)
-                {
-                    now = now.Next;
-                    continue;
-                }
-
-                if (IsNearlyEqual(u + v + w, 1.0f))
-                {
-                    // M and P are not mutually visible, but an R candidate identified
-                    MandPareVisible = false;
-                    possibleRVertices.Add(now);
-                }
-
-                now = now.Next;
-            } while (now != outerPolygon.Head);
-
-            VertexNode<T> visibleOuterVertex = vertexP;
-            if (!MandPareVisible)
-            {
-                // M and P are not mutually visible, Search for the reflex R that minimizes the angle
-                // between ⟨M , I⟩ and ⟨M , R⟩; then M and R are mutually visible and the algorithm terminates.
-                float shortestAngle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexP.Data.Index]);
-                foreach (VertexNode<T> vertexR in possibleRVertices)
-                {
-                    float angle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexR.Data.Index]);
-                    if (angle < shortestAngle)
+                    // vertex is the same as p or is not convex
+                    if (now == vertexP || !IsConvex(now))
                     {
-                        shortestAngle = angle;
-                        visibleOuterVertex = vertexR;
+                        now = now.Next;
+                        continue;
+                    }
+
+                    // Determine if the vertex is inside the triangle (M, I, P) using Barycentric coordinates
+                    // u = CAP / ABC
+                    float u = TriangleArea(outerVertices[vertexP.Data.Index], innerVertices[rightMostInnerVertex.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
+                    if (u < 0.0f || u > 1.0f)
+                    {
+                        now = now.Next;
+                        continue;
+                    }
+                    // v = ABP / ABC
+                    float v = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[now.Data.Index]) / MIPArea;
+                    if (v < 0.0f || v > 1.0f)
+                    {
+                        now = now.Next;
+                        continue;
+                    }
+                    // w = BCP / ABC
+                    float w = TriangleArea(closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
+                    if (w < 0.0f || w > 1.0f)
+                    {
+                        now = now.Next;
+                        continue;
+                    }
+
+                    if (IsNearlyEqual(u + v + w, 1.0f))
+                    {
+                        // M and P are not mutually visible, but an R candidate identified
+                        MandPareVisible = false;
+                        possibleRVertices.Add(now);
+                    }
+
+                    now = now.Next;
+                } while (now != outerPolygon.Head);
+
+                if (!MandPareVisible)
+                {
+                    // M and P are not mutually visible, Search for the reflex R that minimizes the angle
+                    // between ⟨M , I⟩ and ⟨M , R⟩; then M and R are mutually visible and the algorithm terminates.
+                    float shortestAngle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexP.Data.Index]);
+                    foreach (VertexNode<T> vertexR in possibleRVertices)
+                    {
+                        float angle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexR.Data.Index]);
+                        if (angle < shortestAngle)
+                        {
+                            shortestAngle = angle;
+                            visibleOuterVertex = vertexR;
+                        }
                     }
                 }
             }
+
+
 
             // visibleOuterVertex and rightMostInnerVertex are vertices that are mutually visible and a bridge can be form
 
@@ -1098,10 +1108,21 @@ namespace PSDSystem
             return output;
         }
 
-        public static void TriangulateGroup<T>(PolygonGroup<T> group) where T : PolygonVertex
+        public static Polygon<T> TriangulateGroup<T>(PolygonGroup<T> group) where T : PolygonVertex
         {
-            
-            
+            group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
+
+            Polygon<T> currentPolygon = group.OuterPolygon;
+            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+            {
+                Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon);
+                if (result != null)
+                {
+                    currentPolygon = result;
+                }
+            }
+
+            return currentPolygon;
         }
 
         public static List<int>? TriangulateSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
@@ -1245,7 +1266,7 @@ namespace PSDSystem
             Vector2 b = vertices[node.Data.Index];
             Vector2 c = vertices[node.Next.Data.Index];
 
-            return CrossProduct2D(a - b, c - b) > 0.0f;
+            return CrossProduct2D(a - b, c - b) < 0.0f;
         }
 
         private static float VectorToDiamondAngle(Vector2 v)
