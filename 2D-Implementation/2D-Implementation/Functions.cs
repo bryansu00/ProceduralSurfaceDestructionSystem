@@ -915,6 +915,211 @@ namespace PSDSystem
             return 0;
         }
 
+        private static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon) where T : PolygonVertex
+        {
+            if (outerPolygon.Count < 3 || outerPolygon.Head == null || outerPolygon.Vertices == null ||
+                innerPolygon.Count < 3 || innerPolygon.Head == null || innerPolygon.Vertices == null) return null;
+
+            List<Vector2> outerVertices = outerPolygon.Vertices;
+            List<Vector2> innerVertices = innerPolygon.Vertices;
+
+            // Find the bridge
+
+            // Find the right-most vertex of the inner polygon
+            VertexNode<T> rightMostInnerVertex = innerPolygon.Head;
+            VertexNode<T> now = rightMostInnerVertex.Next;
+            while (now != innerPolygon.Head)
+            {
+                if (innerVertices[now.Data.Index].X > innerVertices[rightMostInnerVertex.Data.Index].X)
+                {
+                    rightMostInnerVertex = now;
+                }
+                now = now.Next;
+            }
+
+            // Create a point directly to the right of the right-most hole vertex
+            // in order to line intersections to find nearest edge
+            Vector2 pointRightOfInnerVertex = new Vector2(innerVertices[rightMostInnerVertex.Data.Index].X + 1.0f,
+                                innerVertices[rightMostInnerVertex.Data.Index].Y);
+
+            // Find closest intersection point and line segment using partial line intersection test
+            float shortestLength = float.MaxValue; // arbitrarily large value
+            VertexNode<T>? closestLineSegment = null;
+            Vector2? closestIntersectionPoint = null;
+            now = innerPolygon.Head;
+            do
+            {
+                int IndexA = now.Data.Index;
+                int IndexB = now.Next.Data.Index;
+
+                // Intersection should only be computed if
+                // outerPolygonVertices[aIdx].y is below or on the ray and
+                // outerPolygonVertices[bIdx].y is above or on the ray
+                if (outerVertices[IndexA].Y > pointRightOfInnerVertex.Y ||
+                    outerVertices[IndexB].Y < pointRightOfInnerVertex.Y)
+                {
+                    now = now.Next;
+                    continue;
+                }
+
+                // Perform the intersection test
+                int result = PartialLineIntersection(innerVertices[rightMostInnerVertex.Data.Index], pointRightOfInnerVertex,
+                    outerVertices[IndexA], outerVertices[IndexB], out float t, out float u);
+
+                if (result == 1 && t >= 0.0f && u >= 0.0f && u <= 1.0f)
+                {
+                    // There is a line intersection
+                    Vector2 intersectionPoint = new Vector2(innerVertices[rightMostInnerVertex.Data.Index].X + t * (pointRightOfInnerVertex.X - innerVertices[rightMostInnerVertex.Data.Index].X),
+                        innerVertices[rightMostInnerVertex.Data.Index].Y + t * (pointRightOfInnerVertex.Y - innerVertices[rightMostInnerVertex.Data.Index].Y));
+
+                    float length = SegmentLengthSquared(innerVertices[rightMostInnerVertex.Data.Index], intersectionPoint);
+                    if (length < shortestLength)
+                    {
+                        shortestLength = length;
+                        closestLineSegment = now;
+                        closestIntersectionPoint = intersectionPoint;
+                    }
+                }
+
+                now = now.Next;
+            } while (now != innerPolygon.Head);
+
+            // No intersection was found
+            if (closestLineSegment == null || closestIntersectionPoint == null) return null;
+
+            // Select point P to be the endpoint of the closest edge with the largest x-value
+            VertexNode<T> vertexP = closestLineSegment;
+            if (outerVertices[closestLineSegment.Next.Data.Index].X > outerVertices[vertexP.Data.Index].X)
+            {
+                vertexP = closestLineSegment.Next;
+            }
+
+            // Look at each reflex vertices of the outer polygon, except P
+            // If all of these vertices are outside the triangle (M, I, P),
+            // then M and P are mutually visible
+            float MIPArea = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]);
+            if (IsNearlyEqual(MIPArea, 0.0f))
+            {
+                // M and P are colinear
+                return null;
+            }
+
+            bool MandPareVisible = true;
+            List<VertexNode<T>> possibleRVertices = new List<VertexNode<T>>();
+            now = outerPolygon.Head;
+            do
+            {
+                // vertex is the same as p or is not convex
+                if (now == vertexP || !IsConvex(now))
+                {
+                    now = now.Next;
+                    continue;
+                }
+
+                // Determine if the vertex is inside the triangle (M, I, P) using Barycentric coordinates
+                // u = CAP / ABC
+                float u = TriangleArea(outerVertices[vertexP.Data.Index], innerVertices[rightMostInnerVertex.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
+                if (u < 0.0f || u > 1.0f)
+                {
+                    now = now.Next;
+                    continue;
+                }
+                // v = ABP / ABC
+                float v = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[now.Data.Index]) / MIPArea;
+                if (v < 0.0f || v > 1.0f)
+                {
+                    now = now.Next;
+                    continue;
+                }
+                // w = BCP / ABC
+                float w = TriangleArea(closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
+                if (w < 0.0f || w > 1.0f)
+                {
+                    now = now.Next;
+                    continue;
+                }
+
+                if (IsNearlyEqual(u + v + w, 1.0f))
+                {
+                    // M and P are not mutually visible, but an R candidate identified
+                    MandPareVisible = false;
+                    possibleRVertices.Add(now);
+                }
+
+                now = now.Next;
+            } while (now != outerPolygon.Head);
+
+            VertexNode<T> visibleOuterVertex = vertexP;
+            if (!MandPareVisible)
+            {
+                // M and P are not mutually visible, Search for the reflex R that minimizes the angle
+                // between ⟨M , I⟩ and ⟨M , R⟩; then M and R are mutually visible and the algorithm terminates.
+                float shortestAngle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexP.Data.Index]);
+                foreach (VertexNode<T> vertexR in possibleRVertices)
+                {
+                    float angle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexR.Data.Index]);
+                    if (angle < shortestAngle)
+                    {
+                        shortestAngle = angle;
+                        visibleOuterVertex = vertexR;
+                    }
+                }
+            }
+
+            // visibleOuterVertex and rightMostInnerVertex are vertices that are mutually visible and a bridge can be form
+
+            Polygon<T> output = new Polygon<T>();
+            output.Vertices = new List<Vector2>(outerVertices);
+            // Start with the head of outer polygon
+            VertexNode<T> outerNow = outerPolygon.Head;
+            do
+            {
+                // Insert the index of the outerNow since output.Vertices is a copy of outerVertices
+                output.InsertVertexAtBack(outerNow.Data.Index);
+
+                // Transition to inner polygon
+                if (outerNow == visibleOuterVertex)
+                {
+                    // Insert the rightMostInnerVertex into the output polygon
+                    int rightMostInnerVertexIndex = output.Vertices.Count;
+                    output.InsertVertexAtBack(rightMostInnerVertexIndex);
+                    output.Vertices.Add(innerVertices[rightMostInnerVertex.Data.Index]);
+                    // Switch to the inner polygon
+                    VertexNode<T> innerNow = rightMostInnerVertex.Next;
+                    while (innerNow != rightMostInnerVertex)
+                    {
+                        output.InsertVertexAtBack(output.Vertices.Count);
+                        output.Vertices.Add(innerVertices[innerNow.Data.Index]);
+
+                        innerNow = innerNow.Next;
+                    }
+                    // Insert the rightMostInnerVertex again to complete the loop for inner polygon
+                    output.InsertVertexAtBack(rightMostInnerVertexIndex);
+                    // Insert visibleOuterVertex to return from inner polygon to outer polygon
+                    output.InsertVertexAtBack(visibleOuterVertex.Data.Index);
+                }
+
+                outerNow = outerNow.Next;
+            } while (outerNow != outerPolygon.Head);
+
+            return output;
+        }
+
+        public static List<int>? TriangulateSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
+        {
+            if (surface.Polygons.Count <= 0) return null;
+
+            List<int> output = new List<int>();
+
+            // Triangulate each group
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                
+            }
+
+            return output;
+        }
+
         /// <summary>
         /// Convert the PolygonVertex of the given polygon into a BooleanVertex
         /// </summary>
@@ -1022,6 +1227,56 @@ namespace PSDSystem
             float x = b.X - a.X;
             float y = b.Y - a.Y;
             return x * x + y * y;
+        }
+
+        private static float TriangleArea(Vector2 a, Vector2 b, Vector2 c)
+        {
+            return MathF.Abs(CrossProduct2D(b - a, c - a) / 2.0f);
+        }
+
+        private static bool IsConvex<T>(VertexNode<T> node) where T : PolygonVertex
+        {
+            if (node.Owner.Vertices == null) return false;
+            List<Vector2> vertices = node.Owner.Vertices;
+            // Takes advantage of the fact that triangulation is
+            // done for 2D polygons. Thus the cross product
+            // of two 2D vectors result in either a positive or
+            // negative Z axis value
+            Vector2 a = vertices[node.Previous.Data.Index];
+            Vector2 b = vertices[node.Data.Index];
+            Vector2 c = vertices[node.Next.Data.Index];
+
+            return CrossProduct2D(a - b, c - b) > 0.0f;
+        }
+
+        private static float VectorToDiamondAngle(Vector2 v)
+        {
+            if (IsNearlyEqual(v.LengthSquared(), 0.0f))
+                return 0.0f;
+
+            if (v.Y >= 0.0f)
+            {
+                if (v.X >= 0.0f)
+                    return v.Y / (v.X + v.Y);
+                return 1.0f - v.X / (-v.X + v.Y);
+            }
+            
+            if (v.X < 0.0f)
+            {
+                return 2.0f - v.Y / (-v.X - v.Y);
+            }
+
+            return 3.0f + v.X / (v.X - v.Y);
+        }
+
+        private static float DiamondAngleBetweenTwoVectors(Vector2 a, Vector2 b, Vector2 c)
+        {
+            Vector2 ba = a - b;
+            Vector2 bc = c - b;
+            float result = MathF.Abs(VectorToDiamondAngle(ba) - VectorToDiamondAngle(bc));
+            if (result > 2.0f)
+                return 4.0f - result;
+            return result;
         }
 
         /// <summary>
