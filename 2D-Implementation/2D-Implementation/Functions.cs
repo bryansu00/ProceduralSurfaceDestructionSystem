@@ -1184,13 +1184,14 @@ namespace PSDSystem
                 }
             }
 
-            Polygon<T> currentPolygon = group.OuterPolygon;
+            Polygon<T> currentPolygon;
             // If there is any inner polygons, combined with the outer polygon
             if (group.InnerPolygons.Count > 0)
             {
                 // Sort inner polygons from right-most to least right-most
                 group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
 
+                currentPolygon = group.OuterPolygon;
                 // Connect the outer polygon with the inner polygons
                 foreach (Polygon<T> innerPolygon in group.InnerPolygons)
                 {
