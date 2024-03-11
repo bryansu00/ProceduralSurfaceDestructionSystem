@@ -15,6 +15,11 @@ namespace PSDSystem
         public VertexNode<T>? Head { get; private set; }
 
         /// <summary>
+        /// The right most vertex of the polygon
+        /// </summary>
+        public VertexNode<T>? RightMostVertex { get; private set; }
+
+        /// <summary>
         /// The number of vertex in the polygon
         /// </summary>
         public uint Count { get; private set; }
@@ -27,6 +32,7 @@ namespace PSDSystem
         public Polygon()
         {
             Head = null;
+            RightMostVertex = null;
             Count = 0;
             Vertices = null;
         }
@@ -65,6 +71,9 @@ namespace PSDSystem
             // Increment size of the polygon
             Count++;
 
+            // Set right most vertex
+            SetRightMostVertex(newNode);
+
             return newNode;
         }
 
@@ -96,6 +105,8 @@ namespace PSDSystem
             // Increment count of the polygon
             Count++;
 
+            SetRightMostVertex(newNode);
+
             return newNode;
         }
 
@@ -125,6 +136,8 @@ namespace PSDSystem
                 // If it was the head removed, set new head
                 Head = Head.Next;
             }
+
+            SetRightMostVertex();
         }
 
         public void RemoveVerticesWithIndex(int indexToRemove)
@@ -142,6 +155,8 @@ namespace PSDSystem
                 }
                 now = now.Next;
             }
+
+            SetRightMostVertex();
         }
 
         /// <summary>
@@ -161,6 +176,36 @@ namespace PSDSystem
             } while (now != Head);
 
             return toReturn;
+        }
+
+        private void SetRightMostVertex(VertexNode<T> node)
+        {
+            if (Vertices == null) return;
+
+            if (RightMostVertex == null || Vertices[node.Data.Index].X > Vertices[RightMostVertex.Data.Index].X)
+            {
+                RightMostVertex = node;
+            }
+        }
+
+        private void SetRightMostVertex()
+        {
+            if (Head == null || Vertices == null)
+            {
+                RightMostVertex = null;
+                return;
+            }
+
+            RightMostVertex = Head;
+            VertexNode<T> now = Head.Next;
+            while (now != Head)
+            {
+                if (Vertices[now.Data.Index].X > Vertices[RightMostVertex.Data.Index].X)
+                {
+                    RightMostVertex = now;
+                }
+                now = now.Next;
+            }
         }
     }
 

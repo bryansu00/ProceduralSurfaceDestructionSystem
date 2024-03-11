@@ -925,17 +925,9 @@ namespace PSDSystem
 
             // Find the bridge
 
-            // Find the right-most vertex of the inner polygon
-            VertexNode<T> rightMostInnerVertex = innerPolygon.Head;
-            VertexNode<T> now = rightMostInnerVertex.Next;
-            while (now != innerPolygon.Head)
-            {
-                if (innerVertices[now.Data.Index].X > innerVertices[rightMostInnerVertex.Data.Index].X)
-                {
-                    rightMostInnerVertex = now;
-                }
-                now = now.Next;
-            }
+            // Get the right-most vertex of the inner polygon
+            if (innerPolygon.RightMostVertex == null) return null;
+            VertexNode<T> rightMostInnerVertex = innerPolygon.RightMostVertex;
 
             // Create a point directly to the right of the right-most hole vertex
             // in order to line intersections to find nearest edge
@@ -946,7 +938,7 @@ namespace PSDSystem
             float shortestLength = float.MaxValue; // arbitrarily large value
             VertexNode<T>? closestLineSegment = null;
             Vector2? closestIntersectionPoint = null;
-            now = outerPolygon.Head;
+            VertexNode<T> now = outerPolygon.Head;
             do
             {
                 int IndexA = now.Data.Index;
@@ -1082,14 +1074,15 @@ namespace PSDSystem
                 {
                     // Insert the rightMostInnerVertex into the output polygon
                     int rightMostInnerVertexIndex = output.Vertices.Count;
-                    output.InsertVertexAtBack(rightMostInnerVertexIndex);
                     output.Vertices.Add(innerVertices[rightMostInnerVertex.Data.Index]);
+                    output.InsertVertexAtBack(rightMostInnerVertexIndex);
                     // Switch to the inner polygon
                     VertexNode<T> innerNow = rightMostInnerVertex.Next;
                     while (innerNow != rightMostInnerVertex)
                     {
-                        output.InsertVertexAtBack(output.Vertices.Count);
+                        int insertedVertexIndex = output.Vertices.Count;
                         output.Vertices.Add(innerVertices[innerNow.Data.Index]);
+                        output.InsertVertexAtBack(insertedVertexIndex);
 
                         innerNow = innerNow.Next;
                     }
@@ -1103,6 +1096,12 @@ namespace PSDSystem
             } while (outerNow != outerPolygon.Head);
 
             return output;
+        }
+
+        public static void TriangulateGroup<T>(PolygonGroup<T> group) where T : PolygonVertex
+        {
+            
+            
         }
 
         public static List<int>? TriangulateSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
