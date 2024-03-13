@@ -18,9 +18,249 @@ namespace PSDSystem
             POLYGON_IS_INSIDE = 2,
             BOTH_OUTSIDE = 3
         }
-        static bool IsNearlyEqual(float a, float b, float epsilon = 0.00001f)
+
+        /// <summary>
+        /// Check if the given two float values are nearly equal to each other
+        /// </summary>
+        /// <param name="a">The first value</param>
+        /// <param name="b">The second value</param>
+        /// <param name="epsilon">The threshold for comparison</param>
+        /// <returns>True if they are nearly equal to each other, false otherwise</returns>
+        private static bool IsNearlyEqual(float a, float b, float epsilon = 0.00001f)
         {
             return MathF.Abs(a - b) <= epsilon;
+        }
+
+        /// <summary>
+        /// Given a surface and a polygon that represent the cutter, cut a 'hole' on to the surface
+        /// </summary>
+        /// <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
+        /// <typeparam name="U">The polygon vertex containing properties needed for polygon boolean operations</typeparam>
+        /// <param name="surface">The surface to be cut</param>
+        /// <param name="cutter">The cutter polygon</param>
+        /// <returns>
+        /// -2 if something went wrong (reason is unknown).
+        /// -1 if the operation can not be performed.
+        /// 0 if the cutter polygon overlaps with one or more outer polygons, and one or more outer polygons was replaced with new one
+        /// 1 if the cutter polygon is completely inside of an inner polygon, thus operation cannot be performed.
+        /// 2 if the cutter polygon is completely inside of an outer polygon, does not overlap with any inner polygon, 
+        /// thus the cutter polygon can be placed as an inner polygon without any boolean operations.
+        /// 3 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing only 1 polygon.
+        /// 4 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing MULTIPLE polygons, but only 1 of those polygons were kept.
+        /// </returns>
+        public static int CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
+            where T : PolygonVertex
+            where U : PolygonVertex, IHasBooleanVertexProperties<U>
+        {
+            if (surface.Polygons.Count == 0 || cutter.Head == null || cutter.Vertices == null) return -1;
+
+            // Keep track of what groups to remove
+            List<PolygonGroup<T>> groupsToRemove = new List<PolygonGroup<T>>();
+
+            // List of tuples to store boolean lists and intersectionPoints generated through performing intersection tests.
+            List<Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>>> intersectedGroups =
+                new List<Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>>>();
+
+            // If the cutter happens to be completely inside of a polygon, store that group
+            PolygonGroup<T>? groupCutterIsIn = null;
+
+            // Perform intersection test with cutter against all outer polygons
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                Polygon<U> booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
+                Polygon<U> booleanPolygon = ConvertPolygonToBooleanList<T, U>(group.OuterPolygon);
+                IntersectionResult result = IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<U>? intersectionPoints);
+
+                if (result == IntersectionResult.CUTTER_IS_INSIDE)
+                {
+                    groupCutterIsIn = group;
+                    break;
+                }
+
+                switch (result)
+                {
+                    case IntersectionResult.INTERSECTS:
+                        // Store intersection result and remove the intersected groups
+                        intersectedGroups.Add(new Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>>(group, booleanCutter, intersectionPoints));
+                        groupsToRemove.Add(group);
+                        break;
+                    case IntersectionResult.POLYGON_IS_INSIDE:
+                        // Remove the group
+                        groupsToRemove.Add(group);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            // Remove the groups
+            foreach (PolygonGroup<T> group in groupsToRemove)
+            {
+                surface.RemoveGroup(group);
+            }
+
+            // Case 2
+            // For each outer polygon that was intersected...
+            foreach (Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>> tuple in intersectedGroups)
+            {
+                PolygonGroup<T> group = tuple.Item1;
+                Polygon<U> booleanCutter = tuple.Item2;
+                IntersectionPoints<U> outerIntersectionPoints = tuple.Item3;
+
+                // Intersect each inner polygon of the group
+                List<Polygon<T>> nonIntersectedInnerPolygons = new List<Polygon<T>>();
+                List<Polygon<U>> innerPolygonsToCombineWith = new List<Polygon<U>>();
+                List<IntersectionPoints<U>> listOfInnerIntersections = new List<IntersectionPoints<U>>();
+                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+                {
+                    Polygon<U> booleanInnerPolygon = ConvertPolygonToBooleanList<T, U>(innerPolygon);
+                    // Doing the operation below will incorrectly modify the IsOutside flag
+                    // TO DO: FIX THIS LOGIC
+                    IntersectionResult result = IntersectCutterAndPolygon(booleanCutter, booleanInnerPolygon, out IntersectionPoints<U>? intersectionPoints);
+
+                    switch (result)
+                    {
+                        case IntersectionResult.INTERSECTS:
+                            // Store Intersection result
+                            innerPolygonsToCombineWith.Add(booleanInnerPolygon);
+                            listOfInnerIntersections.Add(intersectionPoints);
+                            break;
+                        case IntersectionResult.BOTH_OUTSIDE:
+                            // Keep the polygon
+                            nonIntersectedInnerPolygons.Add(innerPolygon);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                // The implementation of CombinePolygons below has a work around for the incorrect logic define above. Should be fixed
+                List<Polygon<T>> polygonsProduced = CombinePolygons<T, U>(booleanCutter, outerIntersectionPoints, listOfInnerIntersections);
+                if (polygonsProduced.Count == 1)
+                {
+                    // Only one polygon was produced, add it as a new outer polygon
+                    surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
+                }
+                else if (polygonsProduced.Count > 1)
+                {
+                    // More than one polygon was produced
+                    for (int i = 0; i < polygonsProduced.Count; i++)
+                    {
+                        // Find which nonIntersectedInnerPolygons belong to which new polygon
+                        List<Polygon<T>> newInnerPolygons = new List<Polygon<T>>();
+
+                        foreach (Polygon<T> innerPolygon in nonIntersectedInnerPolygons)
+                        {
+                            if (innerPolygon.Vertices == null || innerPolygon.Head == null) continue;
+
+                            if (PointIsInsidePolygon(innerPolygon.Vertices[innerPolygon.Head.Data.Index], polygonsProduced[i]) == 1)
+                            {
+                                newInnerPolygons.Add(innerPolygon);
+                            }
+                        }
+
+                        // Add the new polygon as an outer polygon a long with the list of inner polygons
+                        surface.AddPair(polygonsProduced[i], newInnerPolygons);
+                    }
+                }
+            }
+
+            // Case 1
+            if (groupCutterIsIn != null)
+            {
+                Polygon<U> booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
+
+                List<Polygon<T>> newInnerPolygonsList = new List<Polygon<T>>();
+                List<Polygon<U>> innerPolygonsToCombineWith = new List<Polygon<U>>();
+                List<IntersectionPoints<U>> innerIntersectionPoints = new List<IntersectionPoints<U>>();
+
+                // Perform intersection test with cutter against all inner polygons of the group the cutter is in
+                foreach (Polygon<T> innerPolygon in groupCutterIsIn.InnerPolygons)
+                {
+                    Polygon<U> booleanPolygon = PSD.ConvertPolygonToBooleanList<T, U>(innerPolygon);
+                    IntersectionResult result = IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<U>? intersectionPoints);
+
+                    if (result == IntersectionResult.CUTTER_IS_INSIDE)
+                    {
+                        // Cutter is completely inside an inner polygon,
+                        // cutter will not produce any new polygons
+                        return 1;
+                    }
+
+                    switch (result)
+                    {
+                        case IntersectionResult.INTERSECTS:
+                            // Store intersection result
+                            innerPolygonsToCombineWith.Add(booleanPolygon);
+                            innerIntersectionPoints.Add(intersectionPoints);
+                            break;
+                        case IntersectionResult.BOTH_OUTSIDE:
+                            // Keep the inner polygon
+                            newInnerPolygonsList.Add(innerPolygon);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                if (innerIntersectionPoints.Count == 0)
+                {
+                    // No intersection was found, cutter is a new inner polygon
+                    groupCutterIsIn.InnerPolygons.Add(cutter);
+                    return 2;
+                }
+
+                // Replace the list
+                groupCutterIsIn.InnerPolygons = newInnerPolygonsList;
+
+                // Perform polygon addition operation
+                List<Polygon<T>> polygonsProduced = CombinePolygons<T, U>(booleanCutter, innerIntersectionPoints);
+                if (polygonsProduced.Count == 1)
+                {
+                    // Only 1 polygon was produced
+                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
+                    return 3;
+                }
+                else if (polygonsProduced.Count > 1)
+                {
+                    // NOTE: Some optimization can be done in the AddPolygons() function side
+
+                    // Multiple polygons was produced
+                    // Find the polygon that is on the outside
+                    int outsidePolygonIndex = 0;
+                    bool outsidePolygonFound = false;
+                    while (!outsidePolygonFound)
+                    {
+                        outsidePolygonFound = true;
+                        foreach (Polygon<T> polygon in polygonsProduced)
+                        {
+                            if (polygon == polygonsProduced[outsidePolygonIndex]) continue;
+
+                            Polygon<T> polygonBeingObserved = polygonsProduced[outsidePolygonIndex];
+
+                            if (PointIsInsidePolygon(polygonBeingObserved.Vertices[polygonBeingObserved.Head.Data.Index], polygon) != -1)
+                            {
+                                outsidePolygonFound = false;
+                                break;
+                            }
+                        }
+
+                        if (!outsidePolygonFound)
+                        {
+                            outsidePolygonIndex++;
+                        }
+                    }
+
+                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
+                    return 4;
+                }
+                else
+                {
+                    return -2;
+                }
+            }
+
+            return 0;
         }
 
         /// <summary>
@@ -31,7 +271,7 @@ namespace PSDSystem
         /// <param name="polygon">The other polygon</param>
         /// <param name="intersectionPoints">List of intersection points to return</param>
         /// <returns>The result from intersecting the two given polygons</returns>
-        public static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        private static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             // Intersection cannot performed, return for invalid operation
             if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null || 
@@ -73,7 +313,7 @@ namespace PSDSystem
                     // Both line segments are non-colinear, thus t and u can be used to determine if they intersect
                     if (result == 1)
                     {
-                        #region EdgeCase1
+                        #region EdgeCase
                         // ----------------------------------------------------------------------------
                         // This is extremely unlikely due to floating point precision error,
                         // but just in case...
@@ -202,6 +442,8 @@ namespace PSDSystem
             if (intersections.Count == 0)
             { 
                 // No intersection between the two given polygons, thus end function
+
+                // Determine which polygon is outside, or if both are outside each other, and then return the result.
                 bool cutterIsOutsidePolygon = originalCutterOutsideFlag ? cutter.Head.Data.IsOutside : !cutter.Head.Data.IsOutside;
                 bool polygonIsOutsidePolygon = originalPolygonOutsideFlag ? polygon.Head.Data.IsOutside : !polygon.Head.Data.IsOutside;
 
@@ -211,66 +453,17 @@ namespace PSDSystem
             }
 
             intersectionPoints = new IntersectionPoints<T>(polygon, intersections);
-            return 0;
-        }
-
-        private static bool CheckSpecialAdditionCase<T>(VertexNode<T> node) where T : PolygonVertex, IHasBooleanVertexProperties<T>
-        {
-            if (node.Data.Cross == null) return false;
-            if (!node.Data.Cross.Next.Data.IsOutside) return false;
-            if (node.Data.Cross.Next.Data.Cross == null) return true;
-            var crossback = node.Data.Cross.Next.Data.Cross;
-            if (crossback == node.Next) return false;
-            return true;
-        }
-
-        /// <summary>
-        /// TO DO: FIX ISSUE AROUND THIS SPECIAL CASE
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="node"></param>
-        /// <param name="center"></param>
-        /// <param name="outerPolygon"></param>
-        /// <returns></returns>
-        private static bool CheckSpecialSubtractionCase<T>(VertexNode<T> node, Polygon<T> center, Polygon<T> outerPolygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
-        {
-            if (node.Data.Cross == null) return false;
-
-            var crossback = node.Data.Cross.Next.Data.Cross;
-
-            // Traversing the outer polygon, thus the cross should always be the center, but the crossback is unknown, could either be outer or another polygon
-            if (node.Owner == outerPolygon)
-            {
-                if (node.Data.Cross.Next.Data.IsOutside) return false;
-            }
-
-            // From this point, we are either traversing the center or any other inner polygon
-
-            // Traversing the center, cross can either be outer or inner from here
-            if (node.Owner == center)
-            {
-                if (!node.Data.Cross.Next.Data.IsOutside) return false;
-            }
-            // Traversing an inner here
-            else
-            {
-                if (node.Data.Cross.Next.Data.IsOutside) return false;
-            }
-
-            if (crossback == null) return true;
-            if (crossback == node.Next) return false;
-            return true;
+            return IntersectionResult.INTERSECTS;
         }
 
         /// <summary>
         /// Perform a boolean addition operation using the given information
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <typeparam name="U"></typeparam>
-        /// <param name="center"></param>
-        /// <param name="polygons"></param>
-        /// <param name="intersections"></param>
-        /// <returns></returns>
+        /// <typeparam name="T">The polygon vertex type to be return</typeparam>
+        /// <typeparam name="U">The polygon vertex that has properties needed to perform boolean operations</typeparam>
+        /// <param name="center">The polygon where the operation will be performed around (should be the hole inserted)</param>
+        /// <param name="intersections">List of intersection points produced from IntersectCutterAndPolygon</param>
+        /// <returns>List of polygons produced from this operation</returns>
         private static List<Polygon<T>> CombinePolygons<T, U>(Polygon<U> center, List<IntersectionPoints<U>> intersections)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
@@ -280,10 +473,22 @@ namespace PSDSystem
             if (center.Head == null || center.Count < 3 || intersections.Count == 0)
                 return outputPolygons;
 
+            // Function for determining if the given point is a crossing point
+            bool CheckSpecialAdditionCase(VertexNode<U> node)
+            {
+                if (node.Data.Cross == null) return false;
+                if (!node.Data.Cross.Next.Data.IsOutside) return false;
+                if (node.Data.Cross.Next.Data.Cross == null) return true;
+                var crossback = node.Data.Cross.Next.Data.Cross;
+                if (crossback == node.Next) return false;
+                return true;
+            }
+
             // Insert Points
             InsertIntersectionPoints(center, intersections);
 
             // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
+            // WHY: I DO NOT KNOW, PROBABLY HAS TO DO WITH ONE OF THE EDGE CASES
             while (true)
             {
                 VertexNode<U>? firstPoint = null, point = null;
@@ -334,6 +539,15 @@ namespace PSDSystem
             return outputPolygons;
         }
 
+        /// <summary>
+        /// Perform a boolean mixed addition-subtraction operation using the given information
+        /// </summary>
+        /// <typeparam name="T">The polygon vertex type to be return</typeparam>
+        /// <typeparam name="U">The polygon vertex that has properties needed to perform boolean operations</typeparam>
+        /// <param name="center">The polygon where the operation will be performed around (should be the hole inserted)</param>
+        /// <param name="outerIntersections">The intersecion points for the outer polygon produced from IntersectCutterAndPolygon</param>
+        /// <param name="innerIntersections">List of intersection points for inner polygons produced from IntersectCutterAndPolygon</param>
+        /// <returns>List of polygons produced from this operation</returns>
         private static List<Polygon<T>> CombinePolygons<T, U>(Polygon<U> center, IntersectionPoints<U> outerIntersections, List<IntersectionPoints<U>> innerIntersections)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
@@ -343,9 +557,41 @@ namespace PSDSystem
             if (center.Head == null || center.Count < 3 || outerIntersections.Polygon.Head == null)
                 return outputPolygons;
 
-            InsertIntersectionPoints(center, outerIntersections, innerIntersections);
-
             Polygon<U> outerPolygon = outerIntersections.Polygon;
+
+            // Function for determining if the given node is a crossing point
+            // TO DO FIX THE LOGIC AROUND THE CENTER POLYGON HAVING INCORRECT IsOutside FLAG
+            bool CheckSpecialSubtractionCase(VertexNode<U> node)
+            {
+                if (node.Data.Cross == null) return false;
+
+                var crossback = node.Data.Cross.Next.Data.Cross;
+
+                // Traversing the outer polygon, thus the cross should always be the center, but the crossback is unknown, could either be outer or another polygon
+                if (node.Owner == outerPolygon)
+                {
+                    if (node.Data.Cross.Next.Data.IsOutside) return false;
+                }
+
+                // From this point, we are either traversing the center or any other inner polygon
+
+                // Traversing the center, cross can either be outer or inner from here
+                if (node.Owner == center)
+                {
+                    if (!node.Data.Cross.Next.Data.IsOutside) return false;
+                }
+                // Traversing an inner here
+                else
+                {
+                    if (node.Data.Cross.Next.Data.IsOutside) return false;
+                }
+
+                if (crossback == null) return true;
+                if (crossback == node.Next) return false;
+                return true;
+            }
+
+            InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
             while (true)
             {
@@ -374,7 +620,7 @@ namespace PSDSystem
                         continue;
                     }
 
-                    bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point, center, outerPolygon);
+                    bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point);
 
                     int insertionIndex = newPolygon.Vertices.Count;
                     newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
@@ -434,7 +680,13 @@ namespace PSDSystem
             return -1;
         }
 
-        public static void InsertIntersectionPoints<T>(Polygon<T> cutter, List<IntersectionPoints<T>> allIntersections) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        /// <summary>
+        /// Helper function for inserting intersection points for an addition boolean operation
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="cutter"></param>
+        /// <param name="allIntersections"></param>
+        private static void InsertIntersectionPoints<T>(Polygon<T> cutter, List<IntersectionPoints<T>> allIntersections) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             if (allIntersections.Count == 0 || cutter.Vertices == null) return;
 
@@ -540,7 +792,14 @@ namespace PSDSystem
             }
         }
 
-        public static void InsertIntersectionPoints<T>(Polygon<T> cutter, IntersectionPoints<T> outerIntersections, List<IntersectionPoints<T>> innerIntersections) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        /// <summary>
+        /// Helper function for inserting intersection points need for a mixed addition-subtraction boolean operation
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="cutter"></param>
+        /// <param name="outerIntersections"></param>
+        /// <param name="innerIntersections"></param>
+        private static void InsertIntersectionPoints<T>(Polygon<T> cutter, IntersectionPoints<T> outerIntersections, List<IntersectionPoints<T>> innerIntersections) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             if (cutter.Vertices == null || outerIntersections.Polygon.Vertices == null) return;
 
@@ -698,225 +957,7 @@ namespace PSDSystem
             }
         }
 
-        public static int CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
-            where T : PolygonVertex
-            where U : PolygonVertex, IHasBooleanVertexProperties<U>
-        {
-            if (surface.Polygons.Count == 0 || cutter.Head == null || cutter.Vertices == null) return -1;
-
-            // Keep track of what groups to remove
-            List<PolygonGroup<T>> groupsToRemove = new List<PolygonGroup<T>>();
-
-            // List of tuples to store boolean lists and intersectionPoints generated through performing intersection tests.
-            List<Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>>> intersectedGroups = 
-                new List<Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>>>();
-
-            // If the cutter happens to be completely inside of a polygon, store that group
-            PolygonGroup<T>? groupCutterIsIn = null;
-
-            // Perform intersection test with cutter against all outer polygons
-            foreach (PolygonGroup<T> group in surface.Polygons)
-            {
-                Polygon<U> booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
-                Polygon<U> booleanPolygon = ConvertPolygonToBooleanList<T, U>(group.OuterPolygon);
-                IntersectionResult result = IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<U>? intersectionPoints);
-
-                if (result == IntersectionResult.CUTTER_IS_INSIDE)
-                {
-                    groupCutterIsIn = group;
-                    break;
-                }
-
-                switch (result)
-                {
-                    case IntersectionResult.INTERSECTS:
-                        // Store intersection result and remove the intersected groups
-                        intersectedGroups.Add(new Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>>(group, booleanCutter, intersectionPoints));
-                        groupsToRemove.Add(group);
-                        break;
-                    case IntersectionResult.POLYGON_IS_INSIDE:
-                        // Remove the group
-                        groupsToRemove.Add(group);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            // Remove the groups
-            foreach (PolygonGroup<T> group in groupsToRemove)
-            {
-                surface.RemoveGroup(group);
-            }
-
-            // Case 2
-            // For each outer polygon that was intersected...
-            foreach (Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>> tuple in intersectedGroups)
-            {
-                PolygonGroup<T> group = tuple.Item1;
-                Polygon<U> booleanCutter = tuple.Item2;
-                IntersectionPoints<U> outerIntersectionPoints = tuple.Item3;
-
-                // Intersect each inner polygon of the group
-                List<Polygon<T>> nonIntersectedInnerPolygons = new List<Polygon<T>>();
-                List<Polygon<U>> innerPolygonsToCombineWith = new List<Polygon<U>>();
-                List<IntersectionPoints<U>> listOfInnerIntersections = new List<IntersectionPoints<U>>();
-                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-                {
-                    Polygon<U> booleanInnerPolygon = ConvertPolygonToBooleanList<T, U>(innerPolygon);
-                    // Doing the operation below will incorrectly modify the IsOutside flag
-                    // TO DO: FIX THIS LOGIC
-                    IntersectionResult result = IntersectCutterAndPolygon(booleanCutter, booleanInnerPolygon, out IntersectionPoints<U>? intersectionPoints);
-
-                    switch(result)
-                    {
-                        case IntersectionResult.INTERSECTS:
-                            // Store Intersection result
-                            innerPolygonsToCombineWith.Add(booleanInnerPolygon);
-                            listOfInnerIntersections.Add(intersectionPoints);
-                            break;
-                        case IntersectionResult.BOTH_OUTSIDE:
-                            // Keep the polygon
-                            nonIntersectedInnerPolygons.Add(innerPolygon);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                // The implementation of CombinePolygons below has a work around for the incorrect logic define above. Should be fixed
-                List<Polygon<T>> polygonsProduced = CombinePolygons<T, U>(booleanCutter, outerIntersectionPoints, listOfInnerIntersections);
-                if (polygonsProduced.Count == 1)
-                {
-                    // Only one polygon was produced, add it as a new outer polygon
-                    surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
-                    return 5;
-                }
-                else if (polygonsProduced.Count > 1)
-                {
-                    // More than one polygon was produced
-                    for (int i = 0; i < polygonsProduced.Count; i++)
-                    {
-                        // Find which nonIntersectedInnerPolygons belong to which new polygon
-                        List<Polygon<T>> newInnerPolygons = new List<Polygon<T>>();
-
-                        foreach (Polygon<T> innerPolygon in nonIntersectedInnerPolygons)
-                        {
-                            if (innerPolygon.Vertices == null || innerPolygon.Head == null) continue;
-                            
-                            if (PointIsInsidePolygon(innerPolygon.Vertices[innerPolygon.Head.Data.Index], polygonsProduced[i]) == 1)
-                            {
-                                newInnerPolygons.Add(innerPolygon);
-                            }
-                        }
-
-                        // Add the new polygon as an outer polygon a long with the list of inner polygons
-                        surface.AddPair(polygonsProduced[i], newInnerPolygons);
-                    }
-
-                    return 6;
-                }
-            }
-
-            // Case 1
-            if (groupCutterIsIn != null)
-            {
-                Polygon<U> booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
-
-                List<Polygon<T>> newInnerPolygonsList = new List<Polygon<T>>();
-                List<Polygon<U>> innerPolygonsToCombineWith = new List<Polygon<U>>();
-                List<IntersectionPoints<U>> innerIntersectionPoints = new List<IntersectionPoints<U>>();
-
-                // Perform intersection test with cutter against all inner polygons of the group the cutter is in
-                foreach (Polygon<T> innerPolygon in groupCutterIsIn.InnerPolygons)
-                {
-                    Polygon<U> booleanPolygon = PSD.ConvertPolygonToBooleanList<T, U>(innerPolygon);
-                    IntersectionResult result = IntersectCutterAndPolygon(booleanCutter, booleanPolygon, out IntersectionPoints<U>? intersectionPoints);
-
-                    if (result == IntersectionResult.CUTTER_IS_INSIDE)
-                    {
-                        // Cutter is completely inside an inner polygon,
-                        // cutter will not produce any new polygons
-                        return 1;
-                    }
-
-                    switch (result)
-                    {
-                        case IntersectionResult.INTERSECTS:
-                            // Store intersection result
-                            innerPolygonsToCombineWith.Add(booleanPolygon);
-                            innerIntersectionPoints.Add(intersectionPoints);
-                            break;
-                        case IntersectionResult.BOTH_OUTSIDE:
-                            // Keep the inner polygon
-                            newInnerPolygonsList.Add(innerPolygon);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                if (innerIntersectionPoints.Count == 0)
-                {
-                    // No intersection was found, cutter is a new inner polygon
-                    groupCutterIsIn.InnerPolygons.Add(cutter);
-                    return 2;
-                }
-
-                // Replace the list
-                groupCutterIsIn.InnerPolygons = newInnerPolygonsList;
-
-                // Perform polygon addition operation
-                List<Polygon<T>> polygonsProduced = CombinePolygons<T, U>(booleanCutter, innerIntersectionPoints);
-                if (polygonsProduced.Count == 1)
-                {
-                    // Only 1 polygon was produced
-                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
-                    return 3;
-                }
-                else if (polygonsProduced.Count > 1)
-                {
-                    // NOTE: Some optimization can be done in the AddPolygons() function side
-
-                    // Multiple polygons was produced
-                    // Find the polygon that is on the outside
-                    int outsidePolygonIndex = 0;
-                    bool outsidePolygonFound = false;
-                    while (!outsidePolygonFound)
-                    {
-                        outsidePolygonFound = true;
-                        foreach (Polygon<T> polygon in polygonsProduced)
-                        {
-                            if (polygon == polygonsProduced[outsidePolygonIndex]) continue;
-
-                            Polygon<T> polygonBeingObserved = polygonsProduced[outsidePolygonIndex];
-
-                            if (PointIsInsidePolygon(polygonBeingObserved.Vertices[polygonBeingObserved.Head.Data.Index], polygon) != -1)
-                            {
-                                outsidePolygonFound = false;
-                                break;
-                            }
-                        }
-
-                        if (!outsidePolygonFound)
-                        {
-                            outsidePolygonIndex++;
-                        }
-                    }
-
-                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
-                    return 4;
-                }
-                else
-                {
-                    return -2;
-                }
-            }
-
-            return 0;
-        }
-
-        public static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon) where T : PolygonVertex
+        private static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon) where T : PolygonVertex
         {
             if (outerPolygon.Count < 3 || outerPolygon.Head == null || outerPolygon.Vertices == null ||
                 innerPolygon.Count < 3 || innerPolygon.Head == null || innerPolygon.Vertices == null) return null;
@@ -1259,7 +1300,6 @@ namespace PSDSystem
             // Triangulate each group
             foreach (PolygonGroup<T> group in surface.Polygons)
             {
-                
             }
 
             return output;

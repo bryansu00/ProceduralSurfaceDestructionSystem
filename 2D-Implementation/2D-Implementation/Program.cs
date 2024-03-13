@@ -48,7 +48,8 @@ class Program
 
                 InsertCircle(mousePos, 5.0f);
 
-                PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
+                int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
+                Console.WriteLine(res);
                 InitCutter();
 
                 PSD.TriangulateGroup(surface.Polygons[0], out triangles, out triangleVertices);
