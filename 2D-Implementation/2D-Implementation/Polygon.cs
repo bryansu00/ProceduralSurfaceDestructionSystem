@@ -61,8 +61,12 @@ namespace PSDSystem
         public Polygon(Polygon<T> polygon)
         {
             Count = 0;
-            // Should probably be a copy here
-            Vertices = polygon.Vertices;
+            Vertices = null;
+
+            // Make a copy here if possible
+            if (polygon.Vertices != null)
+                Vertices = new List<Vector2>(polygon.Vertices);
+
             Head = null;
 
             if (polygon.Head == null)

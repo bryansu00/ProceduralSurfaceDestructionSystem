@@ -957,7 +957,7 @@ namespace PSDSystem
             }
         }
 
-        private static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon) where T : PolygonVertex
+        private static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon, List<Vector2> vertices) where T : PolygonVertex
         {
             if (outerPolygon.Count < 3 || outerPolygon.Head == null || outerPolygon.Vertices == null ||
                 innerPolygon.Count < 3 || innerPolygon.Head == null || innerPolygon.Vertices == null) return null;
@@ -966,6 +966,7 @@ namespace PSDSystem
             List<Vector2> innerVertices = innerPolygon.Vertices;
 
             // Find the bridge
+            #region BridgeFinding
 
             // Get the right-most vertex of the inner polygon
             if (innerPolygon.RightMostVertex == null) 
@@ -1036,15 +1037,8 @@ namespace PSDSystem
             VertexNode<T> visibleOuterVertex = vertexP;
 
             float MIPArea = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]);
-            if (IsNearlyEqual(MIPArea, 0.0f))
-            {
-                // M and P are colinear, there might be a vertex that is on the line segment M & P, but
-                // for now assume M and P are visible for the time being
-
-                // TODO: Check if there is a vertex on line segment M & P 
-                Console.WriteLine("ConnectOuterAndInnerPolygon<T>() found M and P to be colinear, doing some unsafe stuff, please fix when possible.");
-            }
-            else
+            // If MIPArea == 0, then M and P are colinear, M and P must be mutually visible in this case
+            if (!IsNearlyEqual(MIPArea, 0.0f))
             {
                 bool MandPareVisible = true;
                 List<VertexNode<T>> possibleRVertices = new List<VertexNode<T>>();
@@ -1057,6 +1051,8 @@ namespace PSDSystem
                         now = now.Next;
                         continue;
                     }
+
+                    // TODO: Optimization for determining if a vertex is inside a triangle can be done below
 
                     // Determine if the vertex is inside the triangle (M, I, P) using Barycentric coordinates
                     // u = CAP / ABC
@@ -1093,7 +1089,7 @@ namespace PSDSystem
 
                 if (!MandPareVisible)
                 {
-                    // M and P are not mutually visible, Search for the reflex R that minimizes the angle
+                    // M and P are not mutually visible, Search for the reflex R with a minimum angle angle
                     // between ⟨M , I⟩ and ⟨M , R⟩; then M and R are mutually visible and the algorithm terminates.
                     float shortestAngle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexP.Data.Index]);
                     foreach (VertexNode<T> vertexR in possibleRVertices)
@@ -1107,18 +1103,17 @@ namespace PSDSystem
                     }
                 }
             }
-
-
-
-            // visibleOuterVertex and rightMostInnerVertex are vertices that are mutually visible and a bridge can be form
+            #endregion
+            // visibleOuterVertex and rightMostInnerVertex are vertices that are mutually visible and a bridge can be form between these two vertices
 
             Polygon<T> output = new Polygon<T>();
-            output.Vertices = new List<Vector2>(outerVertices);
+            // We are assuming that the vertices list will represent output's list of vertices
+            output.Vertices = vertices;
             // Start with the head of outer polygon
             VertexNode<T> outerNow = outerPolygon.Head;
             do
             {
-                // Insert the index of the outerNow since output.Vertices is a copy of outerVertices
+                // Insert the index of the outerNow since it's 
                 output.InsertVertexAtBack(outerNow.Data.Index);
 
                 // Transition to inner polygon
@@ -1152,15 +1147,18 @@ namespace PSDSystem
 
         private static bool IsAnEarTip<T>(VertexNode<T> node) where T : PolygonVertex
         {
+            // It is an eartip if it is convex and there is no other vertices inside its triangle
+            // It's reflex, then it is not an ear tip
             if (!IsConvex(node)) return false;
 
             List<Vector2> vertices = node.Owner.Vertices;
 
             bool isEar = true;
             VertexNode<T> now = node.Owner.Head;
+            // Check if there exist a vertex inside its triangle
             do
             {
-                // Skip the vertices we are evaluating is one of the triangle
+                // Skip the vertices if it is one of the triangle
                 if (now.Data.Index == node.Previous.Data.Index ||
                     now.Data.Index == node.Data.Index ||
                     now.Data.Index == node.Next.Data.Index)
@@ -1190,7 +1188,7 @@ namespace PSDSystem
 
             List<VertexNode<T>> output = new List<VertexNode<T>>();
 
-            // It is an eartip if it is convex and there is no other vertices inside its triangle
+            // Add each node to output list if it is an ear tip
             VertexNode<T> now = polygon.Head;
             do
             {
@@ -1202,6 +1200,7 @@ namespace PSDSystem
                 now = now.Next;
             } while (now != polygon.Head);
 
+            // No eartips found, return null
             if (output.Count <= 0) return null;
             return output;
         }
@@ -1215,6 +1214,7 @@ namespace PSDSystem
                 return;
             }
 
+            // Probably an unnecessary check here
             foreach (Polygon<T> innerPolygon in group.InnerPolygons)
             {
                 if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
@@ -1226,6 +1226,7 @@ namespace PSDSystem
             }
 
             Polygon<T> currentPolygon;
+            List<Vector2>? currentVertices;
             // If there is any inner polygons, combined with the outer polygon
             if (group.InnerPolygons.Count > 0)
             {
@@ -1233,13 +1234,16 @@ namespace PSDSystem
                 group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
 
                 currentPolygon = group.OuterPolygon;
+                currentVertices = new List<Vector2>(group.OuterPolygon.Vertices);
                 // Connect the outer polygon with the inner polygons
                 foreach (Polygon<T> innerPolygon in group.InnerPolygons)
                 {
-                    Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon);
+                    Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon, currentVertices);
                     if (result != null)
                     {
                         currentPolygon = result;
+                        // No need to do below as it should be done already in ConnectOuterAndInnerPolygon
+                        // currentPolygon.Vertices = currentVertices;
                     }
                 }
             }
@@ -1247,8 +1251,8 @@ namespace PSDSystem
             {
                 // Otherwise make a copy
                 currentPolygon = new Polygon<T>(group.OuterPolygon);
+                currentVertices = currentPolygon.Vertices;
             }
-
 
             // Identify the eartips of currentPolygon
             List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
@@ -1288,21 +1292,28 @@ namespace PSDSystem
             }
 
             triangles = output;
-            vertices = currentPolygon.Vertices;
+            vertices = currentVertices;
         }
 
-        public static List<int>? TriangulateSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
+        public static void TriangulateSurface<T>(SurfaceShape<T> surface, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
         {
-            if (surface.Polygons.Count <= 0) return null;
+            if (surface.Polygons.Count <= 0)
+            {
+                triangles = null;
+                vertices = null;
+                return;
+            }
 
-            List<int> output = new List<int>();
+            triangles = new List<int>();
+            vertices = new List<Vector2>();
 
             // Triangulate each group
             foreach (PolygonGroup<T> group in surface.Polygons)
             {
+                
             }
 
-            return output;
+            return;
         }
 
         /// <summary>
