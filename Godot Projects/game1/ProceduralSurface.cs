@@ -9,9 +9,10 @@ public partial class ProceduralSurface : Node3D
     {
         base._Ready();
 
-        _meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
+        MeshInstance3D placeHolder = GetNode<MeshInstance3D>("Placeholder");
+        //placeHolder.Visible = false;
 
-        GenerateMesh();
+        _meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
     }
 
     private void GenerateMesh()
