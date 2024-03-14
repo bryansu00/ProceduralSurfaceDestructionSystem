@@ -1,5 +1,6 @@
 using Godot;
 using PSDSystem;
+using System;
 using System.Collections.Generic;
 
 public partial class ProceduralSurface : Node3D
@@ -8,25 +9,97 @@ public partial class ProceduralSurface : Node3D
 
     private SurfaceShape<PolygonVertex> _surface;
 
+    private CoordinateConverter _coordinateConverter;
+
     public override void _Ready()
     {
         base._Ready();
 
         MeshInstance3D placeHolder = GetNode<MeshInstance3D>("Placeholder");
-        //placeHolder.Visible = false;
+        placeHolder.Visible = false;
 
         _meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
-        
+        _coordinateConverter = new CoordinateConverter(Vector3.Zero, Vector3.Right, Vector3.Up);
+
         InitSurface();
+        GenerateMeshSurface();
     }
 
     private void InitSurface()
     {
         _surface = new SurfaceShape<PolygonVertex>();
 
-        Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
-        polygon.Vertices = new List<Vector2>();
+        Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>() {
+            Vertices = new List<Vector2> {
+                new Vector2(-5.0f, -5.0f),
+                new Vector2(-5.0f, 5.0f),
+                new Vector2(5.0f, 5.0f),
+                new Vector2(5.0f, -5.0f)
+            }
+        };
 
+        polygon.InsertVertexAtBack(0);
+        polygon.InsertVertexAtBack(1);
+        polygon.InsertVertexAtBack(2);
+        polygon.InsertVertexAtBack(3);
+
+        _surface.AddOuterPolygon(polygon);
+    }
+
+    private void GenerateMeshSurface()
+    {
+        var surfaceArray = new Godot.Collections.Array();
+        surfaceArray.Resize((int)Mesh.ArrayType.Max);
+
+        // Stuff needed for the procedural mesh
+        List<Vector3> verts;
+        List<Vector2> uvs;
+        List<Vector3> normals;
+        List<int> indices;
+
+        // Generate the mesh here
+
+        // Generate Front Face
+        List<Vector2> verts2D;
+        PSD.TriangulateSurface(_surface, out indices, out verts2D);
+        if (indices == null || verts2D == null) return;
+
+        verts = _coordinateConverter.ConvertListTo3D(verts2D);
+
+        uvs = new List<Vector2>();
+        normals = new List<Vector3>();
+        for (int i = 0; i < verts.Count; i++)
+        {
+            uvs.Add(Vector2.Zero);
+            normals.Add(Vector3.Back);
+        }
+
+        // Generate Back Face
+        for (int i = 0; i < verts2D.Count; i++)
+        {
+            verts.Add(verts[i] - new Vector3(0.0f, 0.0f, 0.1f));
+            uvs.Add(Vector2.Zero);
+            normals.Add(Vector3.Forward);
+        }
+
+        for (int i = indices.Count - 1; i >= 0; i--)
+        {
+            indices.Add(indices[i] + verts2D.Count);
+        }
+
+        GD.Print(String.Join(", ", verts));
+        GD.Print(String.Join(", ", indices));
+
+        // Convert Lists to arrays and assign to surface array
+        surfaceArray[(int)Mesh.ArrayType.Vertex] = verts.ToArray();
+        surfaceArray[(int)Mesh.ArrayType.TexUV] = uvs.ToArray();
+        surfaceArray[(int)Mesh.ArrayType.Normal] = normals.ToArray();
+        surfaceArray[(int)Mesh.ArrayType.Index] = indices.ToArray();
+
+        ArrayMesh arrayMesh = new ArrayMesh();
+        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, surfaceArray);
+
+        _meshInstance.Mesh = arrayMesh;
     }
 
     private void GenerateMesh()
