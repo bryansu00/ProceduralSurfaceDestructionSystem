@@ -49,10 +49,9 @@ class Program
                 InsertCircle(mousePos, 5.0f);
 
                 int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                Console.WriteLine(res);
                 InitCutter();
 
-                PSD.TriangulateGroup(surface.Polygons[0], out triangles, out triangleVertices);
+                PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {

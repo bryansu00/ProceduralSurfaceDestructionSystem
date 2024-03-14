@@ -1205,12 +1205,10 @@ namespace PSDSystem
             return output;
         }
 
-        public static void TriangulateGroup<T>(PolygonGroup<T> group, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
+        public static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
         {
             if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
             {
-                triangles = null;
-                vertices = null;
                 return;
             }
 
@@ -1219,8 +1217,6 @@ namespace PSDSystem
             {
                 if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
                 {
-                    triangles = null;
-                    vertices = null;
                     return;
                 }
             }
@@ -1259,12 +1255,12 @@ namespace PSDSystem
             // No ear tips was found, thus triangulation is not possible
             if (earTips == null)
             {
-                triangles = null;
-                vertices = null;
                 return;
             }
 
-            List<int> output = new List<int>();
+            // Add on to the given list of vertices and triangles
+            int verticesListOffset = vertices.Count;
+            vertices.AddRange(currentVertices);
 
             while (earTips.Count > 0)
             {
@@ -1272,9 +1268,9 @@ namespace PSDSystem
                 VertexNode<T> earToClip = earTips[0];
 
                 // Add the triangles
-                output.Add(earToClip.Previous.Data.Index);
-                output.Add(earToClip.Data.Index);
-                output.Add(earToClip.Next.Data.Index);
+                triangles.Add(earToClip.Previous.Data.Index + verticesListOffset);
+                triangles.Add(earToClip.Data.Index + verticesListOffset);
+                triangles.Add(earToClip.Next.Data.Index + verticesListOffset);
 
                 // Clip the ear and remove from the list
                 currentPolygon.ClipVertex(earToClip);
@@ -1290,9 +1286,6 @@ namespace PSDSystem
                 if (IsAnEarTip(earToClip.Next))
                     earTips.Add(earToClip.Next);
             }
-
-            triangles = output;
-            vertices = currentVertices;
         }
 
         public static void TriangulateSurface<T>(SurfaceShape<T> surface, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
@@ -1310,7 +1303,7 @@ namespace PSDSystem
             // Triangulate each group
             foreach (PolygonGroup<T> group in surface.Polygons)
             {
-                
+                TriangulateGroup(group, triangles, vertices);
             }
 
             return;
