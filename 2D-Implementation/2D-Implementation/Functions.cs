@@ -957,6 +957,14 @@ namespace PSDSystem
             }
         }
 
+        /// <summary>
+        /// Given an outer polygon and a polygon that is inside of the outer polygon, form a bridge between these two polygons
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="outerPolygon">The polygon on the outside</param>
+        /// <param name="innerPolygon">The polygon inside of the outerPolygon</param>
+        /// <param name="vertices">The list vertices to modify and add to, should be the same as outerPolygon.Vertices</param>
+        /// <returns>Polygon that was the result of combining the inner and outer polygon</returns>
         private static Polygon<T>? ConnectOuterAndInnerPolygon<T>(Polygon<T> outerPolygon, Polygon<T> innerPolygon, List<Vector2> vertices) where T : PolygonVertex
         {
             if (outerPolygon.Count < 3 || outerPolygon.Head == null || outerPolygon.Vertices == null ||
@@ -1145,6 +1153,12 @@ namespace PSDSystem
             return output;
         }
 
+        /// <summary>
+        /// Check if the given node is an ear tip
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="node">The node to be checked</param>
+        /// <returns>True if the node is an ear tip, false otherwise</returns>
         private static bool IsAnEarTip<T>(VertexNode<T> node) where T : PolygonVertex
         {
             // It is an eartip if it is convex and there is no other vertices inside its triangle
@@ -1182,6 +1196,12 @@ namespace PSDSystem
             return isEar;
         }
 
+        /// <summary>
+        /// A function that finds all ear tips of the given polygon
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="polygon">The polygon to find the ear tips for</param>
+        /// <returns>List of nodes that have been identified to be ear tips, null if no eartips was found, or is not possible</returns>
         private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon) where T : PolygonVertex
         {
             if (polygon.Head == null || polygon.Vertices == null) return null;
@@ -1205,7 +1225,14 @@ namespace PSDSystem
             return output;
         }
 
-        public static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
+        /// <summary>
+        /// Triangulate a group outer polygon and its inner polygons
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group">The group of polygons to triangulate</param>
+        /// <param name="triangles">The list of triangles to add on to</param>
+        /// <param name="vertices">The list of vertices to add on to</param>
+        private static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
         {
             if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
             {
@@ -1288,6 +1315,13 @@ namespace PSDSystem
             }
         }
 
+        /// <summary>
+        /// Triangulate a polygon surface
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="surface">The surface to be triangulated</param>
+        /// <param name="triangles">The list of triangles generated from triangulation</param>
+        /// <param name="vertices">The list of vertices that make up the surface</param>
         public static void TriangulateSurface<T>(SurfaceShape<T> surface, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
         {
             if (surface.Polygons.Count <= 0)
@@ -1316,7 +1350,7 @@ namespace PSDSystem
         /// <typeparam name="U">The desired BooleanVertex class</typeparam>
         /// <param name="polygon">The polygon to convert</param>
         /// <returns>Copy of the given polygon but with BooleanVertex insteadd</returns>
-        public static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
+        private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
@@ -1335,6 +1369,14 @@ namespace PSDSystem
             return toReturn;
         }
 
+        /// <summary>
+        /// Determine if the given point is inside triangle abc
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static bool PointIsInsideTriangle(Vector2 point, Vector2 a, Vector2 b, Vector2 c)
         {
             float ABCarea = TriangleArea(a, b, c);
@@ -1451,11 +1493,24 @@ namespace PSDSystem
             return x * x + y * y;
         }
 
+        /// <summary>
+        /// Compute the area of triangle abc
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static float TriangleArea(Vector2 a, Vector2 b, Vector2 c)
         {
             return MathF.Abs(CrossProduct2D(b - a, c - a) / 2.0f);
         }
 
+        /// <summary>
+        /// Determine if the given node is convex
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="node"></param>
+        /// <returns></returns>
         private static bool IsConvex<T>(VertexNode<T> node) where T : PolygonVertex
         {
             if (node.Owner.Vertices == null) return false;
@@ -1471,6 +1526,11 @@ namespace PSDSystem
             return CrossProduct2D(a - b, c - b) > 0.0f;
         }
 
+        /// <summary>
+        /// Convert a 2D vector into diamond angle measurement
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
         private static float VectorToDiamondAngle(Vector2 v)
         {
             if (IsNearlyEqual(v.LengthSquared(), 0.0f))
@@ -1491,6 +1551,13 @@ namespace PSDSystem
             return 3.0f + v.X / (v.X - v.Y);
         }
 
+        /// <summary>
+        /// Get the angle diamond difference between vector ba and bc
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private static float DiamondAngleBetweenTwoVectors(Vector2 a, Vector2 b, Vector2 c)
         {
             Vector2 ba = a - b;

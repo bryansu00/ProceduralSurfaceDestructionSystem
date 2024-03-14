@@ -102,7 +102,7 @@ class Program
 
             foreach (PolygonGroup<PolygonVertex> group in surface.Polygons)
             {
-                DrawPolygon(group.OuterPolygon, Color.Black);
+                DrawPolygon(group.OuterPolygon, Color.Black, false);
                 foreach (Polygon<PolygonVertex> inner in group.InnerPolygons)
                 {
                     DrawPolygon(inner, Color.Blue, false);
