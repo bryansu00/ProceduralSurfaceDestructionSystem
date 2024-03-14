@@ -140,15 +140,4 @@ public partial class ProceduralSurface : Node3D
 
         _meshInstance.Mesh = arrayMesh;
     }
-
-    private void drawSphere(Vector3 position)
-    {
-        var instance = new MeshInstance3D();
-        _meshInstance.AddChild(instance);
-        instance.Position = position;
-        var sphere = new SphereMesh();
-        sphere.Radius = 0.1f;
-        sphere.Height = 0.1f;
-        instance.Mesh = sphere;
-    }
 }
