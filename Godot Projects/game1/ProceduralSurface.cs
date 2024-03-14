@@ -7,6 +7,8 @@ public partial class ProceduralSurface : Node3D
 {
     private MeshInstance3D _meshInstance;
 
+    private StaticBody3D _staticBody3D;
+
     private SurfaceShape<PolygonVertex> _surface;
 
     private CoordinateConverter _coordinateConverter;
@@ -18,11 +20,14 @@ public partial class ProceduralSurface : Node3D
         MeshInstance3D placeHolder = GetNode<MeshInstance3D>("Placeholder");
         placeHolder.Visible = false;
 
+        _staticBody3D = GetNode<StaticBody3D>("StaticBody3D");
         _meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
+
         _coordinateConverter = new CoordinateConverter(Vector3.Zero, Vector3.Right, Vector3.Up);
 
         InitSurface();
-        GenerateMeshSurface();
+        GenerateMeshOfSurface();
+        GenerateCollision();
     }
 
     private void InitSurface()
@@ -46,7 +51,7 @@ public partial class ProceduralSurface : Node3D
         _surface.AddOuterPolygon(polygon);
     }
 
-    private void GenerateMeshSurface()
+    private void GenerateMeshOfSurface()
     {
         var surfaceArray = new Godot.Collections.Array();
         surfaceArray.Resize((int)Mesh.ArrayType.Max);
@@ -87,9 +92,6 @@ public partial class ProceduralSurface : Node3D
             indices.Add(indices[i] + verts2D.Count);
         }
 
-        GD.Print(String.Join(", ", verts));
-        GD.Print(String.Join(", ", indices));
-
         // Convert Lists to arrays and assign to surface array
         surfaceArray[(int)Mesh.ArrayType.Vertex] = verts.ToArray();
         surfaceArray[(int)Mesh.ArrayType.TexUV] = uvs.ToArray();
@@ -100,6 +102,19 @@ public partial class ProceduralSurface : Node3D
         arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, surfaceArray);
 
         _meshInstance.Mesh = arrayMesh;
+    }
+
+    private void GenerateCollision()
+    {
+        List<Vector3> vertices = _coordinateConverter.ConvertListTo3D(_surface.Polygons[0].OuterPolygon.Vertices);
+
+        ConvexPolygonShape3D shape = new ConvexPolygonShape3D();
+        shape.Points = vertices.ToArray();
+        
+        CollisionShape3D collisionShape3D = new CollisionShape3D();
+        collisionShape3D.Shape = shape;
+
+        _staticBody3D.AddChild(collisionShape3D);
     }
 
     private void GenerateMesh()
