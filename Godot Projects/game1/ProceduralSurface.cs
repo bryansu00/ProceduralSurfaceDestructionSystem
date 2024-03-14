@@ -1,9 +1,12 @@
 using Godot;
+using PSDSystem;
 using System.Collections.Generic;
 
 public partial class ProceduralSurface : Node3D
 {
     private MeshInstance3D _meshInstance;
+
+    private SurfaceShape<PolygonVertex> _surface;
 
     public override void _Ready()
     {
@@ -13,6 +16,17 @@ public partial class ProceduralSurface : Node3D
         //placeHolder.Visible = false;
 
         _meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
+        
+        InitSurface();
+    }
+
+    private void InitSurface()
+    {
+        _surface = new SurfaceShape<PolygonVertex>();
+
+        Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
+        polygon.Vertices = new List<Vector2>();
+
     }
 
     private void GenerateMesh()
