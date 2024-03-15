@@ -1,5 +1,4 @@
 using Godot;
-using Godot.NativeInterop;
 
 public partial class Player : CharacterBody3D
 {
@@ -47,7 +46,11 @@ public partial class Player : CharacterBody3D
 
             if (result.Count > 0)
             {
-                GD.Print(result["rid"]);
+                StaticBody3D collided = (StaticBody3D)result["collider"];
+                if (collided.GetParent() is ProceduralSurface surface)
+                {
+                    surface.DamageSurface((Vector3)result["position"]);
+                }
             }
         }
     }

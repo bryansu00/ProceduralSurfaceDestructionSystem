@@ -30,6 +30,11 @@ public partial class ProceduralSurface : Node3D
         GenerateCollision();
     }
 
+    public void DamageSurface(Vector3 globalCollisionPoint)
+    {
+        GD.Print("Hello");
+    }
+
     private void InitSurface()
     {
         _surface = new SurfaceShape<PolygonVertex>();
