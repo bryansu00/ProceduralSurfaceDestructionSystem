@@ -1,4 +1,5 @@
 using Godot;
+using Godot.NativeInterop;
 
 public partial class Player : CharacterBody3D
 {
@@ -14,6 +15,8 @@ public partial class Player : CharacterBody3D
 
     private SpringArm3D _springArm;
 
+    private Camera3D _camera;
+
     private float _sensitivity = 0.1f;
 
     private float _totalPitch = 0.0f;
@@ -23,10 +26,44 @@ public partial class Player : CharacterBody3D
         base._Ready();
 
         _springArm = GetNode<SpringArm3D>("SpringArm");
+        _camera = _springArm.GetChild<Camera3D>(0);
         Input.MouseMode = Input.MouseModeEnum.Captured;
     }
 
     public override void _PhysicsProcess(double delta)
+    {
+        HandleMovement(delta);
+
+        if (Input.IsActionJustPressed("fire"))
+        {
+            GD.Print("Fire detected!");
+            
+            Vector3 from = _camera.GlobalPosition;
+            Vector3 to = from + (_springArm.Basis.Z * -10.0f);
+
+            PhysicsDirectSpaceState3D spaceState = GetWorld3D().DirectSpaceState;
+            PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(from, to, 0b00000000_00000000_00000000_00000001);
+            var result = spaceState.IntersectRay(query);
+
+            if (result.Count > 0)
+            {
+                GD.Print(result["rid"]);
+            }
+        }
+    }
+
+    private void DrawSphere(Vector3 pos)
+    {
+        var ins = new MeshInstance3D();
+        AddChild(ins);
+        ins.Position = pos;
+        var sphere = new SphereMesh();
+        sphere.Radius = 1.0f;
+        sphere.Height = 1.0f;
+        ins.Mesh = sphere;
+    }
+
+    private void HandleMovement(double delta)
     {
         // Local variable to store input direction
         Vector3 direction = Vector3.Zero;
