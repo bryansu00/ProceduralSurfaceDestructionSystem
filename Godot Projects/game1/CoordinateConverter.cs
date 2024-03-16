@@ -32,5 +32,13 @@ namespace PSDSystem
             }
             return output;
         }
+
+        public Vector2 ConvertTo2D(Vector3 v)
+        {
+            Vector3 localV = v - Origin;
+            float x = localV.Dot(XAxis) / XAxis.Dot(XAxis);
+            float y = localV.Dot(YAxis) / YAxis.Dot(YAxis);
+            return new Vector2(x, y);
+        }
     }
 }

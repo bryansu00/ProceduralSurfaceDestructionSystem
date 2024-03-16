@@ -32,8 +32,54 @@ public partial class ProceduralSurface : Node3D
 
     public void DamageSurface(Vector3 globalCollisionPoint)
     {
-        GD.Print("Hello");
+        Vector3 localCollisionPoint = globalCollisionPoint - GlobalPosition;
+        Vector2 collisionPointOnPlane = _coordinateConverter.ConvertTo2D(localCollisionPoint);
+        
+        Polygon<PolygonVertex> cutter = CreateCircle(collisionPointOnPlane, 0.05f);
+        int result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter);
+
+        GenerateMeshOfSurface();
+
+        GD.Print(result);
     }
+
+    private Polygon<PolygonVertex> CreateCircle(Vector2 center, float scale = 1.0f)
+    {
+        Polygon<PolygonVertex> shape = new Polygon<PolygonVertex> { Vertices = new List<Vector2> {
+                new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+            }
+        };
+
+        shape.InsertVertexAtBack(0);
+        shape.InsertVertexAtBack(1);
+        shape.InsertVertexAtBack(2);
+        shape.InsertVertexAtBack(3);
+        shape.InsertVertexAtBack(4);
+        shape.InsertVertexAtBack(5);
+        shape.InsertVertexAtBack(6);
+        shape.InsertVertexAtBack(7);
+
+        return shape;
+    }
+
+    private void DrawSphere(Vector3 pos)
+    {
+        var ins = new MeshInstance3D();
+        AddChild(ins);
+        ins.Position = pos;
+        var sphere = new SphereMesh();
+        sphere.Radius = 0.1f;
+        sphere.Height = 0.1f;
+        ins.Mesh = sphere;
+    }
+
 
     private void InitSurface()
     {

@@ -1,4 +1,5 @@
 using Godot;
+using System;
 
 public partial class Player : CharacterBody3D
 {
@@ -35,10 +36,8 @@ public partial class Player : CharacterBody3D
 
         if (Input.IsActionJustPressed("fire"))
         {
-            GD.Print("Fire detected!");
-            
             Vector3 from = _camera.GlobalPosition;
-            Vector3 to = from + (_springArm.Basis.Z * -10.0f);
+            Vector3 to = from + _springArm.Basis.Z * -10.0f;
 
             PhysicsDirectSpaceState3D spaceState = GetWorld3D().DirectSpaceState;
             PhysicsRayQueryParameters3D query = PhysicsRayQueryParameters3D.Create(from, to, 0b00000000_00000000_00000000_00000001);
@@ -61,8 +60,8 @@ public partial class Player : CharacterBody3D
         AddChild(ins);
         ins.Position = pos;
         var sphere = new SphereMesh();
-        sphere.Radius = 1.0f;
-        sphere.Height = 1.0f;
+        sphere.Radius = 0.1f;
+        sphere.Height = 0.1f;
         ins.Mesh = sphere;
     }
 
