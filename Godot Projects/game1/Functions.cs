@@ -1565,35 +1565,5 @@ namespace PSDSystem
                 return 4.0f - result;
             return result;
         }
-
-        /// <summary>
-        /// Debugging purpose
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="polygon"></param>
-        static void PrintBooleanList<T>(Polygon<T> polygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
-        {
-            if (polygon.Head == null) return;
-
-            StringBuilder sb = new StringBuilder();
-            VertexNode<T> now = polygon.Head;
-            do
-            {
-                sb.Append(now.Data.Index);
-
-                sb.Append(", Outside: ");
-                sb.Append(now.Data.IsOutside);
-
-                sb.Append(", Cross: ");
-                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
-                else sb.Append("None");
-
-                sb.Append("\n");
-
-                now = now.Next;
-            } while (now != polygon.Head);
-
-            Console.Write(sb.ToString());
-        }
     }
 }
