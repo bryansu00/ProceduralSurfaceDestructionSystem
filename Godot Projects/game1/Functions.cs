@@ -1341,6 +1341,107 @@ namespace PSDSystem
             return;
         }
 
+        public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth, 
+            List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
+        {
+            frontNormal = frontNormal.Normalized();
+
+            // For each group...
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                // Create side cap for each line segment of the outer polygon
+                List<Vector2> outerVertices = group.OuterPolygon.Vertices;
+                VertexNode<T> outerNow = group.OuterPolygon.Head;
+                do
+                {
+                    int verticesPreviousCount = vertices.Count;
+
+                    Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
+                    Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
+
+                    Vector3 aCopy = a - (frontNormal * depth);
+                    Vector3 bCopy = b - (frontNormal * depth);
+
+                    // Add these vertices to the list
+                    vertices.Add(a);
+                    vertices.Add(b);
+                    vertices.Add(bCopy);
+                    vertices.Add(aCopy);
+
+                    // Add the indices for the triangle
+                    indices.Add(verticesPreviousCount + 0);
+                    indices.Add(verticesPreviousCount + 1);
+                    indices.Add(verticesPreviousCount + 2);
+                    // The other triangle
+                    indices.Add(verticesPreviousCount + 2);
+                    indices.Add(verticesPreviousCount + 3);
+                    indices.Add(verticesPreviousCount + 0);
+
+                    // Calculate normal for the triangles and add it to the list of normals
+                    Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+
+                    // Add uvs...
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+
+                    outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
+                } while (outerNow != group.OuterPolygon.Head);
+
+                // Now for each inner polygons
+                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+                {
+                    List<Vector2> innerVertices = innerPolygon.Vertices;
+                    VertexNode<T> innerNow = innerPolygon.Head;
+                    do
+                    {
+                        int verticesPreviousCount = vertices.Count;
+
+                        Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
+                        Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
+
+                        Vector3 aCopy = a - (frontNormal * depth);
+                        Vector3 bCopy = b - (frontNormal * depth);
+
+                        // Add these vertices to the list
+                        vertices.Add(a);
+                        vertices.Add(b);
+                        vertices.Add(bCopy);
+                        vertices.Add(aCopy);
+
+                        // Add the indices for the triangle
+                        indices.Add(verticesPreviousCount + 0);
+                        indices.Add(verticesPreviousCount + 1);
+                        indices.Add(verticesPreviousCount + 2);
+                        // The other triangle
+                        indices.Add(verticesPreviousCount + 2);
+                        indices.Add(verticesPreviousCount + 3);
+                        indices.Add(verticesPreviousCount + 0);
+
+                        // Calculate normal for the triangles and add it to the list of normals
+                        Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
+
+                        // Add uvs...
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
+
+                        innerNow = innerNow.Previous;
+                    } while (innerNow != innerPolygon.Head);
+                }
+            }
+        }
+
         /// <summary>
         /// Convert the PolygonVertex of the given polygon into a BooleanVertex
         /// </summary>

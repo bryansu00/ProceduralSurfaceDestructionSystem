@@ -143,6 +143,10 @@ public partial class ProceduralSurface : Node3D
             indices.Add(indices[i] + verts2D.Count);
         }
 
+        // Generate Side cap
+        PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, 0.1f,
+            verts, normals, indices, uvs);
+
         // Convert Lists to arrays and assign to surface array
         surfaceArray[(int)Mesh.ArrayType.Vertex] = verts.ToArray();
         surfaceArray[(int)Mesh.ArrayType.TexUV] = uvs.ToArray();
