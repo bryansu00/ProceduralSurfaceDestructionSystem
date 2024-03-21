@@ -27,6 +27,9 @@ sky = SubResource("Sky_5noui")
 ambient_light_source = 3
 ambient_light_color = Color(0.615686, 1, 1, 1)
 reflected_light_source = 2
+tonemap_mode = 3
+tonemap_exposure = 0.48
+tonemap_white = 2.27
 
 [node name="Main" type="Node"]
 
@@ -50,6 +53,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24205, 6.3041, -5.00362)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(-0.180706, -0.75245, -0.633376, 0.246831, -0.658063, 0.711356, -0.952061, -0.0277904, 0.304644, -14.3948, 10.9453, -3.82824)
+shadow_enabled = true
 
 [node name="Control" type="Control" parent="."]
 layout_mode = 3
