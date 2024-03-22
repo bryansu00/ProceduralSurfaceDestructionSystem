@@ -20,11 +20,6 @@ namespace PSDSystem
             Polygons = new List<PolygonGroup<T>>();
         }
 
-        public SurfaceShape(List<PolygonGroup<T>> polygons)
-        {
-            Polygons = polygons;
-        }
-
         /// <summary>
         /// Add a polygon as an outer polygon
         /// </summary>

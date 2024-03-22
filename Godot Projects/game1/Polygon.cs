@@ -227,6 +227,15 @@ namespace PSDSystem
         /// </summary>
         public int Index { get; }
 
+        /// <summary>
+        /// Copy data from the given vertex to this vertex
+        /// </summary>
+        /// <param name="vertex">The vertex to copy data from</param>
+        public virtual void CopyData(PolygonVertex vertex)
+        {
+            
+        }
+
         public PolygonVertex(int index)
         {
             Index = index;

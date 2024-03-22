@@ -52,7 +52,7 @@ environment = SubResource("Environment_tfeg0")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24205, 6.3041, -5.00362)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(-0.180706, -0.75245, -0.633376, 0.246831, -0.658063, 0.711356, -0.952061, -0.0277904, 0.304644, -14.3948, 10.9453, -3.82824)
+transform = Transform3D(1, 0, 0, 0, 0.864354, 0.502884, 0, -0.502884, 0.864354, 0, 8.05519, 4.41396)
 shadow_enabled = true
 
 [node name="Control" type="Control" parent="."]
