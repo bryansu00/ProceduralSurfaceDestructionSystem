@@ -33,7 +33,10 @@ public partial class Player : CharacterBody3D
     public override void _PhysicsProcess(double delta)
     {
         HandleMovement(delta);
+    }
 
+    public override void _Process(double delta)
+    {
         if (Input.IsActionJustPressed("fire"))
         {
             Vector3 from = _camera.GlobalPosition;
