@@ -46,12 +46,7 @@ class Program
                 //cutter.Vertices.Add(mousePos);
                 //cutter.InsertVertexAtBack(verticesIdxAdded);
 
-                InsertCircle(mousePos, 5.0f);
-
-                int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                InitCutter();
-
-                PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
+                InsertCircle(mousePos, 10.0f);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
@@ -94,6 +89,9 @@ class Program
                 //PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
                 //InitCutter();
                 //testPolygon = PSD.ConnectOuterAndInnerPolygon(surface.Polygons[0].OuterPolygon, cutter);
+                int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
+                PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
+                InitCutter();
             }
 
             Raylib.BeginDrawing();
@@ -102,13 +100,13 @@ class Program
 
             foreach (PolygonGroup<PolygonVertex> group in surface.Polygons)
             {
-                DrawPolygon(group.OuterPolygon, Color.Black, false);
+                DrawPolygon(group.OuterPolygon, Color.Blue, false);
                 foreach (Polygon<PolygonVertex> inner in group.InnerPolygons)
                 {
-                    DrawPolygon(inner, Color.Blue, false);
+                    DrawPolygon(inner, Color.Red, false);
                 }
             }
-            DrawPolygon(cutter, Color.Red, true, true);
+            DrawPolygon(cutter, Color.Red, false, true);
 
             if (testPolygon != null)
                 DrawPolygon(testPolygon, Color.Green, true);
@@ -143,7 +141,7 @@ class Program
             Vector2 toUse = FlipY(polygon.Vertices[now.Data.Index]);
             Vector2 toUseNext = FlipY(polygon.Vertices[now.Next.Data.Index]);
 
-            Raylib.DrawLineEx(toUse, toUseNext, 1.0f, color);
+            Raylib.DrawLineEx(toUse, toUseNext, 2.0f, color);
             now = now.Next;
         } while (now != polygon.Head);
 
@@ -197,8 +195,8 @@ class Program
         List<Vector2> Vertices = [
             new Vector2(150.0f, 150.0f),
             new Vector2(150.0f, 550.0f),
-            new Vector2(1050.0f, 550.0f),
-            new Vector2(1050.0f, 150.0f)
+            new Vector2(550.0f, 550.0f),
+            new Vector2(550.0f, 150.0f)
         ];
 
         Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
