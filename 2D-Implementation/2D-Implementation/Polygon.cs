@@ -1,4 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿#nullable enable
 using System.Numerics;
 
 namespace PSDSystem
@@ -127,12 +127,12 @@ namespace PSDSystem
         /// <returns>The vertex inserted</returns>
         /// <exception cref="InvalidOperationException">The vertex given belongs to a different polygon</exception>
         /// <exception cref="Exception">Failed to instantiate a Vertex</exception>
-        public VertexNode<T> InsertVertexAfter(VertexNode<T> node, int index)
+        public VertexNode<T>? InsertVertexAfter(VertexNode<T> node, int index)
         {
-            if (node == null || node.Owner != this) throw new InvalidOperationException("Given node does not belong to the Polygon!");
+            if (node == null || node.Owner != this) return null;
 
             T? data = (T?)Activator.CreateInstance(typeof(T), index);
-            if (data == null) throw new Exception("Unable to create an instance of a Vertex!");
+            if (data == null) return null;
 
             VertexNode<T> newNode = new VertexNode<T>(this, data);
 
@@ -224,6 +224,15 @@ namespace PSDSystem
         /// The index that this vertex refers to
         /// </summary>
         public int Index { get; }
+
+        /// <summary>
+        /// Copy data from the given vertex to this vertex
+        /// </summary>
+        /// <param name="vertex">The vertex to copy data from</param>
+        public virtual void CopyData(PolygonVertex vertex)
+        {
+            
+        }
 
         public PolygonVertex(int index)
         {

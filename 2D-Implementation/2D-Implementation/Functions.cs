@@ -1,10 +1,6 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Metrics;
-using System.Drawing;
+﻿#nullable enable
+
 using System.Numerics;
-using System.Text;
-using static PSDSystem.PSD;
 
 namespace PSDSystem
 {
@@ -958,6 +954,124 @@ namespace PSDSystem
         }
 
         /// <summary>
+        /// Triangulate a group outer polygon and its inner polygons
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group">The group of polygons to triangulate</param>
+        /// <param name="triangles">The list of triangles to add on to</param>
+        /// <param name="vertices">The list of vertices to add on to</param>
+        private static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
+        {
+            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
+            {
+                return;
+            }
+
+            // Probably an unnecessary check here
+            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+            {
+                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
+                {
+                    return;
+                }
+            }
+
+            Polygon<T> currentPolygon;
+            List<Vector2>? currentVertices;
+            // If there is any inner polygons, combined with the outer polygon
+            if (group.InnerPolygons.Count > 0)
+            {
+                // Sort inner polygons from right-most to least right-most
+                group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
+
+                currentPolygon = group.OuterPolygon;
+                currentVertices = new List<Vector2>(group.OuterPolygon.Vertices);
+                // Connect the outer polygon with the inner polygons
+                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+                {
+                    Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon, currentVertices);
+                    if (result != null)
+                    {
+                        currentPolygon = result;
+                        // No need to do below as it should be done already in ConnectOuterAndInnerPolygon
+                        // currentPolygon.Vertices = currentVertices;
+                    }
+                }
+            }
+            else
+            {
+                // Otherwise make a copy
+                currentPolygon = new Polygon<T>(group.OuterPolygon);
+                currentVertices = currentPolygon.Vertices; // No need to make a copy of currentPolygon.Vertices as it'll will be copied later
+            }
+
+            // Identify the eartips of currentPolygon
+            List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
+            // No ear tips was found, thus triangulation is not possible
+            if (earTips == null)
+            {
+                return;
+            }
+
+            // Add on to the given list of vertices and triangles
+            int verticesListOffset = vertices.Count;
+            vertices.AddRange(currentVertices);
+
+            while (earTips.Count > 0)
+            {
+                // Get the ear to clip
+                VertexNode<T> earToClip = earTips[0];
+
+                // Add the triangles
+                triangles.Add(earToClip.Previous.Data.Index + verticesListOffset);
+                triangles.Add(earToClip.Data.Index + verticesListOffset);
+                triangles.Add(earToClip.Next.Data.Index + verticesListOffset);
+
+                // Clip the ear and remove from the list
+                currentPolygon.ClipVertex(earToClip);
+                earTips.Remove(earToClip);
+
+                // The neighbors may no longer be ears remove them
+                earTips.Remove(earToClip.Previous);
+                earTips.Remove(earToClip.Next);
+
+                // Reprocess the neighbors
+                if (IsAnEarTip(earToClip.Previous))
+                    earTips.Add(earToClip.Previous);
+                if (IsAnEarTip(earToClip.Next))
+                    earTips.Add(earToClip.Next);
+            }
+        }
+
+        /// <summary>
+        /// Triangulate a polygon surface
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="surface">The surface to be triangulated</param>
+        /// <param name="triangles">The list of triangles generated from triangulation</param>
+        /// <param name="vertices">The list of vertices that make up the surface</param>
+        public static void TriangulateSurface<T>(SurfaceShape<T> surface, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
+        {
+            if (surface.Polygons.Count <= 0)
+            {
+                triangles = null;
+                vertices = null;
+                return;
+            }
+
+            triangles = new List<int>();
+            vertices = new List<Vector2>();
+
+            // Triangulate each group
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                TriangulateGroup(group, triangles, vertices);
+            }
+
+            return;
+        }
+
+        /// <summary>
         /// Given an outer polygon and a polygon that is inside of the outer polygon, form a bridge between these two polygons
         /// </summary>
         /// <typeparam name="T"></typeparam>
@@ -1225,123 +1339,106 @@ namespace PSDSystem
             return output;
         }
 
-        /// <summary>
-        /// Triangulate a group outer polygon and its inner polygons
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="group">The group of polygons to triangulate</param>
-        /// <param name="triangles">The list of triangles to add on to</param>
-        /// <param name="vertices">The list of vertices to add on to</param>
-        private static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
-        {
-            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
-            {
-                return;
-            }
+        //public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth, 
+        //    List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
+        //{
+        //    frontNormal = frontNormal.Normalized();
 
-            // Probably an unnecessary check here
-            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-            {
-                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
-                {
-                    return;
-                }
-            }
+        //    // For each group...
+        //    foreach (PolygonGroup<T> group in surface.Polygons)
+        //    {
+        //        // Create side cap for each line segment of the outer polygon
+        //        List<Vector2> outerVertices = group.OuterPolygon.Vertices;
+        //        VertexNode<T> outerNow = group.OuterPolygon.Head;
+        //        do
+        //        {
+        //            int verticesPreviousCount = vertices.Count;
 
-            Polygon<T> currentPolygon;
-            List<Vector2>? currentVertices;
-            // If there is any inner polygons, combined with the outer polygon
-            if (group.InnerPolygons.Count > 0)
-            {
-                // Sort inner polygons from right-most to least right-most
-                group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
+        //            Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
+        //            Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
 
-                currentPolygon = group.OuterPolygon;
-                currentVertices = new List<Vector2>(group.OuterPolygon.Vertices);
-                // Connect the outer polygon with the inner polygons
-                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-                {
-                    Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon, currentVertices);
-                    if (result != null)
-                    {
-                        currentPolygon = result;
-                        // No need to do below as it should be done already in ConnectOuterAndInnerPolygon
-                        // currentPolygon.Vertices = currentVertices;
-                    }
-                }
-            }
-            else
-            {
-                // Otherwise make a copy
-                currentPolygon = new Polygon<T>(group.OuterPolygon);
-                currentVertices = currentPolygon.Vertices;
-            }
+        //            Vector3 aCopy = a - (frontNormal * depth);
+        //            Vector3 bCopy = b - (frontNormal * depth);
 
-            // Identify the eartips of currentPolygon
-            List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
-            // No ear tips was found, thus triangulation is not possible
-            if (earTips == null)
-            {
-                return;
-            }
+        //            // Add these vertices to the list
+        //            vertices.Add(a);
+        //            vertices.Add(b);
+        //            vertices.Add(bCopy);
+        //            vertices.Add(aCopy);
 
-            // Add on to the given list of vertices and triangles
-            int verticesListOffset = vertices.Count;
-            vertices.AddRange(currentVertices);
+        //            // Add the indices for the triangle
+        //            indices.Add(verticesPreviousCount + 0);
+        //            indices.Add(verticesPreviousCount + 1);
+        //            indices.Add(verticesPreviousCount + 2);
+        //            // The other triangle
+        //            indices.Add(verticesPreviousCount + 2);
+        //            indices.Add(verticesPreviousCount + 3);
+        //            indices.Add(verticesPreviousCount + 0);
 
-            while (earTips.Count > 0)
-            {
-                // Get the ear to clip
-                VertexNode<T> earToClip = earTips[0];
+        //            // Calculate normal for the triangles and add it to the list of normals
+        //            Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+        //            normals.Add(triangleNormal);
+        //            normals.Add(triangleNormal);
+        //            normals.Add(triangleNormal);
+        //            normals.Add(triangleNormal);
 
-                // Add the triangles
-                triangles.Add(earToClip.Previous.Data.Index + verticesListOffset);
-                triangles.Add(earToClip.Data.Index + verticesListOffset);
-                triangles.Add(earToClip.Next.Data.Index + verticesListOffset);
+        //            // Add uvs...
+        //            uvs.Add(Vector2.Zero);
+        //            uvs.Add(Vector2.Zero);
+        //            uvs.Add(Vector2.Zero);
+        //            uvs.Add(Vector2.Zero);
 
-                // Clip the ear and remove from the list
-                currentPolygon.ClipVertex(earToClip);
-                earTips.Remove(earToClip);
+        //            outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
+        //        } while (outerNow != group.OuterPolygon.Head);
 
-                // The neighbors may no longer be ears remove them
-                earTips.Remove(earToClip.Previous);
-                earTips.Remove(earToClip.Next);
+        //        // Now for each inner polygons
+        //        foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+        //        {
+        //            List<Vector2> innerVertices = innerPolygon.Vertices;
+        //            VertexNode<T> innerNow = innerPolygon.Head;
+        //            do
+        //            {
+        //                int verticesPreviousCount = vertices.Count;
 
-                // Reprocess the neighbot
-                if (IsAnEarTip(earToClip.Previous))
-                    earTips.Add(earToClip.Previous);
-                if (IsAnEarTip(earToClip.Next))
-                    earTips.Add(earToClip.Next);
-            }
-        }
+        //                Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
+        //                Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
 
-        /// <summary>
-        /// Triangulate a polygon surface
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="surface">The surface to be triangulated</param>
-        /// <param name="triangles">The list of triangles generated from triangulation</param>
-        /// <param name="vertices">The list of vertices that make up the surface</param>
-        public static void TriangulateSurface<T>(SurfaceShape<T> surface, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
-        {
-            if (surface.Polygons.Count <= 0)
-            {
-                triangles = null;
-                vertices = null;
-                return;
-            }
+        //                Vector3 aCopy = a - (frontNormal * depth);
+        //                Vector3 bCopy = b - (frontNormal * depth);
 
-            triangles = new List<int>();
-            vertices = new List<Vector2>();
+        //                // Add these vertices to the list
+        //                vertices.Add(a);
+        //                vertices.Add(b);
+        //                vertices.Add(bCopy);
+        //                vertices.Add(aCopy);
 
-            // Triangulate each group
-            foreach (PolygonGroup<T> group in surface.Polygons)
-            {
-                TriangulateGroup(group, triangles, vertices);
-            }
+        //                // Add the indices for the triangle
+        //                indices.Add(verticesPreviousCount + 0);
+        //                indices.Add(verticesPreviousCount + 1);
+        //                indices.Add(verticesPreviousCount + 2);
+        //                // The other triangle
+        //                indices.Add(verticesPreviousCount + 2);
+        //                indices.Add(verticesPreviousCount + 3);
+        //                indices.Add(verticesPreviousCount + 0);
 
-            return;
-        }
+        //                // Calculate normal for the triangles and add it to the list of normals
+        //                Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+        //                normals.Add(triangleNormal);
+        //                normals.Add(triangleNormal);
+        //                normals.Add(triangleNormal);
+        //                normals.Add(triangleNormal);
+
+        //                // Add uvs...
+        //                uvs.Add(Vector2.Zero);
+        //                uvs.Add(Vector2.Zero);
+        //                uvs.Add(Vector2.Zero);
+        //                uvs.Add(Vector2.Zero);
+
+        //                innerNow = innerNow.Previous;
+        //            } while (innerNow != innerPolygon.Head);
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Convert the PolygonVertex of the given polygon into a BooleanVertex
@@ -1363,7 +1460,8 @@ namespace PSDSystem
             VertexNode<T> now = polygon.Head;
             do
             {
-                toReturn.InsertVertexAtBack(now.Data.Index);
+                VertexNode<U> copy = toReturn.InsertVertexAtBack(now.Data.Index);
+                copy.Data.CopyData(now.Data);
                 now = now.Next;
             } while (now != polygon.Head);
             return toReturn;
@@ -1566,36 +1664,6 @@ namespace PSDSystem
             if (result > 2.0f)
                 return 4.0f - result;
             return result;
-        }
-
-        /// <summary>
-        /// Debugging purpose
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="polygon"></param>
-        static void PrintBooleanList<T>(Polygon<T> polygon) where T : PolygonVertex, IHasBooleanVertexProperties<T>
-        {
-            if (polygon.Head == null) return;
-
-            StringBuilder sb = new StringBuilder();
-            VertexNode<T> now = polygon.Head;
-            do
-            {
-                sb.Append(now.Data.Index);
-
-                sb.Append(", Outside: ");
-                sb.Append(now.Data.IsOutside);
-
-                sb.Append(", Cross: ");
-                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
-                else sb.Append("None");
-
-                sb.Append("\n");
-
-                now = now.Next;
-            } while (now != polygon.Head);
-
-            Console.Write(sb.ToString());
         }
     }
 }

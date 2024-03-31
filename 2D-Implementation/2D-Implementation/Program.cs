@@ -195,8 +195,8 @@ class Program
         List<Vector2> Vertices = [
             new Vector2(150.0f, 150.0f),
             new Vector2(150.0f, 550.0f),
-            new Vector2(550.0f, 550.0f),
-            new Vector2(550.0f, 150.0f)
+            new Vector2(1050.0f, 550.0f),
+            new Vector2(1050.0f, 150.0f)
         ];
 
         Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
