@@ -376,6 +376,21 @@ namespace PSDSystem
         //    }
         //}
 
+        public static List<List<Vector2>>? FindConvexVerticesOfSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
+        {
+            if (surface.Polygons.Count <= 0) return null;
+
+            List<List<Vector2>> output = new List<List<Vector2>>();
+
+            // Find convex vertices of each group
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                FindConvexVerticesOfGroup(group, output);
+            }
+
+            return output;
+        }
+
         /// <summary>
         /// Perform a boolean addition operation using the given information
         /// </summary>
@@ -1033,29 +1048,8 @@ namespace PSDSystem
             }
         }
 
-        /// <summary>
-        /// Triangulate a group outer polygon and its inner polygons
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="group">The group of polygons to triangulate</param>
-        /// <param name="triangles">The list of triangles to add on to</param>
-        /// <param name="vertices">The list of vertices to add on to</param>
-        private static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
+        private static Polygon<T>? CombineGroupIntoOne<T>(PolygonGroup<T> group) where T : PolygonVertex
         {
-            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
-            {
-                return;
-            }
-
-            // Probably an unnecessary check here
-            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-            {
-                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
-                {
-                    return;
-                }
-            }
-
             Polygon<T> currentPolygon;
             List<Vector2>? currentVertices;
             // If there is any inner polygons, combined with the outer polygon
@@ -1080,10 +1074,47 @@ namespace PSDSystem
             }
             else
             {
-                // Otherwise make a copy
-                currentPolygon = new Polygon<T>(group.OuterPolygon);
-                currentVertices = currentPolygon.Vertices; // No need to make a copy of currentPolygon.Vertices as it'll will be copied later
+                // Otherwise return null as there is no need 'combine' when there is not inner polygons 
+                return null;
             }
+
+            return currentPolygon;
+        }
+
+        /// <summary>
+        /// Triangulate a group outer polygon and its inner polygons
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group">The group of polygons to triangulate</param>
+        /// <param name="triangles">The list of triangles to add on to</param>
+        /// <param name="vertices">The list of vertices to add on to</param>
+        private static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
+        {
+            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
+            {
+                return;
+            }
+
+            // Probably an unnecessary check here
+            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+            {
+                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
+                {
+                    return;
+                }
+            }
+
+            // Combine the given group into one polygon
+            Polygon<T>? currentPolygon = CombineGroupIntoOne(group);
+            List<Vector2> currentVertices;
+            if (currentPolygon == null)
+            {
+                // CombineGroupIntoOne failed probably because lack of inner polygons
+                // Make a copy
+                currentPolygon = new Polygon<T>(group.OuterPolygon);
+                // No need to make a copy of currentPolygon.Vertices as it'll will be copied later
+            }
+            currentVertices = currentPolygon.Vertices;
 
             // Identify the eartips of currentPolygon
             List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
@@ -1120,6 +1151,135 @@ namespace PSDSystem
                     earTips.Add(earToClip.Previous);
                 if (IsAnEarTip(earToClip.Next))
                     earTips.Add(earToClip.Next);
+            }
+        }
+
+        public static void FindConvexVerticesOfGroup<T>(PolygonGroup<T> group, List<List<Vector2>> convexVerticesGroups) where T : PolygonVertex
+        {
+            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
+            {
+                return;
+            }
+
+            // Probably an unnecessary check here
+            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+            {
+                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
+                {
+                    return;
+                }
+            }
+
+            // Combine the given group into one polygon
+            Polygon<T>? currentPolygon = CombineGroupIntoOne(group);
+            List<Vector2> currentVertices;
+            if (currentPolygon == null)
+            {
+                // CombineGroupIntoOne failed probably because lack of inner polygons
+                // Make a copy
+                currentPolygon = new Polygon<T>(group.OuterPolygon);
+                currentVertices = new List<Vector2>(currentPolygon.Vertices);
+            }
+            else
+                currentVertices = currentPolygon.Vertices;
+
+            // Identify the eartips of currentPolygon
+            List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
+            // No ear tips was found, thus no convex group of vertices exist
+            if (earTips == null)
+            {
+                return;
+            }
+
+            while (earTips.Count > 0)
+            {
+                List<Vector2> convexVertices = new List<Vector2>();
+
+                // Get the ear to clip
+                VertexNode<T> earToClip = earTips[0];
+
+                // Add the vertices
+                convexVertices.Add(currentVertices[earToClip.Previous.Data.Index]);
+                convexVertices.Add(currentVertices[earToClip.Data.Index]);
+                convexVertices.Add(currentVertices[earToClip.Next.Data.Index]);
+
+                // Clip the ear and remove from the list
+                currentPolygon.ClipVertex(earToClip);
+                earTips.Remove(earToClip);
+
+                // Keep track if it is next and previous was not an eartip
+                bool nextWasNotAnEarTip = !earTips.Contains(earToClip.Next);
+                bool previousWasNotAnEarTip = !earTips.Contains(earToClip.Previous);
+
+                // The neighbors may no longer be ears remove them
+                earTips.Remove(earToClip.Previous);
+                earTips.Remove(earToClip.Next);
+
+                // Reprocess the neighbors
+                if (IsAnEarTip(earToClip.Previous))
+                    earTips.Add(earToClip.Previous);
+                if (IsAnEarTip(earToClip.Next))
+                    earTips.Add(earToClip.Next);
+
+                // The values may become false now due to reprocessing
+                nextWasNotAnEarTip = nextWasNotAnEarTip || !earTips.Contains(earToClip.Next);
+                previousWasNotAnEarTip = previousWasNotAnEarTip || !earTips.Contains(earToClip.Previous);
+
+                VertexNode<T> next = earToClip.Next;
+                while (!nextWasNotAnEarTip && earTips.Count > 0)
+                {
+                    // Add the next.Next to the list
+                    convexVertices.Add(currentVertices[next.Next.Data.Index]);
+
+                    // Clip and remove from the list
+                    currentPolygon.ClipVertex(next);
+                    earTips.Remove(next);
+
+                    // Keep track if next.Next was not an ear tip
+                    nextWasNotAnEarTip = !earTips.Contains(next.Next);
+
+                    // next.Next may no longer be an ear, remove and reprocess
+                    earTips.Remove(next.Next);
+                    if (IsAnEarTip(next.Next))
+                        earTips.Add(next.Next);
+
+                    // The value may become false now due to reprocessing
+                    nextWasNotAnEarTip = nextWasNotAnEarTip || !earTips.Contains(next.Next);
+
+                    next = next.Next;
+                }
+
+                // Previous may be false now after the next loop
+                earTips.Remove(earToClip.Previous);
+                if (IsAnEarTip(earToClip.Previous))
+                    earTips.Add(earToClip.Previous);
+                previousWasNotAnEarTip = previousWasNotAnEarTip || !earTips.Contains(earToClip.Previous);
+
+                VertexNode<T> prev = earToClip.Previous;
+                while (!previousWasNotAnEarTip && earTips.Count > 0)
+                {
+                    // Add the vertex to the list
+                    convexVertices.Add(currentVertices[prev.Data.Index]);
+
+                    // Clip and remove from the list
+                    currentPolygon.ClipVertex(prev);
+                    earTips.Remove(prev);
+
+                    // Keep track if prev.Previous was not an ear tip
+                    previousWasNotAnEarTip = !earTips.Contains(prev.Previous);
+
+                    // prev.Previous may no longer be an ear, remove and reprocess
+                    earTips.Remove(prev.Previous);
+                    if (IsAnEarTip(prev.Previous))
+                        earTips.Add(next.Next);
+
+                    // The value may become false now due to reprocessing
+                    previousWasNotAnEarTip = previousWasNotAnEarTip || !earTips.Contains(prev.Previous);
+
+                    prev = prev.Previous;
+                }
+
+                convexVerticesGroups.Add(convexVertices);
             }
         }
 

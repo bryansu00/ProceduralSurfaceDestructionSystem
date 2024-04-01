@@ -5,6 +5,7 @@ using System.IO;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
+using System.Collections.Generic;
 
 class Program
 {
@@ -17,6 +18,7 @@ class Program
 
     private static List<int>? triangles = null;
     private static List<Vector2>? triangleVertices = null;
+    private static List<List<Vector2>>? convexVertices = null;
 
     private static Polygon<PolygonVertex>? testPolygon = null;
 
@@ -42,11 +44,11 @@ class Program
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
                 Vector2 mousePos = FlipY(Raylib.GetMousePosition());
-                //int verticesIdxAdded = cutter.Vertices.Count;
-                //cutter.Vertices.Add(mousePos);
-                //cutter.InsertVertexAtBack(verticesIdxAdded);
+                int verticesIdxAdded = cutter.Vertices.Count;
+                cutter.Vertices.Add(mousePos);
+                cutter.InsertVertexAtBack(verticesIdxAdded);
 
-                InsertCircle(mousePos, 10.0f);
+                //InsertCircle(mousePos, 10.0f);
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
@@ -90,7 +92,14 @@ class Program
                 //InitCutter();
                 //testPolygon = PSD.ConnectOuterAndInnerPolygon(surface.Polygons[0].OuterPolygon, cutter);
                 int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
+                //PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
+                convexVertices = new List<List<Vector2>>();
+                PSD.FindConvexVerticesOfGroup(surface.Polygons[0], convexVertices);
+                for (int i = 0; i < convexVertices.Count; i++)
+                {
+                    List<Vector2> verticesList = convexVertices[i];
+                    Console.WriteLine(verticesList.Count);
+                }
                 InitCutter();
             }
 
@@ -107,6 +116,9 @@ class Program
                 }
             }
             DrawPolygon(cutter, Color.Red, false, true);
+
+            if (convexVertices != null)
+                DrawConvexVertices(convexVertices);
 
             if (testPolygon != null)
                 DrawPolygon(testPolygon, Color.Green, true);
@@ -153,6 +165,20 @@ class Program
                 Raylib.DrawCircleV(toUse, 5.0f, color);
                 if (labelOnLeft) Raylib.DrawText(i.ToString(), (int)toUse.X - 6, (int)toUse.Y + 6, 12, color);
                 else Raylib.DrawText(i.ToString(), (int)toUse.X + 5, (int)toUse.Y + 5, 12, color);
+            }
+        }
+    }
+
+    static void DrawConvexVertices(List<List<Vector2>> convexVertices)
+    {
+        for (int i = 0; i < convexVertices.Count; i++)
+        {
+            List<Vector2> verticesList = convexVertices[i];
+
+            for (int j = 0; j < verticesList.Count; j++)
+            {
+                Vector2 a = FlipY(verticesList[j]);
+                Raylib.DrawCircleV(a, 10.0f, colors[i]);
             }
         }
     }
