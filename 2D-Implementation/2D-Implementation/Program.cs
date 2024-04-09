@@ -95,12 +95,14 @@ class Program
                 //InitCutter();
                 //testPolygon = PSD.ConnectOuterAndInnerPolygon(surface.Polygons[0].OuterPolygon, cutter);
                 int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                //PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
+                PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
 
-                convexVertices = new List<List<Vector2>>();
-                PSD.FindConvexVerticesOfGroup(surface.Polygons[0], convexVertices);
+                convexVertices = PSD.FindConvexVerticesOfSurface(surface);
 
                 InitCutter();
+
+                if (convexVertices != null && triangles != null)
+                    Console.WriteLine("# of Convex Groups: {0}, # of Triangles: {1}", convexVertices.Count, triangles.Count / 3.0f);
             }
 
             if (Raylib.IsKeyPressed(KeyboardKey.Right))
@@ -136,14 +138,14 @@ class Program
             }
             DrawPolygon(cutter, Color.Red, false, true);
 
-            if (convexVertices != null)
-                DrawConvexVertices(convexVertices);
-
             if (testPolygon != null)
                 DrawPolygon(testPolygon, Color.Green, true);
 
             if (triangles != null && triangleVertices != null)
                 DrawTriangulation(triangles, triangleVertices);
+
+            if (convexVertices != null)
+                DrawConvexVertices(convexVertices);
 
             Raylib.EndDrawing();
         }
@@ -197,7 +199,7 @@ class Program
         for (int i= 0; i< verticesList.Count; i++)
         {
             Vector2 a = FlipY(verticesList[i]);
-            Raylib.DrawCircleV(a, 10.0f, colors[selectedIndex]);
+            Raylib.DrawCircleV(a, 10.0f, Color.Blue);
         }
     }
 
