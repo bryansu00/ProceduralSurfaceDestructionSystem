@@ -1184,14 +1184,14 @@ namespace PSDSystem
                 currentVertices = currentPolygon.Vertices;
 
             // Identify the eartips of currentPolygon
-            List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
+            List<VertexNode<T>>? earTips = FindEarTips(currentPolygon, true);
             // No ear tips was found, thus no convex group of vertices exist
             if (earTips == null)
             {
                 return;
             }
 
-            while (earTips.Count > 0)
+            while (earTips.Count > 0 && currentPolygon.Count > 2)
             {
                 List<Vector2> convexVertices = new List<Vector2>();
 
@@ -1207,74 +1207,69 @@ namespace PSDSystem
                 currentPolygon.ClipVertex(earToClip);
                 earTips.Remove(earToClip);
 
-                // Keep track if it is next and previous was not an eartip
-                bool nextWasNotAnEarTip = !earTips.Contains(earToClip.Next);
-                bool previousWasNotAnEarTip = !earTips.Contains(earToClip.Previous);
+                // Keep track if it is next and previous is still an eartip
+                bool nextIsStillAnEarTip = earTips.Contains(earToClip.Next);
+                bool previousIsStillAnEarTip = earTips.Contains(earToClip.Previous);
 
                 // The neighbors may no longer be ears remove them
                 earTips.Remove(earToClip.Previous);
                 earTips.Remove(earToClip.Next);
 
                 // Reprocess the neighbors
-                if (IsAnEarTip(earToClip.Previous))
+                if (IsAnEarTip(earToClip.Previous, true))
                     earTips.Add(earToClip.Previous);
-                if (IsAnEarTip(earToClip.Next))
+                if (IsAnEarTip(earToClip.Next, true))
                     earTips.Add(earToClip.Next);
 
                 // The values may become false now due to reprocessing
-                nextWasNotAnEarTip = nextWasNotAnEarTip || !earTips.Contains(earToClip.Next);
-                previousWasNotAnEarTip = previousWasNotAnEarTip || !earTips.Contains(earToClip.Previous);
+                nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(earToClip.Next);
+                previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(earToClip.Previous);
 
                 VertexNode<T> next = earToClip.Next;
-                while (!nextWasNotAnEarTip && earTips.Count > 0)
+                while(nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
-                    // Add the next.Next to the list
+                    // Add next.Next's vertex to the list
                     convexVertices.Add(currentVertices[next.Next.Data.Index]);
 
                     // Clip and remove from the list
                     currentPolygon.ClipVertex(next);
                     earTips.Remove(next);
 
-                    // Keep track if next.Next was not an ear tip
-                    nextWasNotAnEarTip = !earTips.Contains(next.Next);
+                    // Keep track if next is still an ear tip
+                    nextIsStillAnEarTip = earTips.Contains(next.Next);
 
                     // next.Next may no longer be an ear, remove and reprocess
                     earTips.Remove(next.Next);
-                    if (IsAnEarTip(next.Next))
+                    if (IsAnEarTip(next.Next, true))
                         earTips.Add(next.Next);
 
                     // The value may become false now due to reprocessing
-                    nextWasNotAnEarTip = nextWasNotAnEarTip || !earTips.Contains(next.Next);
+                    nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(next.Next);
+
+                    if (next.Next == earToClip.Previous)
+                        // Update previous if next.Next happens to be earToClip.Previous
+                        previousIsStillAnEarTip = nextIsStillAnEarTip;
 
                     next = next.Next;
                 }
 
-                // Previous may be false now after the next loop
-                earTips.Remove(earToClip.Previous);
-                if (IsAnEarTip(earToClip.Previous))
-                    earTips.Add(earToClip.Previous);
-                previousWasNotAnEarTip = previousWasNotAnEarTip || !earTips.Contains(earToClip.Previous);
-
                 VertexNode<T> prev = earToClip.Previous;
-                while (!previousWasNotAnEarTip && earTips.Count > 0)
+                while (previousIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
-                    // Add the vertex to the list
-                    convexVertices.Add(currentVertices[prev.Data.Index]);
+                    // Add prev.Previous's vertex to the list
+                    convexVertices.Add(currentVertices[prev.Previous.Data.Index]);
 
                     // Clip and remove from the list
                     currentPolygon.ClipVertex(prev);
                     earTips.Remove(prev);
 
-                    // Keep track if prev.Previous was not an ear tip
-                    previousWasNotAnEarTip = !earTips.Contains(prev.Previous);
+                    // Keep track if prev is still an ear tip
+                    previousIsStillAnEarTip = earTips.Contains(prev.Previous);
 
                     // prev.Previous may no longer be an ear, remove and reprocess
                     earTips.Remove(prev.Previous);
-                    if (IsAnEarTip(prev.Previous))
-                        earTips.Add(next.Next);
-
-                    // The value may become false now due to reprocessing
-                    previousWasNotAnEarTip = previousWasNotAnEarTip || !earTips.Contains(prev.Previous);
+                    if (IsAnEarTip(prev.Previous, true))
+                        earTips.Add(prev.Previous);
 
                     prev = prev.Previous;
                 }
@@ -1485,11 +1480,11 @@ namespace PSDSystem
         /// <typeparam name="T"></typeparam>
         /// <param name="node">The node to be checked</param>
         /// <returns>True if the node is an ear tip, false otherwise</returns>
-        private static bool IsAnEarTip<T>(VertexNode<T> node) where T : PolygonVertex
+        private static bool IsAnEarTip<T>(VertexNode<T> node, bool includeZeroAngles = false) where T : PolygonVertex
         {
             // It is an eartip if it is convex and there is no other vertices inside its triangle
             // It's reflex, then it is not an ear tip
-            if (!IsConvex(node)) return false;
+            if (!IsConvex(node, includeZeroAngles)) return false;
 
             List<Vector2> vertices = node.Owner.Vertices;
 
@@ -1528,7 +1523,7 @@ namespace PSDSystem
         /// <typeparam name="T"></typeparam>
         /// <param name="polygon">The polygon to find the ear tips for</param>
         /// <returns>List of nodes that have been identified to be ear tips, null if no eartips was found, or is not possible</returns>
-        private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon) where T : PolygonVertex
+        private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon, bool includeZeroAngles = false) where T : PolygonVertex
         {
             if (polygon.Head == null || polygon.Vertices == null) return null;
 
@@ -1538,7 +1533,7 @@ namespace PSDSystem
             VertexNode<T> now = polygon.Head;
             do
             {
-                if (IsAnEarTip(now))
+                if (IsAnEarTip(now, includeZeroAngles))
                 {
                     output.Add(now);
                 }

@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Security.Cryptography.X509Certificates;
 using System.Collections.Generic;
+using System.Net.Security;
 
 class Program
 {
@@ -23,6 +24,8 @@ class Program
     private static Polygon<PolygonVertex>? testPolygon = null;
 
     private static List<Color> colors = new List<Color>();
+
+    private static int selectedIndex = 0;
 
     public static void Main()
     {
@@ -93,14 +96,30 @@ class Program
                 //testPolygon = PSD.ConnectOuterAndInnerPolygon(surface.Polygons[0].OuterPolygon, cutter);
                 int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
                 //PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
+
                 convexVertices = new List<List<Vector2>>();
                 PSD.FindConvexVerticesOfGroup(surface.Polygons[0], convexVertices);
-                for (int i = 0; i < convexVertices.Count; i++)
-                {
-                    List<Vector2> verticesList = convexVertices[i];
-                    Console.WriteLine(verticesList.Count);
-                }
+
                 InitCutter();
+            }
+
+            if (Raylib.IsKeyPressed(KeyboardKey.Right))
+            {
+                selectedIndex++;
+            }
+            else if (Raylib.IsKeyPressed(KeyboardKey.Left))
+            {
+                selectedIndex--;
+            }
+
+            if (Raylib.IsKeyPressed(KeyboardKey.Right) || Raylib.IsKeyPressed(KeyboardKey.Left))
+            {
+                if (convexVertices != null && selectedIndex < convexVertices.Count && selectedIndex >= 0)
+                {
+                    Console.Write(selectedIndex);
+                    Console.Write(": ");
+                    Console.WriteLine(convexVertices[selectedIndex].Count);
+                }
             }
 
             Raylib.BeginDrawing();
@@ -171,15 +190,14 @@ class Program
 
     static void DrawConvexVertices(List<List<Vector2>> convexVertices)
     {
-        for (int i = 0; i < convexVertices.Count; i++)
-        {
-            List<Vector2> verticesList = convexVertices[i];
+        if (selectedIndex >= convexVertices.Count || selectedIndex < 0) return;
 
-            for (int j = 0; j < verticesList.Count; j++)
-            {
-                Vector2 a = FlipY(verticesList[j]);
-                Raylib.DrawCircleV(a, 10.0f, colors[i]);
-            }
+        List<Vector2> verticesList = convexVertices[selectedIndex];
+
+        for (int i= 0; i< verticesList.Count; i++)
+        {
+            Vector2 a = FlipY(verticesList[i]);
+            Raylib.DrawCircleV(a, 10.0f, colors[selectedIndex]);
         }
     }
 
