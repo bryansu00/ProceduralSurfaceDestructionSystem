@@ -13,6 +13,8 @@ public partial class ProceduralSurface : Node3D
 
     private CoordinateConverter _coordinateConverter;
 
+    private readonly float _depth = 1.0f;
+
     public override void _Ready()
     {
         base._Ready();
@@ -23,7 +25,7 @@ public partial class ProceduralSurface : Node3D
         _staticBody3D = GetNode<StaticBody3D>("StaticBody3D");
         _meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
 
-        _coordinateConverter = new CoordinateConverter(Vector3.Zero, Vector3.Right, Vector3.Up);
+        _coordinateConverter = new CoordinateConverter(new Vector3(0.0f, 0.0f, _depth / 2.0f), Vector3.Right, Vector3.Up);
 
         InitSurface();
         GenerateMeshOfSurface();
@@ -68,18 +70,6 @@ public partial class ProceduralSurface : Node3D
 
         return shape;
     }
-
-    private void DrawSphere(Vector3 pos)
-    {
-        var ins = new MeshInstance3D();
-        AddChild(ins);
-        ins.Position = pos;
-        var sphere = new SphereMesh();
-        sphere.Radius = 0.1f;
-        sphere.Height = 0.1f;
-        ins.Mesh = sphere;
-    }
-
 
     private void InitSurface()
     {
@@ -133,7 +123,7 @@ public partial class ProceduralSurface : Node3D
         // Generate Back Face
         for (int i = 0; i < verts2D.Count; i++)
         {
-            verts.Add(verts[i] - new Vector3(0.0f, 0.0f, 0.1f));
+            verts.Add(verts[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
             uvs.Add(Vector2.Zero);
             normals.Add(Vector3.Forward);
         }
@@ -144,7 +134,7 @@ public partial class ProceduralSurface : Node3D
         }
 
         // Generate Side cap
-        PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, 0.1f,
+        PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, _depth / 2.0f,
             verts, normals, indices, uvs);
 
         // Convert Lists to arrays and assign to surface array
