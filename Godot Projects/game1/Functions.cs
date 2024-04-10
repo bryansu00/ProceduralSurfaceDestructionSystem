@@ -1,7 +1,7 @@
 ﻿#nullable enable
+
 using Godot;
 using System;
-using System.Text;
 using System.Collections.Generic;
 
 namespace PSDSystem
@@ -15,18 +15,6 @@ namespace PSDSystem
             CUTTER_IS_INSIDE = 1,
             POLYGON_IS_INSIDE = 2,
             BOTH_OUTSIDE = 3
-        }
-
-        /// <summary>
-        /// Check if the given two float values are nearly equal to each other
-        /// </summary>
-        /// <param name="a">The first value</param>
-        /// <param name="b">The second value</param>
-        /// <param name="epsilon">The threshold for comparison</param>
-        /// <returns>True if they are nearly equal to each other, false otherwise</returns>
-        private static bool IsNearlyEqual(float a, float b, float epsilon = 0.00001f)
-        {
-            return MathF.Abs(a - b) <= epsilon;
         }
 
         /// <summary>
@@ -262,196 +250,147 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Intersect a cutter polygon with another polygon and returns the findings between the two
+        /// Triangulate a polygon surface
         /// </summary>
-        /// <typeparam name="T">A vertex class that has boolean vertex properties to represent each vertex of a polygon and store additional results from the intersection test</typeparam>
-        /// <param name="cutter">The cutter polygon</param>
-        /// <param name="polygon">The other polygon</param>
-        /// <param name="intersectionPoints">List of intersection points to return</param>
-        /// <returns>The result from intersecting the two given polygons</returns>
-        private static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="surface">The surface to be triangulated</param>
+        /// <param name="triangles">The list of triangles generated from triangulation</param>
+        /// <param name="vertices">The list of vertices that make up the surface</param>
+        public static void TriangulateSurface<T>(SurfaceShape<T> surface, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
         {
-            // Intersection cannot performed, return for invalid operation
-            if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null || 
-                polygon.Count < 3 || polygon.Head == null || polygon.Vertices == null)
+            if (surface.Polygons.Count <= 0)
             {
-                intersectionPoints = null;
-                return IntersectionResult.FAILED;
+                triangles = null;
+                vertices = null;
+                return;
             }
 
-            // Get list of vertices
-            List<Vector2> polygonVertices = polygon.Vertices;
-            List<Vector2> cutterVertices = cutter.Vertices;
+            triangles = new List<int>();
+            vertices = new List<Vector2>();
 
-            // Remember the original bool value for these
-            // Needed for determining if cutter is outside of the polygon or vice-versa
-            bool originalPolygonOutsideFlag = polygon.Head.Data.IsOutside;
-            bool originalCutterOutsideFlag = cutter.Head.Data.IsOutside;
-
-            #region IntersectionTest
-
-            // List of intersection point, polygon vertex involved, t value, cutter vertex involved, and u value
-            List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>> intersections = new List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>>();
-
-            VertexNode<T> polygonNow = polygon.Head;
-            do
+            // Triangulate each group
+            foreach (PolygonGroup<T> group in surface.Polygons)
             {
-                Vector2 a0 = polygonVertices[polygonNow.Data.Index];
-                Vector2 a1 = polygonVertices[polygonNow.Next.Data.Index];
+                TriangulateGroup(group, triangles, vertices);
+            }
 
-                VertexNode<T> cutterNow = cutter.Head;
+            return;
+        }
+
+        public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth,
+            List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
+        {
+            frontNormal = frontNormal.Normalized();
+
+            // For each group...
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                // Create side cap for each line segment of the outer polygon
+                List<Vector2> outerVertices = group.OuterPolygon.Vertices;
+                VertexNode<T> outerNow = group.OuterPolygon.Head;
                 do
                 {
-                    Vector2 b0 = cutterVertices[cutterNow.Data.Index];
-                    Vector2 b1 = cutterVertices[cutterNow.Next.Data.Index];
+                    int verticesPreviousCount = vertices.Count;
 
-                    // Perform a line calculation
-                    int result = PartialLineIntersection(a0, a1, b0, b1, out float t, out float u);
+                    Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
+                    Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
 
-                    // Both line segments are non-colinear, thus t and u can be used to determine if they intersect
-                    if (result == 1)
+                    Vector3 aCopy = a - (frontNormal * depth);
+                    Vector3 bCopy = b - (frontNormal * depth);
+
+                    // Add these vertices to the list
+                    vertices.Add(a);
+                    vertices.Add(b);
+                    vertices.Add(bCopy);
+                    vertices.Add(aCopy);
+
+                    // Add the indices for the triangle
+                    indices.Add(verticesPreviousCount + 0);
+                    indices.Add(verticesPreviousCount + 1);
+                    indices.Add(verticesPreviousCount + 2);
+                    // The other triangle
+                    indices.Add(verticesPreviousCount + 2);
+                    indices.Add(verticesPreviousCount + 3);
+                    indices.Add(verticesPreviousCount + 0);
+
+                    // Calculate normal for the triangles and add it to the list of normals
+                    Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+
+                    // Add uvs...
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+
+                    outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
+                } while (outerNow != group.OuterPolygon.Head);
+
+                // Now for each inner polygons
+                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+                {
+                    List<Vector2> innerVertices = innerPolygon.Vertices;
+                    VertexNode<T> innerNow = innerPolygon.Head;
+                    do
                     {
-                        #region EdgeCase
-                        // ----------------------------------------------------------------------------
-                        // This is extremely unlikely due to floating point precision error,
-                        // but just in case...
-                        bool a0IsOnInfiniteRay = IsNearlyEqual(t, 0.0f); // a0 is intersecting with the cutter's infinite ray
-                        bool a1IsOnInfiniteRay = IsNearlyEqual(t, 1.0f);
-                        bool b0IsOnInfiniteRay = IsNearlyEqual(u, 0.0f);
-                        bool b1IsOnInfiniteRay = IsNearlyEqual(u, 1.0f);
+                        int verticesPreviousCount = vertices.Count;
 
-                        // Check if a0 or a1 is on an edge
-                        if (u >= 0.0f && u <= 1.0f)
-                        {
-                            // a0 is the intersection point...
-                            if (a0IsOnInfiniteRay)
-                            {
-                                polygonNow.Data.IsOutside = false;
-                                polygonNow.Data.OnEdge = true;
-                            }
-                            // a1 is the intersection point...
-                            else if (a1IsOnInfiniteRay)
-                            {
-                                polygonNow.Next.Data.IsOutside = false;
-                                polygonNow.Next.Data.OnEdge = true;
-                            }
-                        }
+                        Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
+                        Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
 
-                        // Check if b0 or b1 is on an edge
-                        if (t >= 0.0f && t <= 1.0f)
-                        {
-                            // b0 is the intersection point...
-                            if (b0IsOnInfiniteRay)
-                            {
-                                cutterNow.Data.IsOutside = false;
-                                cutterNow.Data.OnEdge = true;
-                            }
-                            // b0 is the intersection point...
-                            else if (b1IsOnInfiniteRay)
-                            {
-                                cutterNow.Next.Data.IsOutside = false;
-                                cutterNow.Next.Data.OnEdge = true;
-                            }
-                        }
+                        Vector3 aCopy = a - (frontNormal * depth);
+                        Vector3 bCopy = b - (frontNormal * depth);
 
-                        // Modify polygonBoolVertex.Data.IsOutside value
-                        if (polygonNow.Data.OnEdge == false)
-                        {
-                            bool polygonIntersectsAPoint = b0IsOnInfiniteRay || b1IsOnInfiniteRay;
-                            float polygonCrossProductToCuttersLine = 0.0f;
-                            // Line intersection occured at cutter's point b0
-                            if (b0IsOnInfiniteRay) polygonCrossProductToCuttersLine = CrossProduct2D(b0 - a0, b1 - a0);
-                            // Line intersection occured at cutter's point b1
-                            else if (b1IsOnInfiniteRay) polygonCrossProductToCuttersLine = CrossProduct2D(b1 - a0, b0 - a0);
-                            
-                            if (polygonIntersectsAPoint && polygonCrossProductToCuttersLine > 0.0f)
-                            {
-                                // Handle edge case where infinite ray of targetNow passes end points b0 and b1,
-                                // by ignoring if the other vertex is CCW or CW (does not matter which) or colinear to the first vertex
-                                // and changing isOutside if not ignored
-                                polygonNow.Data.IsOutside = !polygonNow.Data.IsOutside;
-                            }
+                        // Add these vertices to the list
+                        vertices.Add(a);
+                        vertices.Add(b);
+                        vertices.Add(bCopy);
+                        vertices.Add(aCopy);
 
-                            if (polygonIntersectsAPoint == false && t >= 0.0f && u >= 0.0f && u <= 1.0f)
-                            {
-                                // infinite ray from polygon's a0 intersects cutter's line segment
-                                polygonNow.Data.IsOutside = !polygonNow.Data.IsOutside;
-                            }
-                        }
+                        // Add the indices for the triangle
+                        indices.Add(verticesPreviousCount + 0);
+                        indices.Add(verticesPreviousCount + 1);
+                        indices.Add(verticesPreviousCount + 2);
+                        // The other triangle
+                        indices.Add(verticesPreviousCount + 2);
+                        indices.Add(verticesPreviousCount + 3);
+                        indices.Add(verticesPreviousCount + 0);
 
-                        // Modify cutterBoolVertex.Data.IsOutside value
-                        if (cutterNow.Data.OnEdge == false)
-                        {
-                            bool cutterIntersectsAPoint = a0IsOnInfiniteRay || a1IsOnInfiniteRay;
-                            float cutterCrossProductToPolygonLine = 0.0f;
-                            // Line intersection occured at polygon's a0
-                            if (a0IsOnInfiniteRay) cutterCrossProductToPolygonLine = CrossProduct2D(a0 - b0, a1 - b0);
-                            // Line intersection occured at polygon's a1
-                            else if (a1IsOnInfiniteRay) cutterCrossProductToPolygonLine = CrossProduct2D(a1 - b0, a0 - b0);
-                            
-                            if (cutterIntersectsAPoint && cutterCrossProductToPolygonLine > 0.0f)
-                            {
-                                cutterNow.Data.IsOutside = !cutterNow.Data.IsOutside;
-                            }
+                        // Calculate normal for the triangles and add it to the list of normals
+                        Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
 
-                            // infinite ray from cutter's b0 intersects cutter's line segment
-                            if (cutterIntersectsAPoint == false && u >= 0.0f && t >= 0.0f && t <= 1.0f)
-                            {
-                                cutterNow.Data.IsOutside = !cutterNow.Data.IsOutside;
-                            }
-                        }
+                        // Add uvs...
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
 
-                        // ----------------------------------------------------------------------------
-                        #endregion
+                        innerNow = innerNow.Previous;
+                    } while (innerNow != innerPolygon.Head);
+                }
+            }
+        }
 
-                        if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
-                        {
-                            Vector2 intersectionPoint = new Vector2(a0.X + t * (a1.X - a0.X), a0.Y + t * (a1.Y - a0.Y));
-                            intersections.Add(
-                                new Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>(intersectionPoint, polygonNow, t, cutterNow, u)
-                                );
-                        }
-                        
-                    }
-                    // Both line segments are colinear, (This is unlikely due to floating point error, just in case though...)
-                    else if (result == 0)
-                    {
-                        // polygonNow is on the edge of cutter's line segment
-                        if (t >= 0.0f && t <= 1.0f)
-                        {
-                            polygonNow.Data.IsOutside = false;
-                            polygonNow.Data.OnEdge = true;
-                        }
-                        // cutterNow is on the edge of target's line segment
-                        if (u >= 0.0f && u <= 0.0f)
-                        {
-                            cutterNow.Data.IsOutside = false;
-                            cutterNow.Data.OnEdge = true;
-                        }
-                    }
+        public static List<List<Vector2>>? FindConvexVerticesOfSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
+        {
+            if (surface.Polygons.Count <= 0) return null;
 
-                    cutterNow = cutterNow.Next;
-                } while (cutterNow != cutter.Head);
+            List<List<Vector2>> output = new List<List<Vector2>>();
 
-                polygonNow = polygonNow.Next;
-            } while (polygonNow != polygon.Head);
-            #endregion
-
-            if (intersections.Count == 0)
-            { 
-                // No intersection between the two given polygons, thus end function
-
-                // Determine which polygon is outside, or if both are outside each other, and then return the result.
-                bool cutterIsOutsidePolygon = originalCutterOutsideFlag ? cutter.Head.Data.IsOutside : !cutter.Head.Data.IsOutside;
-                bool polygonIsOutsidePolygon = originalPolygonOutsideFlag ? polygon.Head.Data.IsOutside : !polygon.Head.Data.IsOutside;
-
-                intersectionPoints = null;
-                if (polygonIsOutsidePolygon && cutterIsOutsidePolygon) return IntersectionResult.BOTH_OUTSIDE;
-                return cutterIsOutsidePolygon ? IntersectionResult.POLYGON_IS_INSIDE : IntersectionResult.CUTTER_IS_INSIDE;
+            // Find convex vertices of each group
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                FindConvexVerticesOfGroup(group, output);
             }
 
-            intersectionPoints = new IntersectionPoints<T>(polygon, intersections);
-            return IntersectionResult.INTERSECTS;
+            return output;
         }
 
         /// <summary>
@@ -519,7 +458,7 @@ namespace PSDSystem
                     int insertionIndex = newPolygon.Vertices.Count;
                     newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
                     newPolygon.InsertVertexAtBack(insertionIndex);
-                    
+
                     point.Data.Processed = true;
 
                     if (pointIsCrossingPoint)
@@ -642,40 +581,196 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Perform a partial line intersection computation between two lines
+        /// Intersect a cutter polygon with another polygon and returns the findings between the two
         /// </summary>
-        /// <param name="a0">Starting point of Line A</param>
-        /// <param name="a1">End point of Line A</param>
-        /// <param name="b0">Starting point of Line B</param>
-        /// <param name="b1">End point of Line B</param>
-        /// <param name="tValue">The t value computed</param>
-        /// <param name="uValue">The u value computed</param>
-        /// <returns>Returns 1 if the given lines are not parallel,
-        /// Returns 0 if the given lines are colinear,
-        /// Returns -1 if the given lines are parallel</returns>
-        private static int PartialLineIntersection(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out float tValue, out float uValue)
+        /// <typeparam name="T">A vertex class that has boolean vertex properties to represent each vertex of a polygon and store additional results from the intersection test</typeparam>
+        /// <param name="cutter">The cutter polygon</param>
+        /// <param name="polygon">The other polygon</param>
+        /// <param name="intersectionPoints">List of intersection points to return</param>
+        /// <returns>The result from intersecting the two given polygons</returns>
+        private static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
-            float determinant = (a0.X - a1.X) * (b0.Y - b1.Y) - (a0.Y - a1.Y) * (b0.X - b1.X);
-            if (!IsNearlyEqual(determinant, 0.0f))
+            // Intersection cannot performed, return for invalid operation
+            if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null ||
+                polygon.Count < 3 || polygon.Head == null || polygon.Vertices == null)
             {
-                tValue = ((a0.X - b0.X) * (b0.Y - b1.Y) - (a0.Y - b0.Y) * (b0.X - b1.X)) / determinant;
-                uValue = ((a1.X - a0.X) * (a0.Y - b0.Y) - (a1.Y - a0.Y) * (a0.X - b0.X)) / determinant;
-                return 1;
+                intersectionPoints = null;
+                return IntersectionResult.FAILED;
             }
-            else
+
+            // Get list of vertices
+            List<Vector2> polygonVertices = polygon.Vertices;
+            List<Vector2> cutterVertices = cutter.Vertices;
+
+            // Remember the original bool value for these
+            // Needed for determining if cutter is outside of the polygon or vice-versa
+            bool originalPolygonOutsideFlag = polygon.Head.Data.IsOutside;
+            bool originalCutterOutsideFlag = cutter.Head.Data.IsOutside;
+
+            #region IntersectionTest
+
+            // List of intersection point, polygon vertex involved, t value, cutter vertex involved, and u value
+            List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>> intersections = new List<Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>>();
+
+            VertexNode<T> polygonNow = polygon.Head;
+            do
             {
-                float top = ((a1.X - a0.X) * (a0.Y - b0.Y) + (a1.Y - a0.Y) * (a0.X - b0.X));
-                if (IsNearlyEqual(top, 0.0f)) // Lines are colinear
+                Vector2 a0 = polygonVertices[polygonNow.Data.Index];
+                Vector2 a1 = polygonVertices[polygonNow.Next.Data.Index];
+
+                VertexNode<T> cutterNow = cutter.Head;
+                do
                 {
-                    tValue = ((a0.X - b0.X) * (b1.X - b0.X) + (a0.Y - b0.Y) * (b1.Y - b0.Y)) /
-                        ((b1.X - b0.X) * (b1.X - b0.X) + (b1.Y - b0.Y) * (b1.Y - b0.Y));
-                    uValue = ((b0.X - a0.X) * (a1.X - a0.X) + (b0.Y - a0.Y) * (a1.Y - a0.Y)) /
-                        ((a1.X - a0.X) * (a1.X - a0.X) + (a1.Y - a0.Y) * (a1.Y - a0.Y));
-                    return 0;
-                }
+                    Vector2 b0 = cutterVertices[cutterNow.Data.Index];
+                    Vector2 b1 = cutterVertices[cutterNow.Next.Data.Index];
+
+                    // Perform a line calculation
+                    int result = PartialLineIntersection(a0, a1, b0, b1, out float t, out float u);
+
+                    // Both line segments are non-colinear, thus t and u can be used to determine if they intersect
+                    if (result == 1)
+                    {
+                        #region EdgeCase
+                        // ----------------------------------------------------------------------------
+                        // This is extremely unlikely due to floating point precision error,
+                        // but just in case...
+                        bool a0IsOnInfiniteRay = IsNearlyEqual(t, 0.0f); // a0 is intersecting with the cutter's infinite ray
+                        bool a1IsOnInfiniteRay = IsNearlyEqual(t, 1.0f);
+                        bool b0IsOnInfiniteRay = IsNearlyEqual(u, 0.0f);
+                        bool b1IsOnInfiniteRay = IsNearlyEqual(u, 1.0f);
+
+                        // Check if a0 or a1 is on an edge
+                        if (u >= 0.0f && u <= 1.0f)
+                        {
+                            // a0 is the intersection point...
+                            if (a0IsOnInfiniteRay)
+                            {
+                                polygonNow.Data.IsOutside = false;
+                                polygonNow.Data.OnEdge = true;
+                            }
+                            // a1 is the intersection point...
+                            else if (a1IsOnInfiniteRay)
+                            {
+                                polygonNow.Next.Data.IsOutside = false;
+                                polygonNow.Next.Data.OnEdge = true;
+                            }
+                        }
+
+                        // Check if b0 or b1 is on an edge
+                        if (t >= 0.0f && t <= 1.0f)
+                        {
+                            // b0 is the intersection point...
+                            if (b0IsOnInfiniteRay)
+                            {
+                                cutterNow.Data.IsOutside = false;
+                                cutterNow.Data.OnEdge = true;
+                            }
+                            // b0 is the intersection point...
+                            else if (b1IsOnInfiniteRay)
+                            {
+                                cutterNow.Next.Data.IsOutside = false;
+                                cutterNow.Next.Data.OnEdge = true;
+                            }
+                        }
+
+                        // Modify polygonBoolVertex.Data.IsOutside value
+                        if (polygonNow.Data.OnEdge == false)
+                        {
+                            bool polygonIntersectsAPoint = b0IsOnInfiniteRay || b1IsOnInfiniteRay;
+                            float polygonCrossProductToCuttersLine = 0.0f;
+                            // Line intersection occured at cutter's point b0
+                            if (b0IsOnInfiniteRay) polygonCrossProductToCuttersLine = CrossProduct2D(b0 - a0, b1 - a0);
+                            // Line intersection occured at cutter's point b1
+                            else if (b1IsOnInfiniteRay) polygonCrossProductToCuttersLine = CrossProduct2D(b1 - a0, b0 - a0);
+
+                            if (polygonIntersectsAPoint && polygonCrossProductToCuttersLine > 0.0f)
+                            {
+                                // Handle edge case where infinite ray of targetNow passes end points b0 and b1,
+                                // by ignoring if the other vertex is CCW or CW (does not matter which) or colinear to the first vertex
+                                // and changing isOutside if not ignored
+                                polygonNow.Data.IsOutside = !polygonNow.Data.IsOutside;
+                            }
+
+                            if (polygonIntersectsAPoint == false && t >= 0.0f && u >= 0.0f && u <= 1.0f)
+                            {
+                                // infinite ray from polygon's a0 intersects cutter's line segment
+                                polygonNow.Data.IsOutside = !polygonNow.Data.IsOutside;
+                            }
+                        }
+
+                        // Modify cutterBoolVertex.Data.IsOutside value
+                        if (cutterNow.Data.OnEdge == false)
+                        {
+                            bool cutterIntersectsAPoint = a0IsOnInfiniteRay || a1IsOnInfiniteRay;
+                            float cutterCrossProductToPolygonLine = 0.0f;
+                            // Line intersection occured at polygon's a0
+                            if (a0IsOnInfiniteRay) cutterCrossProductToPolygonLine = CrossProduct2D(a0 - b0, a1 - b0);
+                            // Line intersection occured at polygon's a1
+                            else if (a1IsOnInfiniteRay) cutterCrossProductToPolygonLine = CrossProduct2D(a1 - b0, a0 - b0);
+
+                            if (cutterIntersectsAPoint && cutterCrossProductToPolygonLine > 0.0f)
+                            {
+                                cutterNow.Data.IsOutside = !cutterNow.Data.IsOutside;
+                            }
+
+                            // infinite ray from cutter's b0 intersects cutter's line segment
+                            if (cutterIntersectsAPoint == false && u >= 0.0f && t >= 0.0f && t <= 1.0f)
+                            {
+                                cutterNow.Data.IsOutside = !cutterNow.Data.IsOutside;
+                            }
+                        }
+
+                        // ----------------------------------------------------------------------------
+                        #endregion
+
+                        if (t >= 0.0f && t <= 1.0f && u >= 0.0f && u <= 1.0f)
+                        {
+                            Vector2 intersectionPoint = new Vector2(a0.X + t * (a1.X - a0.X), a0.Y + t * (a1.Y - a0.Y));
+                            intersections.Add(
+                                new Tuple<Vector2, VertexNode<T>, float, VertexNode<T>, float>(intersectionPoint, polygonNow, t, cutterNow, u)
+                                );
+                        }
+
+                    }
+                    // Both line segments are colinear, (This is unlikely due to floating point error, just in case though...)
+                    else if (result == 0)
+                    {
+                        // polygonNow is on the edge of cutter's line segment
+                        if (t >= 0.0f && t <= 1.0f)
+                        {
+                            polygonNow.Data.IsOutside = false;
+                            polygonNow.Data.OnEdge = true;
+                        }
+                        // cutterNow is on the edge of target's line segment
+                        if (u >= 0.0f && u <= 0.0f)
+                        {
+                            cutterNow.Data.IsOutside = false;
+                            cutterNow.Data.OnEdge = true;
+                        }
+                    }
+
+                    cutterNow = cutterNow.Next;
+                } while (cutterNow != cutter.Head);
+
+                polygonNow = polygonNow.Next;
+            } while (polygonNow != polygon.Head);
+            #endregion
+
+            if (intersections.Count == 0)
+            {
+                // No intersection between the two given polygons, thus end function
+
+                // Determine which polygon is outside, or if both are outside each other, and then return the result.
+                bool cutterIsOutsidePolygon = originalCutterOutsideFlag ? cutter.Head.Data.IsOutside : !cutter.Head.Data.IsOutside;
+                bool polygonIsOutsidePolygon = originalPolygonOutsideFlag ? polygon.Head.Data.IsOutside : !polygon.Head.Data.IsOutside;
+
+                intersectionPoints = null;
+                if (polygonIsOutsidePolygon && cutterIsOutsidePolygon) return IntersectionResult.BOTH_OUTSIDE;
+                return cutterIsOutsidePolygon ? IntersectionResult.POLYGON_IS_INSIDE : IntersectionResult.CUTTER_IS_INSIDE;
             }
-            tValue = uValue = 0.0f;
-            return -1;
+
+            intersectionPoints = new IntersectionPoints<T>(polygon, intersections);
+            return IntersectionResult.INTERSECTS;
         }
 
         /// <summary>
@@ -955,29 +1050,8 @@ namespace PSDSystem
             }
         }
 
-        /// <summary>
-        /// Triangulate a group outer polygon and its inner polygons
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="group">The group of polygons to triangulate</param>
-        /// <param name="triangles">The list of triangles to add on to</param>
-        /// <param name="vertices">The list of vertices to add on to</param>
-        private static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
+        private static Polygon<T>? CombineGroupIntoOne<T>(PolygonGroup<T> group) where T : PolygonVertex
         {
-            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
-            {
-                return;
-            }
-
-            // Probably an unnecessary check here
-            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-            {
-                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
-                {
-                    return;
-                }
-            }
-
             Polygon<T> currentPolygon;
             List<Vector2>? currentVertices;
             // If there is any inner polygons, combined with the outer polygon
@@ -1002,10 +1076,47 @@ namespace PSDSystem
             }
             else
             {
-                // Otherwise make a copy
-                currentPolygon = new Polygon<T>(group.OuterPolygon);
-                currentVertices = currentPolygon.Vertices; // No need to make a copy of currentPolygon.Vertices as it'll will be copied later
+                // Otherwise return null as there is no need 'combine' when there is not inner polygons 
+                return null;
             }
+
+            return currentPolygon;
+        }
+
+        /// <summary>
+        /// Triangulate a group outer polygon and its inner polygons
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group">The group of polygons to triangulate</param>
+        /// <param name="triangles">The list of triangles to add on to</param>
+        /// <param name="vertices">The list of vertices to add on to</param>
+        private static void TriangulateGroup<T>(PolygonGroup<T> group, List<int> triangles, List<Vector2> vertices) where T : PolygonVertex
+        {
+            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
+            {
+                return;
+            }
+
+            // Probably an unnecessary check here
+            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+            {
+                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
+                {
+                    return;
+                }
+            }
+
+            // Combine the given group into one polygon
+            Polygon<T>? currentPolygon = CombineGroupIntoOne(group);
+            List<Vector2> currentVertices;
+            if (currentPolygon == null)
+            {
+                // CombineGroupIntoOne failed probably because lack of inner polygons
+                // Make a copy
+                currentPolygon = new Polygon<T>(group.OuterPolygon);
+                // No need to make a copy of currentPolygon.Vertices as it'll will be copied later
+            }
+            currentVertices = currentPolygon.Vertices;
 
             // Identify the eartips of currentPolygon
             List<VertexNode<T>>? earTips = FindEarTips(currentPolygon);
@@ -1045,32 +1156,128 @@ namespace PSDSystem
             }
         }
 
-        /// <summary>
-        /// Triangulate a polygon surface
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="surface">The surface to be triangulated</param>
-        /// <param name="triangles">The list of triangles generated from triangulation</param>
-        /// <param name="vertices">The list of vertices that make up the surface</param>
-        public static void TriangulateSurface<T>(SurfaceShape<T> surface, out List<int>? triangles, out List<Vector2>? vertices) where T : PolygonVertex
+        private static void FindConvexVerticesOfGroup<T>(PolygonGroup<T> group, List<List<Vector2>> convexVerticesGroups) where T : PolygonVertex
         {
-            if (surface.Polygons.Count <= 0)
+            if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
             {
-                triangles = null;
-                vertices = null;
                 return;
             }
 
-            triangles = new List<int>();
-            vertices = new List<Vector2>();
-
-            // Triangulate each group
-            foreach (PolygonGroup<T> group in surface.Polygons)
+            // Probably an unnecessary check here
+            foreach (Polygon<T> innerPolygon in group.InnerPolygons)
             {
-                TriangulateGroup(group, triangles, vertices);
+                if (innerPolygon.Head == null || innerPolygon.Count < 3 || innerPolygon.Vertices == null)
+                {
+                    return;
+                }
             }
 
-            return;
+            // Combine the given group into one polygon
+            Polygon<T>? currentPolygon = CombineGroupIntoOne(group);
+            List<Vector2> currentVertices;
+            if (currentPolygon == null)
+            {
+                // CombineGroupIntoOne failed probably because lack of inner polygons
+                // Make a copy
+                currentPolygon = new Polygon<T>(group.OuterPolygon);
+                currentVertices = new List<Vector2>(currentPolygon.Vertices);
+            }
+            else
+                currentVertices = currentPolygon.Vertices;
+
+            // Identify the eartips of currentPolygon
+            List<VertexNode<T>>? earTips = FindEarTips(currentPolygon, true);
+            // No ear tips was found, thus no convex group of vertices exist
+            if (earTips == null)
+            {
+                return;
+            }
+
+            while (earTips.Count > 0 && currentPolygon.Count > 2)
+            {
+                List<Vector2> convexVertices = new List<Vector2>();
+
+                // Get the ear to clip
+                VertexNode<T> earToClip = earTips[0];
+
+                // Add the vertices
+                convexVertices.Add(currentVertices[earToClip.Previous.Data.Index]);
+                convexVertices.Add(currentVertices[earToClip.Data.Index]);
+                convexVertices.Add(currentVertices[earToClip.Next.Data.Index]);
+
+                // Clip the ear and remove from the list
+                currentPolygon.ClipVertex(earToClip);
+                earTips.Remove(earToClip);
+
+                // Keep track if it is next and previous is still an eartip
+                bool nextIsStillAnEarTip = earTips.Contains(earToClip.Next);
+                bool previousIsStillAnEarTip = earTips.Contains(earToClip.Previous);
+
+                // The neighbors may no longer be ears remove them
+                earTips.Remove(earToClip.Previous);
+                earTips.Remove(earToClip.Next);
+
+                // Reprocess the neighbors
+                if (IsAnEarTip(earToClip.Previous, true))
+                    earTips.Add(earToClip.Previous);
+                if (IsAnEarTip(earToClip.Next, true))
+                    earTips.Add(earToClip.Next);
+
+                // The values may become false now due to reprocessing
+                nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(earToClip.Next);
+                previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(earToClip.Previous);
+
+                VertexNode<T> next = earToClip.Next;
+                while(nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
+                {
+                    // Add next.Next's vertex to the list
+                    convexVertices.Add(currentVertices[next.Next.Data.Index]);
+
+                    // Clip and remove from the list
+                    currentPolygon.ClipVertex(next);
+                    earTips.Remove(next);
+
+                    // Keep track if next is still an ear tip
+                    nextIsStillAnEarTip = earTips.Contains(next.Next);
+
+                    // next.Next may no longer be an ear, remove and reprocess
+                    earTips.Remove(next.Next);
+                    if (IsAnEarTip(next.Next, true))
+                        earTips.Add(next.Next);
+
+                    // The value may become false now due to reprocessing
+                    nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(next.Next);
+
+                    if (next.Next == earToClip.Previous)
+                        // Update previous if next.Next happens to be earToClip.Previous
+                        previousIsStillAnEarTip = nextIsStillAnEarTip;
+
+                    next = next.Next;
+                }
+
+                VertexNode<T> prev = earToClip.Previous;
+                while (previousIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
+                {
+                    // Add prev.Previous's vertex to the list
+                    convexVertices.Add(currentVertices[prev.Previous.Data.Index]);
+
+                    // Clip and remove from the list
+                    currentPolygon.ClipVertex(prev);
+                    earTips.Remove(prev);
+
+                    // Keep track if prev is still an ear tip
+                    previousIsStillAnEarTip = earTips.Contains(prev.Previous);
+
+                    // prev.Previous may no longer be an ear, remove and reprocess
+                    earTips.Remove(prev.Previous);
+                    if (IsAnEarTip(prev.Previous, true))
+                        earTips.Add(prev.Previous);
+
+                    prev = prev.Previous;
+                }
+
+                convexVerticesGroups.Add(convexVertices);
+            }
         }
 
         /// <summary>
@@ -1275,11 +1482,11 @@ namespace PSDSystem
         /// <typeparam name="T"></typeparam>
         /// <param name="node">The node to be checked</param>
         /// <returns>True if the node is an ear tip, false otherwise</returns>
-        private static bool IsAnEarTip<T>(VertexNode<T> node) where T : PolygonVertex
+        private static bool IsAnEarTip<T>(VertexNode<T> node, bool includeZeroAngles = false) where T : PolygonVertex
         {
             // It is an eartip if it is convex and there is no other vertices inside its triangle
             // It's reflex, then it is not an ear tip
-            if (!IsConvex(node)) return false;
+            if (!IsConvex(node, includeZeroAngles)) return false;
 
             List<Vector2> vertices = node.Owner.Vertices;
 
@@ -1318,7 +1525,7 @@ namespace PSDSystem
         /// <typeparam name="T"></typeparam>
         /// <param name="polygon">The polygon to find the ear tips for</param>
         /// <returns>List of nodes that have been identified to be ear tips, null if no eartips was found, or is not possible</returns>
-        private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon) where T : PolygonVertex
+        private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon, bool includeZeroAngles = false) where T : PolygonVertex
         {
             if (polygon.Head == null || polygon.Vertices == null) return null;
 
@@ -1328,7 +1535,7 @@ namespace PSDSystem
             VertexNode<T> now = polygon.Head;
             do
             {
-                if (IsAnEarTip(now))
+                if (IsAnEarTip(now, includeZeroAngles))
                 {
                     output.Add(now);
                 }
@@ -1339,107 +1546,6 @@ namespace PSDSystem
             // No eartips found, return null
             if (output.Count <= 0) return null;
             return output;
-        }
-
-        public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth, 
-            List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
-        {
-            frontNormal = frontNormal.Normalized();
-
-            // For each group...
-            foreach (PolygonGroup<T> group in surface.Polygons)
-            {
-                // Create side cap for each line segment of the outer polygon
-                List<Vector2> outerVertices = group.OuterPolygon.Vertices;
-                VertexNode<T> outerNow = group.OuterPolygon.Head;
-                do
-                {
-                    int verticesPreviousCount = vertices.Count;
-
-                    Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
-                    Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
-
-                    Vector3 aCopy = a - (frontNormal * depth);
-                    Vector3 bCopy = b - (frontNormal * depth);
-
-                    // Add these vertices to the list
-                    vertices.Add(a);
-                    vertices.Add(b);
-                    vertices.Add(bCopy);
-                    vertices.Add(aCopy);
-
-                    // Add the indices for the triangle
-                    indices.Add(verticesPreviousCount + 0);
-                    indices.Add(verticesPreviousCount + 1);
-                    indices.Add(verticesPreviousCount + 2);
-                    // The other triangle
-                    indices.Add(verticesPreviousCount + 2);
-                    indices.Add(verticesPreviousCount + 3);
-                    indices.Add(verticesPreviousCount + 0);
-
-                    // Calculate normal for the triangles and add it to the list of normals
-                    Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
-                    normals.Add(triangleNormal);
-                    normals.Add(triangleNormal);
-                    normals.Add(triangleNormal);
-                    normals.Add(triangleNormal);
-
-                    // Add uvs...
-                    uvs.Add(Vector2.Zero);
-                    uvs.Add(Vector2.Zero);
-                    uvs.Add(Vector2.Zero);
-                    uvs.Add(Vector2.Zero);
-
-                    outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
-                } while (outerNow != group.OuterPolygon.Head);
-
-                // Now for each inner polygons
-                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-                {
-                    List<Vector2> innerVertices = innerPolygon.Vertices;
-                    VertexNode<T> innerNow = innerPolygon.Head;
-                    do
-                    {
-                        int verticesPreviousCount = vertices.Count;
-
-                        Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
-                        Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
-
-                        Vector3 aCopy = a - (frontNormal * depth);
-                        Vector3 bCopy = b - (frontNormal * depth);
-
-                        // Add these vertices to the list
-                        vertices.Add(a);
-                        vertices.Add(b);
-                        vertices.Add(bCopy);
-                        vertices.Add(aCopy);
-
-                        // Add the indices for the triangle
-                        indices.Add(verticesPreviousCount + 0);
-                        indices.Add(verticesPreviousCount + 1);
-                        indices.Add(verticesPreviousCount + 2);
-                        // The other triangle
-                        indices.Add(verticesPreviousCount + 2);
-                        indices.Add(verticesPreviousCount + 3);
-                        indices.Add(verticesPreviousCount + 0);
-
-                        // Calculate normal for the triangles and add it to the list of normals
-                        Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
-                        normals.Add(triangleNormal);
-                        normals.Add(triangleNormal);
-                        normals.Add(triangleNormal);
-                        normals.Add(triangleNormal);
-
-                        // Add uvs...
-                        uvs.Add(Vector2.Zero);
-                        uvs.Add(Vector2.Zero);
-                        uvs.Add(Vector2.Zero);
-                        uvs.Add(Vector2.Zero);
-
-                        innerNow = innerNow.Previous;
-                    } while (innerNow != innerPolygon.Head);
-                }
-            }
         }
 
         /// <summary>
@@ -1547,9 +1653,9 @@ namespace PSDSystem
 
                 if (between(point.Y, a.Y, b.Y)) // If point is inside the vertical range
                 {
-                    // Below is extremly unlikely
-                    if (point.Y == a.Y && b.Y >= a.Y ||
-                        point.Y == b.Y && a.Y >= b.Y)
+                    // Below is extremely unlikely
+                    if (IsNearlyEqual(point.Y, a.Y) && b.Y >= a.Y ||
+                        IsNearlyEqual(point.Y, b.Y) && a.Y >= b.Y)
                     {
                         now = now.Next;
                         continue;
@@ -1567,6 +1673,123 @@ namespace PSDSystem
             } while (now != polygon.Head);
 
             return inside ? 1 : -1;
+        }
+
+        /// <summary>
+        /// Compute the area of triangle abc
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        private static float TriangleArea(Vector2 a, Vector2 b, Vector2 c)
+        {
+            return MathF.Abs(CrossProduct2D(b - a, c - a) / 2.0f);
+        }
+
+        /// <summary>
+        /// Determine if the given node is convex
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        private static bool IsConvex<T>(VertexNode<T> node, bool includeZeroAngles = false) where T : PolygonVertex
+        {
+            if (node.Owner.Vertices == null) return false;
+            List<Vector2> vertices = node.Owner.Vertices;
+            // Takes advantage of the fact that triangulation is
+            // done for 2D polygons. Thus the cross product
+            // of two 2D vectors result in either a positive or
+            // negative Z axis value
+            Vector2 a = vertices[node.Previous.Data.Index];
+            Vector2 b = vertices[node.Data.Index];
+            Vector2 c = vertices[node.Next.Data.Index];
+
+            float crossResult = CrossProduct2D(a - b, c - b);
+
+            if (!includeZeroAngles)
+                return crossResult > 0.0f;
+
+            return crossResult >= 0.0f || IsNearlyEqual(crossResult, 0.0f);
+        }
+
+        /// <summary>
+        /// Perform a partial line intersection computation between two lines
+        /// </summary>
+        /// <param name="a0">Starting point of Line A</param>
+        /// <param name="a1">End point of Line A</param>
+        /// <param name="b0">Starting point of Line B</param>
+        /// <param name="b1">End point of Line B</param>
+        /// <param name="tValue">The t value computed</param>
+        /// <param name="uValue">The u value computed</param>
+        /// <returns>Returns 1 if the given lines are not parallel,
+        /// Returns 0 if the given lines are colinear,
+        /// Returns -1 if the given lines are parallel</returns>
+        private static int PartialLineIntersection(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out float tValue, out float uValue)
+        {
+            float determinant = (a0.X - a1.X) * (b0.Y - b1.Y) - (a0.Y - a1.Y) * (b0.X - b1.X);
+            if (!IsNearlyEqual(determinant, 0.0f))
+            {
+                tValue = ((a0.X - b0.X) * (b0.Y - b1.Y) - (a0.Y - b0.Y) * (b0.X - b1.X)) / determinant;
+                uValue = ((a1.X - a0.X) * (a0.Y - b0.Y) - (a1.Y - a0.Y) * (a0.X - b0.X)) / determinant;
+                return 1;
+            }
+            else
+            {
+                float top = ((a1.X - a0.X) * (a0.Y - b0.Y) + (a1.Y - a0.Y) * (a0.X - b0.X));
+                if (IsNearlyEqual(top, 0.0f)) // Lines are colinear
+                {
+                    tValue = ((a0.X - b0.X) * (b1.X - b0.X) + (a0.Y - b0.Y) * (b1.Y - b0.Y)) /
+                        ((b1.X - b0.X) * (b1.X - b0.X) + (b1.Y - b0.Y) * (b1.Y - b0.Y));
+                    uValue = ((b0.X - a0.X) * (a1.X - a0.X) + (b0.Y - a0.Y) * (a1.Y - a0.Y)) /
+                        ((a1.X - a0.X) * (a1.X - a0.X) + (a1.Y - a0.Y) * (a1.Y - a0.Y));
+                    return 0;
+                }
+            }
+            tValue = uValue = 0.0f;
+            return -1;
+        }
+
+        /// <summary>
+        /// Get the angle diamond difference between vector ba and bc
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        private static float DiamondAngleBetweenTwoVectors(Vector2 a, Vector2 b, Vector2 c)
+        {
+            Vector2 ba = a - b;
+            Vector2 bc = c - b;
+            float result = MathF.Abs(VectorToDiamondAngle(ba) - VectorToDiamondAngle(bc));
+            if (result > 2.0f)
+                return 4.0f - result;
+            return result;
+        }
+
+        /// <summary>
+        /// Convert a 2D vector into diamond angle measurement
+        /// </summary>
+        /// <param name="v"></param>
+        /// <returns></returns>
+        private static float VectorToDiamondAngle(Vector2 v)
+        {
+            if (IsNearlyEqual(v.LengthSquared(), 0.0f))
+                return 0.0f;
+
+            if (v.Y >= 0.0f)
+            {
+                if (v.X >= 0.0f)
+                    return v.Y / (v.X + v.Y);
+                return 1.0f - v.X / (-v.X + v.Y);
+            }
+
+            if (v.X < 0.0f)
+            {
+                return 2.0f - v.Y / (-v.X - v.Y);
+            }
+
+            return 3.0f + v.X / (v.X - v.Y);
         }
 
         /// <summary>
@@ -1594,78 +1817,17 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Compute the area of triangle abc
+        /// Check if the given two float values are nearly equal to each other
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="c"></param>
-        /// <returns></returns>
-        private static float TriangleArea(Vector2 a, Vector2 b, Vector2 c)
+        /// <param name="a">The first value</param>
+        /// <param name="b">The second value</param>
+        /// <param name="epsilon">The threshold for comparison</param>
+        /// <returns>True if they are nearly equal to each other, false otherwise</returns>
+        private static bool IsNearlyEqual(float a, float b, float epsilon = 0.00001f)
         {
-            return MathF.Abs(CrossProduct2D(b - a, c - a) / 2.0f);
-        }
-
-        /// <summary>
-        /// Determine if the given node is convex
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="node"></param>
-        /// <returns></returns>
-        private static bool IsConvex<T>(VertexNode<T> node) where T : PolygonVertex
-        {
-            if (node.Owner.Vertices == null) return false;
-            List<Vector2> vertices = node.Owner.Vertices;
-            // Takes advantage of the fact that triangulation is
-            // done for 2D polygons. Thus the cross product
-            // of two 2D vectors result in either a positive or
-            // negative Z axis value
-            Vector2 a = vertices[node.Previous.Data.Index];
-            Vector2 b = vertices[node.Data.Index];
-            Vector2 c = vertices[node.Next.Data.Index];
-
-            return CrossProduct2D(a - b, c - b) > 0.0f;
-        }
-
-        /// <summary>
-        /// Convert a 2D vector into diamond angle measurement
-        /// </summary>
-        /// <param name="v"></param>
-        /// <returns></returns>
-        private static float VectorToDiamondAngle(Vector2 v)
-        {
-            if (IsNearlyEqual(v.LengthSquared(), 0.0f))
-                return 0.0f;
-
-            if (v.Y >= 0.0f)
-            {
-                if (v.X >= 0.0f)
-                    return v.Y / (v.X + v.Y);
-                return 1.0f - v.X / (-v.X + v.Y);
-            }
-            
-            if (v.X < 0.0f)
-            {
-                return 2.0f - v.Y / (-v.X - v.Y);
-            }
-
-            return 3.0f + v.X / (v.X - v.Y);
-        }
-
-        /// <summary>
-        /// Get the angle diamond difference between vector ba and bc
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="c"></param>
-        /// <returns></returns>
-        private static float DiamondAngleBetweenTwoVectors(Vector2 a, Vector2 b, Vector2 c)
-        {
-            Vector2 ba = a - b;
-            Vector2 bc = c - b;
-            float result = MathF.Abs(VectorToDiamondAngle(ba) - VectorToDiamondAngle(bc));
-            if (result > 2.0f)
-                return 4.0f - result;
-            return result;
+            return MathF.Abs(a - b) <= epsilon;
         }
     }
+
+
 }
