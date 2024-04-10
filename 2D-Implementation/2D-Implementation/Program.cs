@@ -245,14 +245,35 @@ class Program
             new Vector2(1050.0f, 150.0f)
         ];
 
+        //List<Vector2> Vertices = [
+        //    new Vector2(130.0f, 250.0f),
+        //    new Vector2(0.0f, 250.0f),
+        //    new Vector2(65.0f, 350.0f),
+        //    new Vector2(0.0f, 450.0f),
+        //    new Vector2(130.0f, 450.0f),
+        //    new Vector2(200.0f, 550.0f),
+        //    new Vector2(270.0f, 450.0f),
+        //    new Vector2(400.0f, 450.0f),
+        //    new Vector2(335.0f, 350.0f),
+        //    new Vector2(400.0f, 250.0f),
+        //    new Vector2(270.0f, 250.0f),
+        //    new Vector2(200.0f, 150.0f),
+        //];
+
         Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
         polygon.Vertices = Vertices;
         polygon.InsertVertexAtBack(0);
         polygon.InsertVertexAtBack(1);
         polygon.InsertVertexAtBack(2);
         polygon.InsertVertexAtBack(3);
-
-        //Console.WriteLine(String.Join(", ", polygon.ToList()));
+        //polygon.InsertVertexAtBack(4);
+        //polygon.InsertVertexAtBack(5);
+        //polygon.InsertVertexAtBack(6);
+        //polygon.InsertVertexAtBack(7);
+        //polygon.InsertVertexAtBack(8);
+        //polygon.InsertVertexAtBack(9);
+        //polygon.InsertVertexAtBack(10);
+        //polygon.InsertVertexAtBack(11);
 
         surface.AddOuterPolygon(polygon);
     }
