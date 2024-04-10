@@ -1,3 +1,5 @@
+#nullable enable
+
 using Godot;
 using PSDSystem;
 using System;
@@ -41,6 +43,7 @@ public partial class ProceduralSurface : Node3D
         int result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter);
 
         GenerateMeshOfSurface();
+        GenerateCollision();
 
         GD.Print(result);
     }
@@ -151,15 +154,33 @@ public partial class ProceduralSurface : Node3D
 
     private void GenerateCollision()
     {
-        List<Vector3> vertices = _coordinateConverter.ConvertListTo3D(_surface.Polygons[0].OuterPolygon.Vertices);
+        List<List<Vector2>>? convexVertices = PSD.FindConvexVerticesOfSurface(_surface);
+        if (convexVertices == null) return;
 
-        ConvexPolygonShape3D shape = new ConvexPolygonShape3D();
-        shape.Points = vertices.ToArray();
-        
-        CollisionShape3D collisionShape3D = new CollisionShape3D();
-        collisionShape3D.Shape = shape;
+        foreach (Node child in _staticBody3D.GetChildren())
+        {
+            _staticBody3D.RemoveChild(child);
+            child.QueueFree();
+        }
 
-        _staticBody3D.AddChild(collisionShape3D);
+        foreach (List<Vector2> vertexGroup in convexVertices)
+        {
+            List<Vector3> vertices = _coordinateConverter.ConvertListTo3D(vertexGroup);
+            for (int i = vertices.Count - 1; i >= 0; i--)
+            {
+                vertices.Add(vertices[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
+            }
+
+            ConvexPolygonShape3D shape = new ConvexPolygonShape3D();
+            shape.Points = vertices.ToArray();
+
+            CollisionShape3D collisionShape3D = new CollisionShape3D();
+            collisionShape3D.Shape = shape;
+
+            _staticBody3D.AddChild(collisionShape3D);
+        }
+
+        GD.Print("Collision Updated!");
     }
 
     private void GenerateMesh()
