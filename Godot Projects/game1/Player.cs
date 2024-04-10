@@ -1,5 +1,4 @@
 using Godot;
-using System;
 
 public partial class Player : CharacterBody3D
 {
@@ -21,6 +20,12 @@ public partial class Player : CharacterBody3D
 
     private float _totalPitch = 0.0f;
 
+    private readonly StringName _fireString = new StringName("fire");
+    private readonly StringName _moveRightString = new StringName("move_right");
+    private readonly StringName _moveLeftString = new StringName("move_left");
+    private readonly StringName _moveForwardString = new StringName("move_forward");
+    private readonly StringName _moveBackString = new StringName("move_back");
+
     public override void _Ready()
     {
         base._Ready();
@@ -37,7 +42,7 @@ public partial class Player : CharacterBody3D
 
     public override void _Process(double delta)
     {
-        if (Input.IsActionJustPressed("fire"))
+        if (Input.IsActionJustPressed(_fireString))
         {
             Vector3 from = _camera.GlobalPosition;
             Vector3 to = from + _springArm.Basis.Z * -100.0f;
@@ -74,13 +79,13 @@ public partial class Player : CharacterBody3D
         Vector3 direction = Vector3.Zero;
 
         // Check input and update direction accordingly
-        if (Input.IsActionPressed("move_right"))
+        if (Input.IsActionPressed(_moveRightString))
             direction.X += 1.0f;
-        if (Input.IsActionPressed("move_left"))
+        if (Input.IsActionPressed(_moveLeftString))
             direction.X -= 1.0f;
-        if (Input.IsActionPressed("move_back"))
+        if (Input.IsActionPressed(_moveBackString))
             direction.Z += 1.0f;
-        if (Input.IsActionPressed("move_forward"))
+        if (Input.IsActionPressed(_moveForwardString))
             direction.Z -= 1.0f;
 
         if (!direction.IsZeroApprox())
