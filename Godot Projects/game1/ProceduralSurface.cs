@@ -19,6 +19,8 @@ public partial class ProceduralSurface : Node3D
     private StaticBody3D _staticBody3D;
 
     private SurfaceShape<PolygonVertex> _surface;
+    private List<Vector2> _originalVertices;
+    private List<Vector2> _originalUvs;
 
     private CoordinateConverter _coordinateConverter;
 
@@ -87,10 +89,10 @@ public partial class ProceduralSurface : Node3D
 
         Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>() {
             Vertices = new List<Vector2> {
-                new Vector2(-5.0f, -5.0f),
-                new Vector2(-5.0f, 5.0f),
-                new Vector2(5.0f, 5.0f),
-                new Vector2(5.0f, -5.0f)
+                new Vector2(-5.0f, -5.0f), // bottom left
+                new Vector2(-5.0f, 5.0f), // top left
+                new Vector2(5.0f, 5.0f), // top right
+                new Vector2(5.0f, -5.0f) // bottom right
             }
         };
 
@@ -100,6 +102,15 @@ public partial class ProceduralSurface : Node3D
         polygon.InsertVertexAtBack(3);
 
         _surface.AddOuterPolygon(polygon);
+
+        _originalVertices = new List<Vector2>(polygon.Vertices);
+        _originalUvs = new List<Vector2>
+        {
+            new Vector2(0.0f, 1.0f),
+            new Vector2(0.0f, 0.0f),
+            new Vector2(1.0f, 0.0f),
+            new Vector2(1.0f, 1.0f),
+        };
     }
 
     private void GenerateMeshOfSurface()
@@ -110,7 +121,7 @@ public partial class ProceduralSurface : Node3D
 
         // Objects needed for the procedural mesh
         List<Vector3> frontVerts;
-        List<Vector2> frontUvs = new List<Vector2>();
+        List<Vector2>? frontUvs = new List<Vector2>();
         List<Vector3> frontNormals = new List<Vector3>();
         List<int> frontIndices;
 
@@ -124,9 +135,11 @@ public partial class ProceduralSurface : Node3D
 
         for (int i = 0; i < frontVerts.Count; i++)
         {
-            frontUvs.Add(Vector2.Zero);
             frontNormals.Add(Vector3.Back);
         }
+
+        frontUvs = PSD.ComputeUVCoordinates(_originalVertices, _originalUvs, verts2D);
+        if (frontUvs == null) return;
 
         var frontSurfaceArray = new Godot.Collections.Array();
         frontSurfaceArray.Resize((int)Mesh.ArrayType.Max);
@@ -151,9 +164,10 @@ public partial class ProceduralSurface : Node3D
         for (int i = 0; i < verts2D.Count; i++)
         {
             backVerts.Add(frontVerts[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
-            backUvs.Add(Vector2.Zero);
             backNormals.Add(Vector3.Forward);
         }
+
+        backUvs.AddRange(frontUvs);
 
         for (int i = frontIndices.Count - 1; i >= 0; i--)
         {
@@ -190,6 +204,11 @@ public partial class ProceduralSurface : Node3D
         arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, sideSurfaceArray);
 
         _meshInstance.Mesh = arrayMesh;
+
+        if (Material1 != null)
+            _meshInstance.SetSurfaceOverrideMaterial(0, Material1);
+        if (Material2 != null)
+            _meshInstance.SetSurfaceOverrideMaterial(1, Material2);
     }
 
     private void GenerateCollision()

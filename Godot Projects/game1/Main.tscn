@@ -1,8 +1,9 @@
-[gd_scene load_steps=11 format=3 uid="uid://fdebxu7ldb7x"]
+[gd_scene load_steps=14 format=3 uid="uid://fdebxu7ldb7x"]
 
 [ext_resource type="Texture2D" uid="uid://bpxnos7mw12io" path="res://texture_01.png" id="1_1kols"]
 [ext_resource type="PackedScene" uid="uid://dp25ehwbt0m41" path="res://Player.tscn" id="1_hdjmo"]
 [ext_resource type="PackedScene" uid="uid://ba3oiu1856cl8" path="res://ProceduralSurface.tscn" id="2_lr3sj"]
+[ext_resource type="Texture2D" uid="uid://be45ggfdxn4aw" path="res://texture_01_orange.png" id="4_rul3d"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_hev35"]
 size = Vector3(60, 2, 60)
@@ -31,6 +32,12 @@ tonemap_mode = 3
 tonemap_exposure = 0.48
 tonemap_white = 2.27
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_jwwo1"]
+albedo_texture = ExtResource("4_rul3d")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_uw5a8"]
+albedo_texture = ExtResource("4_rul3d")
+
 [sub_resource type="CanvasTexture" id="CanvasTexture_ifrhf"]
 
 [node name="Main" type="Node3D"]
@@ -52,6 +59,8 @@ environment = SubResource("Environment_tfeg0")
 
 [node name="ProceduralSurface" parent="." instance=ExtResource("2_lr3sj")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24205, 6.3041, -5.00362)
+Material1 = SubResource("StandardMaterial3D_jwwo1")
+Material2 = SubResource("StandardMaterial3D_uw5a8")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.864354, 0.502884, 0, -0.502884, 0.864354, 0, 8.05519, 4.41396)
