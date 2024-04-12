@@ -179,8 +179,6 @@ public partial class ProceduralSurface : Node3D
 
             _staticBody3D.AddChild(collisionShape3D);
         }
-
-        GD.Print("Collision Updated!");
     }
 
     private void GenerateMesh()
