@@ -7,6 +7,13 @@ using System.Collections.Generic;
 
 public partial class ProceduralSurface : Node3D
 {
+    [Export]
+    private Material? Material1 = null;
+    [Export]
+    private Material? Material2 = null;
+    [Export]
+    private Material? MaterialSide = null;
+
     private MeshInstance3D _meshInstance;
 
     private StaticBody3D _staticBody3D;
@@ -97,57 +104,90 @@ public partial class ProceduralSurface : Node3D
 
     private void GenerateMeshOfSurface()
     {
-        var surfaceArray = new Godot.Collections.Array();
-        surfaceArray.Resize((int)Mesh.ArrayType.Max);
-
-        // Stuff needed for the procedural mesh
-        List<Vector3> verts;
-        List<Vector2> uvs;
-        List<Vector3> normals;
-        List<int> indices;
-
-        // Generate the mesh here
+        ArrayMesh arrayMesh = new ArrayMesh();
 
         // Generate Front Face
+
+        // Objects needed for the procedural mesh
+        List<Vector3> frontVerts;
+        List<Vector2> frontUvs = new List<Vector2>();
+        List<Vector3> frontNormals = new List<Vector3>();
+        List<int> frontIndices;
+
+        // Begine generating the mesh here
+
         List<Vector2> verts2D;
-        PSD.TriangulateSurface(_surface, out indices, out verts2D);
-        if (indices == null || verts2D == null) return;
+        PSD.TriangulateSurface(_surface, out frontIndices, out verts2D);
+        if (frontIndices == null || verts2D == null) return;
 
-        verts = _coordinateConverter.ConvertListTo3D(verts2D);
+        frontVerts = _coordinateConverter.ConvertListTo3D(verts2D);
 
-        uvs = new List<Vector2>();
-        normals = new List<Vector3>();
-        for (int i = 0; i < verts.Count; i++)
+        for (int i = 0; i < frontVerts.Count; i++)
         {
-            uvs.Add(Vector2.Zero);
-            normals.Add(Vector3.Back);
+            frontUvs.Add(Vector2.Zero);
+            frontNormals.Add(Vector3.Back);
         }
 
-        // Generate Back Face
-        for (int i = 0; i < verts2D.Count; i++)
-        {
-            verts.Add(verts[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
-            uvs.Add(Vector2.Zero);
-            normals.Add(Vector3.Forward);
-        }
-
-        for (int i = indices.Count - 1; i >= 0; i--)
-        {
-            indices.Add(indices[i] + verts2D.Count);
-        }
-
-        // Generate Side cap
-        PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, _depth / 2.0f,
-            verts, normals, indices, uvs);
+        var frontSurfaceArray = new Godot.Collections.Array();
+        frontSurfaceArray.Resize((int)Mesh.ArrayType.Max);
 
         // Convert Lists to arrays and assign to surface array
-        surfaceArray[(int)Mesh.ArrayType.Vertex] = verts.ToArray();
-        surfaceArray[(int)Mesh.ArrayType.TexUV] = uvs.ToArray();
-        surfaceArray[(int)Mesh.ArrayType.Normal] = normals.ToArray();
-        surfaceArray[(int)Mesh.ArrayType.Index] = indices.ToArray();
+        frontSurfaceArray[(int)Mesh.ArrayType.Vertex] = frontVerts.ToArray();
+        frontSurfaceArray[(int)Mesh.ArrayType.TexUV] = frontUvs.ToArray();
+        frontSurfaceArray[(int)Mesh.ArrayType.Normal] = frontNormals.ToArray();
+        frontSurfaceArray[(int)Mesh.ArrayType.Index] = frontIndices.ToArray();
 
-        ArrayMesh arrayMesh = new ArrayMesh();
-        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, surfaceArray);
+        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, frontSurfaceArray);
+
+        // ------------------------------------------------------------------------------------------
+
+        // Generate Back Face
+
+        List<Vector3> backVerts = new List<Vector3>();
+        List<Vector2> backUvs = new List<Vector2>();
+        List<Vector3> backNormals = new List<Vector3>();
+        List<int> backIndices = new List<int>();
+
+        for (int i = 0; i < verts2D.Count; i++)
+        {
+            backVerts.Add(frontVerts[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
+            backUvs.Add(Vector2.Zero);
+            backNormals.Add(Vector3.Forward);
+        }
+
+        for (int i = frontIndices.Count - 1; i >= 0; i--)
+        {
+            backIndices.Add(frontIndices[i]);
+        }
+
+        var backSurfaceArray = new Godot.Collections.Array();
+        backSurfaceArray.Resize((int)Mesh.ArrayType.Max);
+
+        backSurfaceArray[(int)Mesh.ArrayType.Vertex] = backVerts.ToArray();
+        backSurfaceArray[(int)Mesh.ArrayType.TexUV] = backUvs.ToArray();
+        backSurfaceArray[(int)Mesh.ArrayType.Normal] = backNormals.ToArray();
+        backSurfaceArray[(int)Mesh.ArrayType.Index] = backIndices.ToArray();
+
+        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, backSurfaceArray);
+
+        // Generate Side cap
+        List<Vector3> sideVerts = new List<Vector3>();
+        List<Vector2> sideUvs = new List<Vector2>();
+        List<Vector3> sideNormals = new List<Vector3>();
+        List<int> sideIndices = new List<int>();
+
+        PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, _depth / 2.0f,
+            sideVerts, sideNormals, sideIndices, sideUvs);
+
+        var sideSurfaceArray = new Godot.Collections.Array();
+        sideSurfaceArray.Resize((int)Mesh.ArrayType.Max);
+
+        sideSurfaceArray[(int)Mesh.ArrayType.Vertex] = sideVerts.ToArray();
+        sideSurfaceArray[(int)Mesh.ArrayType.TexUV] = sideUvs.ToArray();
+        sideSurfaceArray[(int)Mesh.ArrayType.Normal] = sideNormals.ToArray();
+        sideSurfaceArray[(int)Mesh.ArrayType.Index] = sideIndices.ToArray();
+
+        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, sideSurfaceArray);
 
         _meshInstance.Mesh = arrayMesh;
     }

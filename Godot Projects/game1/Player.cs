@@ -113,6 +113,11 @@ public partial class Player : CharacterBody3D
     {
         base._UnhandledInput(@event);
 
+        if (@event is InputEventKey eventKey && eventKey.Pressed && eventKey.Keycode == Key.Escape)
+        {
+            GetTree().Quit();
+        }
+
         // Process Mouse Input
         if (@event is InputEventMouseMotion eventMouseMotion)
         {
