@@ -1,5 +1,7 @@
 ﻿#nullable enable
 
+using System;
+using System.Collections.Generic;
 using System.Numerics;
 
 namespace PSDSystem
@@ -275,7 +277,7 @@ namespace PSDSystem
             return;
         }
 
-        //public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth, 
+        //public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth,
         //    List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
         //{
         //    frontNormal = frontNormal.Normalized();
@@ -386,6 +388,38 @@ namespace PSDSystem
             foreach (PolygonGroup<T> group in surface.Polygons)
             {
                 FindConvexVerticesOfGroup(group, output);
+            }
+
+            return output;
+        }
+
+        public static List<Vector2>? ComputeUVCoordinates(List<Vector2> originalVertices, List<Vector2> originalUVCoordinates, List<Vector2> currentVertices)
+        {
+            if (originalVertices.Count <= 0 || originalUVCoordinates.Count <= 0) return null;
+
+            List<Vector2> output = new List<Vector2>();
+            
+            foreach (Vector2 vertex in currentVertices)
+            {
+                for (int i = 0; i < originalVertices.Count; i++)
+                {
+                    // Find which 'triangle the vertex belongs to'
+                    Vector2 a = originalVertices[i];
+                    Vector2 b = originalVertices[(i + 1) % originalVertices.Count];
+                    Vector2 c = originalVertices[(i + 2) % originalVertices.Count];
+
+                    if (BarycentricCoordinates(vertex, a, b, c, out float u, out float v, out float w))
+                    {
+                        Vector2 aUv = originalUVCoordinates[i];
+                        Vector2 bUv = originalUVCoordinates[(i + 1) % originalVertices.Count];
+                        Vector2 cUv = originalUVCoordinates[(i + 2) % originalVertices.Count];
+
+                        Vector2 newUv = (aUv * w) + (bUv * u) + (cUv * v);
+                        output.Add(newUv);
+
+                        break;
+                    }
+                }
             }
 
             return output;
@@ -1610,6 +1644,45 @@ namespace PSDSystem
             {
                 return true;
             }
+
+            return false;
+        }
+
+        private static bool  BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
+        {
+            float ABCarea = TriangleArea(a, b, c);
+            if (IsNearlyEqual(ABCarea, 0.0f))
+            {
+                u = 0.0f;
+                v = 0.0f;
+                w = 0.0f;
+                return false;
+            }
+
+            // u = CAP / ABC
+            u = TriangleArea(c, a, point) / ABCarea;
+            if (u < 0.0f || u > 1.0f)
+            {
+                v = 0.0f;
+                w = 0.0f;
+                return false;
+            }
+            // v = ABP / ABC
+            v = TriangleArea(a, b, point) / ABCarea;
+            if (v < 0.0f || v > 1.0f)
+            {
+                w = 0.0f;
+                return false;
+            }
+            // w = BCP / ABC
+            w = TriangleArea(b, c, point) / ABCarea;
+            if (w < 0.0f || w > 1.0f)
+            {
+                return false;
+            }
+
+            if (IsNearlyEqual(u + v + w, 1.0f))
+                return true;
 
             return false;
         }
