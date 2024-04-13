@@ -3,16 +3,25 @@ using PSDSystem;
 using System.Numerics;
 using System.Text;
 using static PSDSystem.PSD;
+using static PSDSystem.TestCases;
 
 class Program
 {
     const int HEIGHT = 720;
     private static List<Color> colors = new List<Color>();
 
+    static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = [
+        SquareTestCase<PolygonVertex>
+        ];
+    static int SelectedTestCase = 0;
+
     // Test Results
-    CutSurfaceResult CutResult = CutSurfaceResult.UNKNOWN_ERROR;
-    int TriangleCount = 0;
-    int ConvexGroupCount = 0;
+    static string TestName = "";
+    static SurfaceShape<PolygonVertex>? Surface = null;
+    static Polygon<PolygonVertex>? Cutter = null;
+    static CutSurfaceResult CutResult = CutSurfaceResult.UNKNOWN_ERROR;
+    static int TriangleCount = 0;
+    static int ConvexGroupCount = 0;
 
     public static void Main()
     {
@@ -21,6 +30,8 @@ class Program
         {
             colors.Add(new Color(rnd.Next(0, 255), rnd.Next(0, 255), rnd.Next(0, 255), 255));
         }
+
+        LoadTestCase();
 
         Raylib.InitWindow(1280, HEIGHT, "2D Surface Destruction Testing");
         Raylib.SetTargetFPS(60);
@@ -45,10 +56,37 @@ class Program
 
             Raylib.ClearBackground(Color.White);
 
+            // Draw Info Container
+            Raylib.DrawRectangle(20, 20, 400, 300, Color.Gray);
+
+            Raylib.DrawText(string.Format("CurrentTest: {0}", TestName), 30, 30, 18, Color.Black);
+            Raylib.DrawText(string.Format("CutResult: {0}", CutResult), 30, 50, 18, Color.Black);
+            Raylib.DrawText(string.Format("TriangleCount: {0}", TriangleCount), 30, 70, 18, Color.Black);
+            Raylib.DrawText(string.Format("ConvexGroupCount: {0}", ConvexGroupCount), 30, 90, 18, Color.Black);
+           
+            Raylib.DrawText("Test", 30, 300, 18, Color.Black);
+            // End Info Container
+
             Raylib.EndDrawing();
         }
 
         Raylib.CloseWindow();
+    }
+
+    static void LoadTestCase()
+    {
+        if (SelectedTestCase < 0 || SelectedTestCase >= TestCaseDelegates.Count)
+        {
+            TestName = "None";
+            Surface = null;
+            Cutter = null;
+            CutResult = CutSurfaceResult.UNKNOWN_ERROR;
+            TriangleCount = 0;
+            ConvexGroupCount = 0;
+            return;
+        }
+
+        TestCaseDelegates[SelectedTestCase](out TestName, out Surface, out Cutter);
     }
 
     static void DrawTriangulation(List<int> triangulation, List<Vector2> vertices)
@@ -113,181 +151,181 @@ class Program
         Console.Write(sb.ToString());
     }
 
-    static void InitShape()
-    {
-        surface = new SurfaceShape<PolygonVertex>();
+    //static void InitShape()
+    //{
+    //    surface = new SurfaceShape<PolygonVertex>();
 
-        List<Vector2> Vertices = [
-            new Vector2(150.0f, 150.0f),
-            new Vector2(150.0f, 550.0f),
-            new Vector2(1050.0f, 550.0f),
-            new Vector2(1050.0f, 150.0f)
-        ];
+    //    List<Vector2> Vertices = [
+    //        new Vector2(150.0f, 150.0f),
+    //        new Vector2(150.0f, 550.0f),
+    //        new Vector2(1050.0f, 550.0f),
+    //        new Vector2(1050.0f, 150.0f)
+    //    ];
 
-        //List<Vector2> Vertices = [
-        //    new Vector2(130.0f, 250.0f),
-        //    new Vector2(0.0f, 250.0f),
-        //    new Vector2(65.0f, 350.0f),
-        //    new Vector2(0.0f, 450.0f),
-        //    new Vector2(130.0f, 450.0f),
-        //    new Vector2(200.0f, 550.0f),
-        //    new Vector2(270.0f, 450.0f),
-        //    new Vector2(400.0f, 450.0f),
-        //    new Vector2(335.0f, 350.0f),
-        //    new Vector2(400.0f, 250.0f),
-        //    new Vector2(270.0f, 250.0f),
-        //    new Vector2(200.0f, 150.0f),
-        //];
+    //    //List<Vector2> Vertices = [
+    //    //    new Vector2(130.0f, 250.0f),
+    //    //    new Vector2(0.0f, 250.0f),
+    //    //    new Vector2(65.0f, 350.0f),
+    //    //    new Vector2(0.0f, 450.0f),
+    //    //    new Vector2(130.0f, 450.0f),
+    //    //    new Vector2(200.0f, 550.0f),
+    //    //    new Vector2(270.0f, 450.0f),
+    //    //    new Vector2(400.0f, 450.0f),
+    //    //    new Vector2(335.0f, 350.0f),
+    //    //    new Vector2(400.0f, 250.0f),
+    //    //    new Vector2(270.0f, 250.0f),
+    //    //    new Vector2(200.0f, 150.0f),
+    //    //];
 
-        Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
-        polygon.Vertices = Vertices;
-        polygon.InsertVertexAtBack(0);
-        polygon.InsertVertexAtBack(1);
-        polygon.InsertVertexAtBack(2);
-        polygon.InsertVertexAtBack(3);
-        //polygon.InsertVertexAtBack(4);
-        //polygon.InsertVertexAtBack(5);
-        //polygon.InsertVertexAtBack(6);
-        //polygon.InsertVertexAtBack(7);
-        //polygon.InsertVertexAtBack(8);
-        //polygon.InsertVertexAtBack(9);
-        //polygon.InsertVertexAtBack(10);
-        //polygon.InsertVertexAtBack(11);
+    //    Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
+    //    polygon.Vertices = Vertices;
+    //    polygon.InsertVertexAtBack(0);
+    //    polygon.InsertVertexAtBack(1);
+    //    polygon.InsertVertexAtBack(2);
+    //    polygon.InsertVertexAtBack(3);
+    //    //polygon.InsertVertexAtBack(4);
+    //    //polygon.InsertVertexAtBack(5);
+    //    //polygon.InsertVertexAtBack(6);
+    //    //polygon.InsertVertexAtBack(7);
+    //    //polygon.InsertVertexAtBack(8);
+    //    //polygon.InsertVertexAtBack(9);
+    //    //polygon.InsertVertexAtBack(10);
+    //    //polygon.InsertVertexAtBack(11);
 
-        surface.AddOuterPolygon(polygon);
-    }
+    //    surface.AddOuterPolygon(polygon);
+    //}
 
-    static void LoadTest1()
-    {
-        InitShape();
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = [
-            new Vector2(250.0f, 150.0f),
-            new Vector2(250.0f, 50.0f),
-            new Vector2(550.0f, 50.0f),
-            new Vector2(550.0f, 250.0f),
-            new Vector2(450.0f, 250.0f),
-            new Vector2(450.0f, 150.0f)
-            ];
-        cutter.InsertVertexAtBack(0);
-        cutter.InsertVertexAtBack(1);
-        cutter.InsertVertexAtBack(2);
-        cutter.InsertVertexAtBack(3);
-        cutter.InsertVertexAtBack(4);
-        cutter.InsertVertexAtBack(5);
+    //static void LoadTest1()
+    //{
+    //    InitShape();
+    //    cutter = new Polygon<PolygonVertex>();
+    //    cutter.Vertices = [
+    //        new Vector2(250.0f, 150.0f),
+    //        new Vector2(250.0f, 50.0f),
+    //        new Vector2(550.0f, 50.0f),
+    //        new Vector2(550.0f, 250.0f),
+    //        new Vector2(450.0f, 250.0f),
+    //        new Vector2(450.0f, 150.0f)
+    //        ];
+    //    cutter.InsertVertexAtBack(0);
+    //    cutter.InsertVertexAtBack(1);
+    //    cutter.InsertVertexAtBack(2);
+    //    cutter.InsertVertexAtBack(3);
+    //    cutter.InsertVertexAtBack(4);
+    //    cutter.InsertVertexAtBack(5);
 
-        Console.WriteLine("Loaded test1");
-    }
+    //    Console.WriteLine("Loaded test1");
+    //}
 
-    static void LoadTest2()
-    {
-        InitShape();
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = [
-            new Vector2(250.0f, 150.0f),
-            new Vector2(250.0f, 50.0f),
-            new Vector2(550.0f, 50.0f),
-            new Vector2(550.0f, 150.0f),
-            ];
-        cutter.InsertVertexAtBack(0);
-        cutter.InsertVertexAtBack(1);
-        cutter.InsertVertexAtBack(2);
-        cutter.InsertVertexAtBack(3);
+    //static void LoadTest2()
+    //{
+    //    InitShape();
+    //    cutter = new Polygon<PolygonVertex>();
+    //    cutter.Vertices = [
+    //        new Vector2(250.0f, 150.0f),
+    //        new Vector2(250.0f, 50.0f),
+    //        new Vector2(550.0f, 50.0f),
+    //        new Vector2(550.0f, 150.0f),
+    //        ];
+    //    cutter.InsertVertexAtBack(0);
+    //    cutter.InsertVertexAtBack(1);
+    //    cutter.InsertVertexAtBack(2);
+    //    cutter.InsertVertexAtBack(3);
 
-        Console.WriteLine("Loaded test2");
-    }
+    //    Console.WriteLine("Loaded test2");
+    //}
 
-    static void LoadTest3()
-    {
-        InitShape();
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = [
-            new Vector2(550.0f, 150.0f),
-            new Vector2(550.0f, 50.0f),
-            new Vector2(250.0f, 50.0f),
-        ];
-        cutter.InsertVertexAtBack(0);
-        cutter.InsertVertexAtBack(1);
-        cutter.InsertVertexAtBack(2);
+    //static void LoadTest3()
+    //{
+    //    InitShape();
+    //    cutter = new Polygon<PolygonVertex>();
+    //    cutter.Vertices = [
+    //        new Vector2(550.0f, 150.0f),
+    //        new Vector2(550.0f, 50.0f),
+    //        new Vector2(250.0f, 50.0f),
+    //    ];
+    //    cutter.InsertVertexAtBack(0);
+    //    cutter.InsertVertexAtBack(1);
+    //    cutter.InsertVertexAtBack(2);
 
-        Console.WriteLine("Loaded test3");
-    }
+    //    Console.WriteLine("Loaded test3");
+    //}
 
-    static void LoadTest4()
-    {
-        InitShape();
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = [
-            new Vector2(550.0f, 150.0f),
-            new Vector2(550.0f, 250.0f),
-            new Vector2(250.0f, 250.0f),
-        ];
-        cutter.InsertVertexAtBack(0);
-        cutter.InsertVertexAtBack(1);
-        cutter.InsertVertexAtBack(2);
+    //static void LoadTest4()
+    //{
+    //    InitShape();
+    //    cutter = new Polygon<PolygonVertex>();
+    //    cutter.Vertices = [
+    //        new Vector2(550.0f, 150.0f),
+    //        new Vector2(550.0f, 250.0f),
+    //        new Vector2(250.0f, 250.0f),
+    //    ];
+    //    cutter.InsertVertexAtBack(0);
+    //    cutter.InsertVertexAtBack(1);
+    //    cutter.InsertVertexAtBack(2);
 
-        Console.WriteLine("Loaded test4");
-    }
+    //    Console.WriteLine("Loaded test4");
+    //}
 
-    static void LoadTest5()
-    {
-        InitShape();
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = [
-            new Vector2(150.0f, 150.0f),
-            new Vector2(150.0f, 550.0f),
-            new Vector2(550.0f, 550.0f),
-            new Vector2(550.0f, 150.0f)
-        ];
-        cutter.InsertVertexAtBack(0);
-        cutter.InsertVertexAtBack(1);
-        cutter.InsertVertexAtBack(2);
-        cutter.InsertVertexAtBack(3);
+    //static void LoadTest5()
+    //{
+    //    InitShape();
+    //    cutter = new Polygon<PolygonVertex>();
+    //    cutter.Vertices = [
+    //        new Vector2(150.0f, 150.0f),
+    //        new Vector2(150.0f, 550.0f),
+    //        new Vector2(550.0f, 550.0f),
+    //        new Vector2(550.0f, 150.0f)
+    //    ];
+    //    cutter.InsertVertexAtBack(0);
+    //    cutter.InsertVertexAtBack(1);
+    //    cutter.InsertVertexAtBack(2);
+    //    cutter.InsertVertexAtBack(3);
 
-        Console.WriteLine("Loaded test5");
-    }
+    //    Console.WriteLine("Loaded test5");
+    //}
 
-    static void LoadTest6()
-    {
-        InitShape();
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = [
-            new Vector2(150.0f, 150.0f),
-            new Vector2(150.0f, 250.0f),
-            new Vector2(550.0f, 250.0f),
-            new Vector2(550.0f, 150.0f)
-        ];
-        cutter.InsertVertexAtBack(0);
-        cutter.InsertVertexAtBack(1);
-        cutter.InsertVertexAtBack(2);
-        cutter.InsertVertexAtBack(3);
+    //static void LoadTest6()
+    //{
+    //    InitShape();
+    //    cutter = new Polygon<PolygonVertex>();
+    //    cutter.Vertices = [
+    //        new Vector2(150.0f, 150.0f),
+    //        new Vector2(150.0f, 250.0f),
+    //        new Vector2(550.0f, 250.0f),
+    //        new Vector2(550.0f, 150.0f)
+    //    ];
+    //    cutter.InsertVertexAtBack(0);
+    //    cutter.InsertVertexAtBack(1);
+    //    cutter.InsertVertexAtBack(2);
+    //    cutter.InsertVertexAtBack(3);
 
-        Console.WriteLine("Loaded test6");
-    }
+    //    Console.WriteLine("Loaded test6");
+    //}
 
-    static void InsertCircle(Vector2 center, float scale = 1.0f)
-    {
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = [
-            new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
-            new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
-            new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
-            new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
-            new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
-            new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
-            new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
-            new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-        ];
+    //static void InsertCircle(Vector2 center, float scale = 1.0f)
+    //{
+    //    cutter = new Polygon<PolygonVertex>();
+    //    cutter.Vertices = [
+    //        new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+    //        new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+    //        new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+    //        new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+    //        new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+    //        new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+    //        new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+    //        new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+    //    ];
 
-        cutter.InsertVertexAtBack(0);
-        cutter.InsertVertexAtBack(1);
-        cutter.InsertVertexAtBack(2);
-        cutter.InsertVertexAtBack(3);
-        cutter.InsertVertexAtBack(4);
-        cutter.InsertVertexAtBack(5);
-        cutter.InsertVertexAtBack(6);
-        cutter.InsertVertexAtBack(7);
-    }
+    //    cutter.InsertVertexAtBack(0);
+    //    cutter.InsertVertexAtBack(1);
+    //    cutter.InsertVertexAtBack(2);
+    //    cutter.InsertVertexAtBack(3);
+    //    cutter.InsertVertexAtBack(4);
+    //    cutter.InsertVertexAtBack(5);
+    //    cutter.InsertVertexAtBack(6);
+    //    cutter.InsertVertexAtBack(7);
+    //}
 
     static Vector2 FlipY(Vector2 vector)
     {
