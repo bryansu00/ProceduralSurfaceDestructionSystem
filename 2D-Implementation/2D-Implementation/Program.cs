@@ -1,31 +1,18 @@
 ﻿using Raylib_cs;
 using PSDSystem;
 using System.Numerics;
-using System.IO;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using System.Security.Cryptography.X509Certificates;
-using System.Collections.Generic;
-using System.Net.Security;
+using static PSDSystem.PSD;
 
 class Program
 {
     const int HEIGHT = 720;
-
-    private static Polygon<PolygonVertex> cutter = new Polygon<PolygonVertex>();
-
-    // Initialize stuff....
-    private static SurfaceShape<PolygonVertex> surface = new SurfaceShape<PolygonVertex>();
-
-    private static List<int>? triangles = null;
-    private static List<Vector2>? triangleVertices = null;
-    private static List<List<Vector2>>? convexVertices = null;
-
-    private static Polygon<PolygonVertex>? testPolygon = null;
-
     private static List<Color> colors = new List<Color>();
 
-    private static int selectedIndex = 0;
+    // Test Results
+    CutSurfaceResult CutResult = CutSurfaceResult.UNKNOWN_ERROR;
+    int TriangleCount = 0;
+    int ConvexGroupCount = 0;
 
     public static void Main()
     {
@@ -35,117 +22,28 @@ class Program
             colors.Add(new Color(rnd.Next(0, 255), rnd.Next(0, 255), rnd.Next(0, 255), 255));
         }
 
-
         Raylib.InitWindow(1280, HEIGHT, "2D Surface Destruction Testing");
         Raylib.SetTargetFPS(60);
-
-        InitShape();
-        InitCutter();
 
         while (!Raylib.WindowShouldClose())
         {
             if (Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                Vector2 mousePos = FlipY(Raylib.GetMousePosition());
-                int verticesIdxAdded = cutter.Vertices.Count;
-                cutter.Vertices.Add(mousePos);
-                cutter.InsertVertexAtBack(verticesIdxAdded);
-
-                //InsertCircle(mousePos, 10.0f);
+                
             }
             else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
             {
-                //if (cutter.Vertices.Count > 0)
-                //{
-                //    cutter.Vertices.RemoveAt(cutter.Vertices.Count - 1);
-                //    int verticesIdxRemoved = cutter.Vertices.Count;
-                //    cutter.RemoveVerticesWithIndex(verticesIdxRemoved);
-                //}
-            }
 
-            if (Raylib.IsKeyPressed(KeyboardKey.Grave))
-            {
-                Console.Write("~");
-                string? input = Console.ReadLine();
-                if (input != null)
-                {
-                    string[] args = input.Split();
-
-                    if (args.Length > 0)
-                    {
-                        if (args[0].Equals("test0"))
-                        {
-                            InitShape();
-                            InitCutter();
-                            Console.WriteLine("Loaded test0");
-                        }
-                        else if (args[0].Equals("test1")) LoadTest1();
-                        else if (args[0].Equals("test2")) LoadTest2();
-                        else if (args[0].Equals("test3")) LoadTest3();
-                        else if (args[0].Equals("test4")) LoadTest4();
-                        else if (args[0].Equals("test5")) LoadTest5();
-                        else if (args[0].Equals("test6")) LoadTest6();
-                    }
-                }
             }
 
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                //PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                //InitCutter();
-                //testPolygon = PSD.ConnectOuterAndInnerPolygon(surface.Polygons[0].OuterPolygon, cutter);
-                int res = PSD.CutSurface<PolygonVertex, BooleanVertex>(surface, cutter);
-                PSD.TriangulateSurface(surface, out triangles, out triangleVertices);
-
-                convexVertices = PSD.FindConvexVerticesOfSurface(surface);
-
-                InitCutter();
-
-                if (convexVertices != null && triangles != null)
-                    Console.WriteLine("# of Convex Groups: {0}, # of Triangles: {1}", convexVertices.Count, triangles.Count / 3.0f);
-            }
-
-            if (Raylib.IsKeyPressed(KeyboardKey.Right))
-            {
-                selectedIndex++;
-            }
-            else if (Raylib.IsKeyPressed(KeyboardKey.Left))
-            {
-                selectedIndex--;
-            }
-
-            if (Raylib.IsKeyPressed(KeyboardKey.Right) || Raylib.IsKeyPressed(KeyboardKey.Left))
-            {
-                if (convexVertices != null && selectedIndex < convexVertices.Count && selectedIndex >= 0)
-                {
-                    Console.Write(selectedIndex);
-                    Console.Write(": ");
-                    Console.WriteLine(convexVertices[selectedIndex].Count);
-                }
+                
             }
 
             Raylib.BeginDrawing();
 
             Raylib.ClearBackground(Color.White);
-
-            foreach (PolygonGroup<PolygonVertex> group in surface.Polygons)
-            {
-                DrawPolygon(group.OuterPolygon, Color.Blue, false);
-                foreach (Polygon<PolygonVertex> inner in group.InnerPolygons)
-                {
-                    DrawPolygon(inner, Color.Red, false);
-                }
-            }
-            DrawPolygon(cutter, Color.Red, false, true);
-
-            if (testPolygon != null)
-                DrawPolygon(testPolygon, Color.Green, true);
-
-            if (triangles != null && triangleVertices != null)
-                DrawTriangulation(triangles, triangleVertices);
-
-            if (convexVertices != null)
-                DrawConvexVertices(convexVertices);
 
             Raylib.EndDrawing();
         }
@@ -190,19 +88,6 @@ class Program
         }
     }
 
-    static void DrawConvexVertices(List<List<Vector2>> convexVertices)
-    {
-        if (selectedIndex >= convexVertices.Count || selectedIndex < 0) return;
-
-        List<Vector2> verticesList = convexVertices[selectedIndex];
-
-        for (int i= 0; i< verticesList.Count; i++)
-        {
-            Vector2 a = FlipY(verticesList[i]);
-            Raylib.DrawCircleV(a, 10.0f, Color.Blue);
-        }
-    }
-
     static void PrintBooleanList(Polygon<BooleanVertex> polygon)
     {
         if (polygon.Head == null) return;
@@ -226,12 +111,6 @@ class Program
         } while (now != polygon.Head);
 
         Console.Write(sb.ToString());
-    }
-
-    static void InitCutter()
-    {
-        cutter = new Polygon<PolygonVertex>();
-        cutter.Vertices = new List<Vector2>();
     }
 
     static void InitShape()

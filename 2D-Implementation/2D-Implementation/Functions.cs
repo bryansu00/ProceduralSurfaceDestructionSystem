@@ -17,6 +17,17 @@ namespace PSDSystem
             BOTH_OUTSIDE = 3
         }
 
+        public enum CutSurfaceResult
+        {
+            UNKNOWN_ERROR = -2,
+            FAILED = -1,
+            OVERLAPPED_OUTER = 0,
+            CUTTER_INSIDE_OF_INNER = 1,
+            CUTTER_INSIDE_OUTER_BUT_NOT_INNERS = 2,
+            CUTTER_INSIDE_OUTER_OVERLAPPED_INNER = 3,
+            CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI = 4
+        }
+
         /// <summary>
         /// Given a surface and a polygon that represent the cutter, cut a 'hole' on to the surface
         /// </summary>
@@ -34,11 +45,11 @@ namespace PSDSystem
         /// 3 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing only 1 polygon.
         /// 4 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing MULTIPLE polygons, but only 1 of those polygons were kept.
         /// </returns>
-        public static int CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
+        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
-            if (surface.Polygons.Count == 0 || cutter.Head == null || cutter.Vertices == null) return -1;
+            if (surface.Polygons.Count == 0 || cutter.Head == null || cutter.Vertices == null) return CutSurfaceResult.FAILED;
 
             // Keep track of what groups to remove
             List<PolygonGroup<T>> groupsToRemove = new List<PolygonGroup<T>>();
@@ -170,7 +181,7 @@ namespace PSDSystem
                     {
                         // Cutter is completely inside an inner polygon,
                         // cutter will not produce any new polygons
-                        return 1;
+                        return CutSurfaceResult.CUTTER_INSIDE_OF_INNER;
                     }
 
                     switch (result)
@@ -193,7 +204,7 @@ namespace PSDSystem
                 {
                     // No intersection was found, cutter is a new inner polygon
                     groupCutterIsIn.InnerPolygons.Add(cutter);
-                    return 2;
+                    return CutSurfaceResult.CUTTER_INSIDE_OUTER_BUT_NOT_INNERS;
                 }
 
                 // Replace the list
@@ -205,7 +216,7 @@ namespace PSDSystem
                 {
                     // Only 1 polygon was produced
                     groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
-                    return 3;
+                    return CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER;
                 }
                 else if (polygonsProduced.Count > 1)
                 {
@@ -238,15 +249,15 @@ namespace PSDSystem
                     }
 
                     groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
-                    return 4;
+                    return CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI;
                 }
                 else
                 {
-                    return -2;
+                    return CutSurfaceResult.UNKNOWN_ERROR;
                 }
             }
 
-            return 0;
+            return CutSurfaceResult.OVERLAPPED_OUTER;
         }
 
         /// <summary>
