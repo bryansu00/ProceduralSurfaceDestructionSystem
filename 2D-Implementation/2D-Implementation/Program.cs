@@ -7,19 +7,30 @@ using static PSDSystem.TestCases;
 
 class Program
 {
+    public enum ViewMode
+    {
+        Surface = 0,
+        Triangle
+    }
+
     const int HEIGHT = 720;
     private static List<Color> colors = new List<Color>();
 
+    // Test Settings
     static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = [
         SquareTestCase<PolygonVertex>
         ];
     static int SelectedTestCase = 0;
+    static ViewMode Mode = ViewMode.Surface;
 
     // Test Results
     static string TestName = "";
     static SurfaceShape<PolygonVertex>? Surface = null;
-    static Polygon<PolygonVertex>? Cutter = null;
+    static List<Polygon<PolygonVertex>>? Cutters = null;
     static CutSurfaceResult CutResult = CutSurfaceResult.UNKNOWN_ERROR;
+    static List<int>? Triangles = null;
+    static List<Vector2>? TrianglesVertices = null;
+    static List<List<Vector2>>? ConvexGroups = null;
     static int TriangleCount = 0;
     static int ConvexGroupCount = 0;
 
@@ -47,14 +58,47 @@ class Program
 
             }
 
+            // Reload
+            if (Raylib.IsKeyPressed(KeyboardKey.R))
+            {
+                LoadTestCase();
+            }
+            // Run Test
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                
+                if (Surface != null && Cutters != null)
+                {
+                    foreach (Polygon<PolygonVertex> cutter in Cutters)
+                        CutSurface<PolygonVertex, BooleanVertex>(Surface, cutter);
+                }
+                if (Surface != null)
+                {
+                    TriangulateSurface(Surface, out Triangles, out TrianglesVertices);
+                    if (Triangles != null)
+                        TriangleCount = Triangles.Count / 3;
+
+                    ConvexGroups = FindConvexVerticesOfSurface(Surface);
+                    if (ConvexGroups != null)
+                        ConvexGroupCount = ConvexGroups.Count;
+                }
             }
 
             Raylib.BeginDrawing();
 
             Raylib.ClearBackground(Color.White);
+
+            // Draw Test Case
+            switch (Mode)
+            {
+                case ViewMode.Surface:
+                    if (Surface != null)
+                    {
+                        DrawSurface(Surface, true);
+                    }
+                    break;
+                default:
+                    break;
+            }
 
             // Draw Info Container
             Raylib.DrawRectangle(20, 20, 400, 300, Color.Gray);
@@ -63,8 +107,10 @@ class Program
             Raylib.DrawText(string.Format("CutResult: {0}", CutResult), 30, 50, 18, Color.Black);
             Raylib.DrawText(string.Format("TriangleCount: {0}", TriangleCount), 30, 70, 18, Color.Black);
             Raylib.DrawText(string.Format("ConvexGroupCount: {0}", ConvexGroupCount), 30, 90, 18, Color.Black);
-           
-            Raylib.DrawText("Test", 30, 300, 18, Color.Black);
+
+            Raylib.DrawText(string.Format("Selected Test Case: {0}", SelectedTestCase), 30, 260, 18, Color.Black);
+            Raylib.DrawText("V - Change View | R - Reload", 30, 280, 18, Color.Black);
+            Raylib.DrawText("Space - Run Test", 30, 300, 18, Color.Black);
             // End Info Container
 
             Raylib.EndDrawing();
@@ -75,18 +121,19 @@ class Program
 
     static void LoadTestCase()
     {
+        TestName = "None";
+        Surface = null;
+        Cutters = null;
+        CutResult = CutSurfaceResult.UNKNOWN_ERROR;
+        TriangleCount = 0;
+        ConvexGroupCount = 0;
+
         if (SelectedTestCase < 0 || SelectedTestCase >= TestCaseDelegates.Count)
         {
-            TestName = "None";
-            Surface = null;
-            Cutter = null;
-            CutResult = CutSurfaceResult.UNKNOWN_ERROR;
-            TriangleCount = 0;
-            ConvexGroupCount = 0;
             return;
         }
 
-        TestCaseDelegates[SelectedTestCase](out TestName, out Surface, out Cutter);
+        TestCaseDelegates[SelectedTestCase](out TestName, out Surface, out Cutters);
     }
 
     static void DrawTriangulation(List<int> triangulation, List<Vector2> vertices)
@@ -122,6 +169,19 @@ class Program
                 Raylib.DrawCircleV(toUse, 5.0f, color);
                 if (labelOnLeft) Raylib.DrawText(i.ToString(), (int)toUse.X - 6, (int)toUse.Y + 6, 12, color);
                 else Raylib.DrawText(i.ToString(), (int)toUse.X + 5, (int)toUse.Y + 5, 12, color);
+            }
+        }
+    }
+
+    static void DrawSurface<T>(SurfaceShape<T> surface, bool labelVerts = true) where T : PolygonVertex
+    {
+        foreach (PolygonGroup<T> group in surface.Polygons)
+        {
+            DrawPolygon(group.OuterPolygon, Color.Blue, labelVerts, false);
+            
+            foreach (Polygon<T> polygon in group.InnerPolygons)
+            {
+                DrawPolygon(polygon, Color.Red, labelVerts, true);
             }
         }
     }

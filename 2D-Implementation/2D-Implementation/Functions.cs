@@ -631,7 +631,7 @@ namespace PSDSystem
         /// <param name="polygon">The other polygon</param>
         /// <param name="intersectionPoints">List of intersection points to return</param>
         /// <returns>The result from intersecting the two given polygons</returns>
-        private static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        public static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             // Intersection cannot performed, return for invalid operation
             if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null ||
