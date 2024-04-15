@@ -10,7 +10,9 @@ class Program
     public enum ViewMode
     {
         Surface = 0,
-        Triangle
+        Triangles,
+        ConvexGroups,
+        MAX
     }
 
     const int HEIGHT = 720;
@@ -18,15 +20,17 @@ class Program
 
     // Test Settings
     static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = [
-        SquareTestCase<PolygonVertex>
+        SquareTestCase<PolygonVertex>,
+        TestCase1<PolygonVertex>
         ];
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;
+    static int GroupBeingViewed = 0;
 
     // Test Results
     static string TestName = "";
     static SurfaceShape<PolygonVertex>? Surface = null;
-    static List<Polygon<PolygonVertex>>? Cutters = null;
+    static Polygon<PolygonVertex>? Cutter = null;
     static CutSurfaceResult CutResult = CutSurfaceResult.UNKNOWN_ERROR;
     static List<int>? Triangles = null;
     static List<Vector2>? TrianglesVertices = null;
@@ -49,15 +53,12 @@ class Program
 
         while (!Raylib.WindowShouldClose())
         {
-            if (Raylib.IsMouseButtonPressed(MouseButton.Left))
+            // Change View
+            if (Raylib.IsKeyPressed(KeyboardKey.V))
             {
-                
+                Mode = (ViewMode)(((int)Mode + 1) % (int)ViewMode.MAX);
+                GroupBeingViewed = 0;
             }
-            else if (Raylib.IsMouseButtonPressed(MouseButton.Right))
-            {
-
-            }
-
             // Reload
             if (Raylib.IsKeyPressed(KeyboardKey.R))
             {
@@ -66,10 +67,9 @@ class Program
             // Run Test
             if (Raylib.IsKeyPressed(KeyboardKey.Space))
             {
-                if (Surface != null && Cutters != null)
+                if (Surface != null && Cutter != null)
                 {
-                    foreach (Polygon<PolygonVertex> cutter in Cutters)
-                        CutSurface<PolygonVertex, BooleanVertex>(Surface, cutter);
+                     CutResult = CutSurface<PolygonVertex, BooleanVertex>(Surface, Cutter);
                 }
                 if (Surface != null)
                 {
@@ -81,6 +81,29 @@ class Program
                     if (ConvexGroups != null)
                         ConvexGroupCount = ConvexGroups.Count;
                 }
+
+                Cutter = null;
+            }
+
+            // Change Test
+            if (Raylib.IsKeyPressed(KeyboardKey.Right))
+            {
+                SelectedTestCase = (SelectedTestCase + 1) % TestCaseDelegates.Count;
+            }
+            else if (Raylib.IsKeyPressed(KeyboardKey.Left))
+            {
+                SelectedTestCase = SelectedTestCase - 1;
+                if (SelectedTestCase < 0) SelectedTestCase = 0;
+            }
+            // Change Group
+            if (Raylib.IsKeyPressed(KeyboardKey.Up))
+            {
+                if (ConvexGroups != null) GroupBeingViewed = (GroupBeingViewed + 1) % ConvexGroups.Count;
+            }
+            else if (Raylib.IsKeyPressed(KeyboardKey.Down))
+            {
+                if (ConvexGroups != null) GroupBeingViewed = GroupBeingViewed - 1;
+                if (GroupBeingViewed < 0) GroupBeingViewed = 0;
             }
 
             Raylib.BeginDrawing();
@@ -96,8 +119,28 @@ class Program
                         DrawSurface(Surface, true);
                     }
                     break;
+                case ViewMode.Triangles:
+                    if (Triangles != null && TrianglesVertices != null)
+                    {
+                        DrawTriangulation(Triangles, TrianglesVertices);
+                    }
+                    break;
+                case ViewMode.ConvexGroups:
+                    if (Surface != null)
+                    {
+                        DrawSurface(Surface, true);
+                    }
+                    if (ConvexGroups != null)
+                    {
+                        DrawConvexVertices(ConvexGroups[GroupBeingViewed]);
+                    }
+                    break;
                 default:
                     break;
+            }
+            if (Cutter != null)
+            {
+                DrawPolygon(Cutter, Color.Red, true, true);
             }
 
             // Draw Info Container
@@ -108,7 +151,9 @@ class Program
             Raylib.DrawText(string.Format("TriangleCount: {0}", TriangleCount), 30, 70, 18, Color.Black);
             Raylib.DrawText(string.Format("ConvexGroupCount: {0}", ConvexGroupCount), 30, 90, 18, Color.Black);
 
-            Raylib.DrawText(string.Format("Selected Test Case: {0}", SelectedTestCase), 30, 260, 18, Color.Black);
+            Raylib.DrawText(string.Format("Current View: {0}", Mode), 30, 220, 18, Color.Black);
+            Raylib.DrawText(string.Format("Selected Test Case: {0}", SelectedTestCase), 30, 240, 18, Color.Black);
+            Raylib.DrawText(string.Format("Selected Vertex Group: {0}", GroupBeingViewed), 30, 260, 18, Color.Black);
             Raylib.DrawText("V - Change View | R - Reload", 30, 280, 18, Color.Black);
             Raylib.DrawText("Space - Run Test", 30, 300, 18, Color.Black);
             // End Info Container
@@ -123,8 +168,11 @@ class Program
     {
         TestName = "None";
         Surface = null;
-        Cutters = null;
+        Cutter = null;
         CutResult = CutSurfaceResult.UNKNOWN_ERROR;
+        Triangles = null;
+        TrianglesVertices = null;
+        ConvexGroups = null;
         TriangleCount = 0;
         ConvexGroupCount = 0;
 
@@ -133,7 +181,7 @@ class Program
             return;
         }
 
-        TestCaseDelegates[SelectedTestCase](out TestName, out Surface, out Cutters);
+        TestCaseDelegates[SelectedTestCase](out TestName, out Surface, out Cutter);
     }
 
     static void DrawTriangulation(List<int> triangulation, List<Vector2> vertices)
@@ -181,101 +229,25 @@ class Program
             
             foreach (Polygon<T> polygon in group.InnerPolygons)
             {
-                DrawPolygon(polygon, Color.Red, labelVerts, true);
+                DrawPolygon(polygon, Color.Blue, labelVerts, false);
             }
         }
     }
 
-    static void PrintBooleanList(Polygon<BooleanVertex> polygon)
+    static void DrawConvexVertices(List<Vector2> vertices)
     {
-        if (polygon.Head == null) return;
-
-        StringBuilder sb = new StringBuilder();
-        VertexNode<BooleanVertex> now = polygon.Head;
-        do
+        foreach (Vector2 v in vertices)
         {
-            sb.Append(now.Data.Index);
-
-            sb.Append(", Outside: ");
-            sb.Append(now.Data.IsOutside);
-
-            sb.Append(", Cross: ");
-            if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
-            else sb.Append("None");
-
-            sb.Append("\n");
-
-            now = now.Next;
-        } while (now != polygon.Head);
-
-        Console.Write(sb.ToString());
+            Vector2 flippedV = FlipY(v);
+            Raylib.DrawCircleV(flippedV, 5.0f, Color.Red);
+            foreach (Vector2 v2 in vertices)
+            {
+                if (v == v2) continue;
+                Vector2 flippedV2 = FlipY(v2);
+                Raylib.DrawLineV(flippedV, flippedV2, Color.Red);
+            }
+        }
     }
-
-    //static void InitShape()
-    //{
-    //    surface = new SurfaceShape<PolygonVertex>();
-
-    //    List<Vector2> Vertices = [
-    //        new Vector2(150.0f, 150.0f),
-    //        new Vector2(150.0f, 550.0f),
-    //        new Vector2(1050.0f, 550.0f),
-    //        new Vector2(1050.0f, 150.0f)
-    //    ];
-
-    //    //List<Vector2> Vertices = [
-    //    //    new Vector2(130.0f, 250.0f),
-    //    //    new Vector2(0.0f, 250.0f),
-    //    //    new Vector2(65.0f, 350.0f),
-    //    //    new Vector2(0.0f, 450.0f),
-    //    //    new Vector2(130.0f, 450.0f),
-    //    //    new Vector2(200.0f, 550.0f),
-    //    //    new Vector2(270.0f, 450.0f),
-    //    //    new Vector2(400.0f, 450.0f),
-    //    //    new Vector2(335.0f, 350.0f),
-    //    //    new Vector2(400.0f, 250.0f),
-    //    //    new Vector2(270.0f, 250.0f),
-    //    //    new Vector2(200.0f, 150.0f),
-    //    //];
-
-    //    Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>();
-    //    polygon.Vertices = Vertices;
-    //    polygon.InsertVertexAtBack(0);
-    //    polygon.InsertVertexAtBack(1);
-    //    polygon.InsertVertexAtBack(2);
-    //    polygon.InsertVertexAtBack(3);
-    //    //polygon.InsertVertexAtBack(4);
-    //    //polygon.InsertVertexAtBack(5);
-    //    //polygon.InsertVertexAtBack(6);
-    //    //polygon.InsertVertexAtBack(7);
-    //    //polygon.InsertVertexAtBack(8);
-    //    //polygon.InsertVertexAtBack(9);
-    //    //polygon.InsertVertexAtBack(10);
-    //    //polygon.InsertVertexAtBack(11);
-
-    //    surface.AddOuterPolygon(polygon);
-    //}
-
-    //static void LoadTest1()
-    //{
-    //    InitShape();
-    //    cutter = new Polygon<PolygonVertex>();
-    //    cutter.Vertices = [
-    //        new Vector2(250.0f, 150.0f),
-    //        new Vector2(250.0f, 50.0f),
-    //        new Vector2(550.0f, 50.0f),
-    //        new Vector2(550.0f, 250.0f),
-    //        new Vector2(450.0f, 250.0f),
-    //        new Vector2(450.0f, 150.0f)
-    //        ];
-    //    cutter.InsertVertexAtBack(0);
-    //    cutter.InsertVertexAtBack(1);
-    //    cutter.InsertVertexAtBack(2);
-    //    cutter.InsertVertexAtBack(3);
-    //    cutter.InsertVertexAtBack(4);
-    //    cutter.InsertVertexAtBack(5);
-
-    //    Console.WriteLine("Loaded test1");
-    //}
 
     //static void LoadTest2()
     //{

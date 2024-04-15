@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text;
 
 namespace PSDSystem
 {
@@ -436,6 +437,32 @@ namespace PSDSystem
             return output;
         }
 
+        private static void PrintBooleanList<T>(Polygon<T> polygon)
+            where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        {
+            if (polygon.Head == null) return;
+
+            StringBuilder sb = new StringBuilder();
+            VertexNode<T> now = polygon.Head;
+            do
+            {
+                sb.Append(now.Data.Index);
+
+                sb.Append(", Outside: ");
+                sb.Append(now.Data.IsOutside);
+
+                sb.Append(", Cross: ");
+                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
+                else sb.Append("None");
+
+                sb.Append("\n");
+
+                now = now.Next;
+            } while (now != polygon.Head);
+
+            Console.Write(sb.ToString());
+        }
+
         /// <summary>
         /// Perform a boolean addition operation using the given information
         /// </summary>
@@ -466,6 +493,8 @@ namespace PSDSystem
 
             // Insert Points
             InsertIntersectionPoints(center, intersections);
+
+            PrintBooleanList(center);
 
             // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
             // WHY: I DO NOT KNOW, PROBABLY HAS TO DO WITH ONE OF THE EDGE CASES
@@ -573,6 +602,8 @@ namespace PSDSystem
 
             InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
+            PrintBooleanList(center);
+
             while (true)
             {
                 VertexNode<U>? firstPoint = null, point = null;
@@ -631,7 +662,7 @@ namespace PSDSystem
         /// <param name="polygon">The other polygon</param>
         /// <param name="intersectionPoints">List of intersection points to return</param>
         /// <returns>The result from intersecting the two given polygons</returns>
-        public static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        private static IntersectionResult IntersectCutterAndPolygon<T>(Polygon<T> cutter, Polygon<T> polygon, out IntersectionPoints<T>? intersectionPoints) where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             // Intersection cannot performed, return for invalid operation
             if (cutter.Count < 3 || cutter.Head == null || cutter.Vertices == null ||
