@@ -26,7 +26,6 @@ class Program
         ];
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;
-    static int GroupBeingViewed = 0;
 
     // Test Results
     static string TestName = "";
@@ -59,7 +58,6 @@ class Program
             if (Raylib.IsKeyPressed(KeyboardKey.V))
             {
                 Mode = (ViewMode)(((int)Mode + 1) % (int)ViewMode.MAX);
-                GroupBeingViewed = 0;
             }
             // Reload
             if (Raylib.IsKeyPressed(KeyboardKey.R))
@@ -105,17 +103,7 @@ class Program
             else if (Raylib.IsKeyPressed(KeyboardKey.Left))
             {
                 SelectedTestCase = SelectedTestCase - 1;
-                if (SelectedTestCase < 0) SelectedTestCase = 0;
-            }
-            // Change Group
-            if (Raylib.IsKeyPressed(KeyboardKey.Up))
-            {
-                if (ConvexGroups != null) GroupBeingViewed = (GroupBeingViewed + 1) % ConvexGroups.Count;
-            }
-            else if (Raylib.IsKeyPressed(KeyboardKey.Down))
-            {
-                if (ConvexGroups != null) GroupBeingViewed = GroupBeingViewed - 1;
-                if (GroupBeingViewed < 0) GroupBeingViewed = 0;
+                if (SelectedTestCase == -1) SelectedTestCase = TestCaseDelegates.Count - 1;
             }
 
             Raylib.BeginDrawing();
@@ -140,11 +128,11 @@ class Program
                 case ViewMode.ConvexGroups:
                     if (Surface != null)
                     {
-                        DrawSurface(Surface, true);
+                        DrawSurface(Surface, false);
                     }
                     if (ConvexGroups != null)
                     {
-                        DrawConvexVertices(ConvexGroups[GroupBeingViewed]);
+                        DrawConvexVertices(ConvexGroups);
                     }
                     break;
                 default:
@@ -164,9 +152,8 @@ class Program
             Raylib.DrawText(string.Format("SurfaceVerticesCount: {0}", SurfaceVerticesCount), 30, 90, 18, Color.Black);
             Raylib.DrawText(string.Format("ConvexGroupCount: {0}", ConvexGroupCount), 30, 110, 18, Color.Black);
 
-            Raylib.DrawText(string.Format("Current View: {0}", Mode), 30, 220, 18, Color.Black);
-            Raylib.DrawText(string.Format("Selected Test Case: {0}", SelectedTestCase), 30, 240, 18, Color.Black);
-            Raylib.DrawText(string.Format("Selected Vertex Group: {0}", GroupBeingViewed), 30, 260, 18, Color.Black);
+            Raylib.DrawText(string.Format("Current View: {0}", Mode), 30, 240, 18, Color.Black);
+            Raylib.DrawText(string.Format("Selected Test Case: {0}", SelectedTestCase), 30, 260, 18, Color.Black);
             Raylib.DrawText("V - Change View | R - Reload", 30, 280, 18, Color.Black);
             Raylib.DrawText("Space - Run Test", 30, 300, 18, Color.Black);
             // End Info Container
@@ -248,17 +235,20 @@ class Program
         }
     }
 
-    static void DrawConvexVertices(List<Vector2> vertices)
+    static void DrawConvexVertices(List<List<Vector2>> verticesGroup)
     {
-        foreach (Vector2 v in vertices)
+        for (int i = 0; i < verticesGroup.Count; i++)
         {
-            Vector2 flippedV = FlipY(v);
-            Raylib.DrawCircleV(flippedV, 5.0f, Color.Red);
-            foreach (Vector2 v2 in vertices)
+            foreach (Vector2 v in verticesGroup[i])
             {
-                if (v == v2) continue;
-                Vector2 flippedV2 = FlipY(v2);
-                Raylib.DrawLineV(flippedV, flippedV2, Color.Red);
+                Vector2 flippedV = FlipY(v);
+                Raylib.DrawCircleV(flippedV, 5.0f, colors[i]);
+                foreach (Vector2 v2 in verticesGroup[i])
+                {
+                    if (v == v2) continue;
+                    Vector2 flippedV2 = FlipY(v2);
+                    Raylib.DrawLineEx(flippedV, flippedV2, 2.0f, colors[i]);
+                }
             }
         }
     }
