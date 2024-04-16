@@ -21,7 +21,8 @@ class Program
     // Test Settings
     static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = [
         SquareTestCase<PolygonVertex>,
-        TestCase1<PolygonVertex>
+        TestCase1<PolygonVertex>,
+        TestCase2<PolygonVertex>
         ];
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;
