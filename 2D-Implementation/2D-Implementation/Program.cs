@@ -36,6 +36,7 @@ class Program
     static List<Vector2>? TrianglesVertices = null;
     static List<List<Vector2>>? ConvexGroups = null;
     static int TriangleCount = 0;
+    static int SurfaceVerticesCount = 0;
     static int ConvexGroupCount = 0;
 
     public static void Main()
@@ -80,6 +81,16 @@ class Program
                     ConvexGroups = FindConvexVerticesOfSurface(Surface);
                     if (ConvexGroups != null)
                         ConvexGroupCount = ConvexGroups.Count;
+
+                    SurfaceVerticesCount = 0;
+                    foreach (PolygonGroup<PolygonVertex> group in Surface.Polygons)
+                    {
+                        SurfaceVerticesCount += (int)group.OuterPolygon.Count;
+                        foreach (Polygon<PolygonVertex> polygon in group.InnerPolygons)
+                        {
+                            SurfaceVerticesCount += (int)polygon.Count;
+                        }
+                    }
                 }
 
                 Cutter = null;
@@ -149,7 +160,8 @@ class Program
             Raylib.DrawText(string.Format("CurrentTest: {0}", TestName), 30, 30, 18, Color.Black);
             Raylib.DrawText(string.Format("CutResult: {0}", CutResult), 30, 50, 18, Color.Black);
             Raylib.DrawText(string.Format("TriangleCount: {0}", TriangleCount), 30, 70, 18, Color.Black);
-            Raylib.DrawText(string.Format("ConvexGroupCount: {0}", ConvexGroupCount), 30, 90, 18, Color.Black);
+            Raylib.DrawText(string.Format("SurfaceVerticesCount: {0}", SurfaceVerticesCount), 30, 90, 18, Color.Black);
+            Raylib.DrawText(string.Format("ConvexGroupCount: {0}", ConvexGroupCount), 30, 110, 18, Color.Black);
 
             Raylib.DrawText(string.Format("Current View: {0}", Mode), 30, 220, 18, Color.Black);
             Raylib.DrawText(string.Format("Selected Test Case: {0}", SelectedTestCase), 30, 240, 18, Color.Black);
@@ -174,6 +186,7 @@ class Program
         TrianglesVertices = null;
         ConvexGroups = null;
         TriangleCount = 0;
+        SurfaceVerticesCount = 0;
         ConvexGroupCount = 0;
 
         if (SelectedTestCase < 0 || SelectedTestCase >= TestCaseDelegates.Count)
