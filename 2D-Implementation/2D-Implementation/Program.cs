@@ -26,7 +26,10 @@ class Program
         SquareTestCase3<PolygonVertex>,
         SquareTestCase4<PolygonVertex>,
         SquareTestCase5<PolygonVertex>,
-        OctagonTestCase<PolygonVertex>
+        SquareTestCase6<PolygonVertex>,
+        SquareTestCase7<PolygonVertex>,
+        OctagonTestCase<PolygonVertex>,
+        OctagonTestCase1<PolygonVertex>
         ];
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;

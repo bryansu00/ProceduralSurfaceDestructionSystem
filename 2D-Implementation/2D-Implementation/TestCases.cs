@@ -255,6 +255,70 @@ namespace PSDSystem
             cutter.InsertVertexAtBack(3);
         }
 
+        public static void SquareTestCase6<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
+            where T : PolygonVertex
+        {
+            testName = "Surface with Square Cutter Inside Overlapping Edge";
+            surface = new SurfaceShape<T>();
+            List<Vector2> outerVertices = [
+                new Vector2(550.0f, 150.0f),
+                new Vector2(550.0f, 650.0f),
+                new Vector2(1050.0f, 650.0f),
+                new Vector2(1050.0f, 150.0f)
+            ];
+            Polygon<T> polygon = new Polygon<T>();
+            polygon.Vertices = outerVertices;
+            polygon.InsertVertexAtBack(0);
+            polygon.InsertVertexAtBack(1);
+            polygon.InsertVertexAtBack(2);
+            polygon.InsertVertexAtBack(3);
+
+            surface.AddOuterPolygon(polygon);
+
+            cutter = new Polygon<T>();
+            cutter.Vertices = [
+                new Vector2(750.0f, 450.0f),
+                new Vector2(750.0f, 150.0f),
+                new Vector2(850.0f, 150.0f),
+                new Vector2(850.0f, 450.0f)
+                ];
+            cutter.InsertVertexAtBack(0);
+            cutter.InsertVertexAtBack(1);
+            cutter.InsertVertexAtBack(2);
+            cutter.InsertVertexAtBack(3);
+        }
+
+        public static void SquareTestCase7<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
+            where T : PolygonVertex
+        {
+            testName = "Surface with Triangle Cutter Inside - Vertex Touches Edge";
+            surface = new SurfaceShape<T>();
+            List<Vector2> outerVertices = [
+                new Vector2(550.0f, 150.0f),
+                new Vector2(550.0f, 650.0f),
+                new Vector2(1050.0f, 650.0f),
+                new Vector2(1050.0f, 150.0f)
+            ];
+            Polygon<T> polygon = new Polygon<T>();
+            polygon.Vertices = outerVertices;
+            polygon.InsertVertexAtBack(0);
+            polygon.InsertVertexAtBack(1);
+            polygon.InsertVertexAtBack(2);
+            polygon.InsertVertexAtBack(3);
+
+            surface.AddOuterPolygon(polygon);
+
+            cutter = new Polygon<T>();
+            cutter.Vertices = [
+                new Vector2(750.0f, 450.0f),
+                new Vector2(750.0f, 150.0f),
+                new Vector2(850.0f, 450.0f)
+                ];
+            cutter.InsertVertexAtBack(0);
+            cutter.InsertVertexAtBack(1);
+            cutter.InsertVertexAtBack(2);
+        }
+
         public static void OctagonTestCase<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {
@@ -287,6 +351,62 @@ namespace PSDSystem
             polygon.InsertVertexAtBack(7);
 
             surface.AddOuterPolygon(polygon);
+
+            return;
+        }
+
+        public static void OctagonTestCase1<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
+            where T : PolygonVertex
+        {
+            testName = "Octagon Test With Hole";
+            surface = new SurfaceShape<T>();
+
+            float scale = 20.0f;
+            Vector2 center = new Vector2(775.0f, 400.0f);
+            List<Vector2> outerVertices = [
+                new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+                new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y)
+            ];
+
+            Polygon<T> polygon = new Polygon<T>();
+            polygon.Vertices = outerVertices;
+            polygon.InsertVertexAtBack(0);
+            polygon.InsertVertexAtBack(1);
+            polygon.InsertVertexAtBack(2);
+            polygon.InsertVertexAtBack(3);
+            polygon.InsertVertexAtBack(4);
+            polygon.InsertVertexAtBack(5);
+            polygon.InsertVertexAtBack(6);
+            polygon.InsertVertexAtBack(7);
+
+            surface.AddOuterPolygon(polygon);
+
+            scale = 10.0f;
+            cutter = new Polygon<T>();
+            cutter.Vertices = [
+                new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+                ];
+            cutter.InsertVertexAtBack(0);
+            cutter.InsertVertexAtBack(1);
+            cutter.InsertVertexAtBack(2);
+            cutter.InsertVertexAtBack(3);
+            cutter.InsertVertexAtBack(4);
+            cutter.InsertVertexAtBack(5);
+            cutter.InsertVertexAtBack(6);
+            cutter.InsertVertexAtBack(7);
 
             return;
         }
