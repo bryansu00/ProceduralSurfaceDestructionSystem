@@ -322,7 +322,7 @@ namespace PSDSystem
         public static void SquareTestCase8<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {
-            testName = "Vertices and Edge Overlap (From Inside)";
+            testName = "Edge Overlap (From Inside)";
             surface = new SurfaceShape<T>();
             List<Vector2> Vertices = [
                 new Vector2(550.0f, 150.0f),
@@ -342,9 +342,7 @@ namespace PSDSystem
             cutter = new Polygon<T>();
             cutter.Vertices = [
                 new Vector2(750.0f, 350.0f),
-                new Vector2(950.0f, 350.0f),
-                new Vector2(950.0f, 250.0f),
-                new Vector2(850.0f, 250.0f),
+                new Vector2(850.0f, 350.0f),
                 new Vector2(850.0f, 150.0f),
                 new Vector2(750.0f, 150.0f)
                 ];
@@ -352,8 +350,6 @@ namespace PSDSystem
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
             cutter.InsertVertexAtBack(3);
-            cutter.InsertVertexAtBack(4);
-            cutter.InsertVertexAtBack(5);
         }
 
         public static void SquareTestCase9<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
@@ -378,9 +374,9 @@ namespace PSDSystem
 
             cutter = new Polygon<T>();
             cutter.Vertices = [
-                new Vector2(750.0f, 50.0f),
+                new Vector2(850.0f, 50.0f),
                 new Vector2(750.0f, 150.0f),
-                new Vector2(850.0f, 50.0f)
+                new Vector2(750.0f, 50.0f)
                 ];
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
@@ -440,9 +436,9 @@ namespace PSDSystem
 
             cutter = new Polygon<T>();
             cutter.Vertices = [
-                new Vector2(450.0f, 150.0f),
+                new Vector2(550.0f, 50.0f),
                 new Vector2(550.0f, 150.0f),
-                new Vector2(550.0f, 50.0f)
+                new Vector2(450.0f, 150.0f)
                 ];
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
