@@ -494,6 +494,8 @@ namespace PSDSystem
             // Insert Points
             InsertIntersectionPoints(center, intersections);
 
+            // Print Boolean List for Debugging
+            Console.WriteLine("\nFrom Within the Polygon Addition Version CombinePolygons()");
             PrintBooleanList(center);
 
             // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
@@ -602,6 +604,8 @@ namespace PSDSystem
 
             InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
+            // Print Boolean List for Debugging
+            Console.WriteLine("\nFrom Within the Polygon Mixed Addition-Subtraction Version CombinePolygons()");
             PrintBooleanList(center);
 
             while (true)

@@ -28,6 +28,12 @@ class Program
         SquareTestCase5<PolygonVertex>,
         SquareTestCase6<PolygonVertex>,
         SquareTestCase7<PolygonVertex>,
+        SquareTestCase8<PolygonVertex>,
+        SquareTestCase9<PolygonVertex>,
+        SquareTestCase10<PolygonVertex>,
+        SquareTestCase11<PolygonVertex>,
+        SquareTestCase12<PolygonVertex>,
+        SquareTestCase13<PolygonVertex>,
         OctagonTestCase<PolygonVertex>,
         OctagonTestCase1<PolygonVertex>
         ];
