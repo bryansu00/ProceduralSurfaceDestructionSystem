@@ -34,6 +34,7 @@ class Program
         SquareTestCase11<PolygonVertex>,
         SquareTestCase12<PolygonVertex>,
         SquareTestCase13<PolygonVertex>,
+        SquareTestCase14<PolygonVertex>,
         OctagonTestCase<PolygonVertex>,
         OctagonTestCase1<PolygonVertex>
         ];

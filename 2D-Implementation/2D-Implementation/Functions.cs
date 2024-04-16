@@ -494,9 +494,8 @@ namespace PSDSystem
             // Insert Points
             InsertIntersectionPoints(center, intersections);
 
-            // Print Boolean List for Debugging
-            Console.WriteLine("\nFrom Within the Polygon Addition Version CombinePolygons()");
-            PrintBooleanList(center);
+            // Below is used for printing boolean list for debugging purposes
+            HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
 
             // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
             // WHY: I DO NOT KNOW, PROBABLY HAS TO DO WITH ONE OF THE EDGE CASES
@@ -527,6 +526,12 @@ namespace PSDSystem
                         continue;
                     }
 
+                    // DEBUG STUFF
+                    if (point.Owner != center)
+                    {
+                        booleanPolygons.Add(point.Owner);
+                    }
+
                     bool pointIsCrossingPoint = CheckSpecialAdditionCase(point);
 
                     int insertionIndex = newPolygon.Vertices.Count;
@@ -545,6 +550,18 @@ namespace PSDSystem
                 } while (point != firstPoint);
 
                 outputPolygons.Add(newPolygon);
+            }
+
+            // Print Boolean List for Debugging
+            Console.WriteLine("\nFrom Within the Polygon Addition Version CombinePolygons()");
+            Console.WriteLine("Cutter:");
+            PrintBooleanList(center);
+            int innerCount = 0;
+            foreach (Polygon<U> polygon in booleanPolygons)
+            {
+                Console.WriteLine(string.Format("Inner Polygon {0}:", innerCount));
+                PrintBooleanList(polygon);
+                innerCount++;
             }
 
             return outputPolygons;
@@ -604,9 +621,8 @@ namespace PSDSystem
 
             InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
-            // Print Boolean List for Debugging
-            Console.WriteLine("\nFrom Within the Polygon Mixed Addition-Subtraction Version CombinePolygons()");
-            PrintBooleanList(center);
+            // Below is used for printing boolean list for debugging purposes
+            HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
 
             while (true)
             {
@@ -635,6 +651,12 @@ namespace PSDSystem
                         continue;
                     }
 
+                    // DEBUG STUFF
+                    if (point.Owner != center && point.Owner != outerPolygon)
+                    {
+                        booleanPolygons.Add(point.Owner);
+                    }
+
                     bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point);
 
                     int insertionIndex = newPolygon.Vertices.Count;
@@ -653,6 +675,20 @@ namespace PSDSystem
                 } while (point != firstPoint && newPolygon.Vertices.Count < 1000);
 
                 outputPolygons.Add(newPolygon);
+            }
+
+            // Print Boolean List for Debugging
+            Console.WriteLine("\nFrom Within the Polygon Mixed Addition-Subtraction Version CombinePolygons()");
+            Console.WriteLine("Cutter:");
+            PrintBooleanList(center);
+            Console.WriteLine("Outer Polygon:");
+            PrintBooleanList(outerPolygon);
+            int innerCount = 0;
+            foreach (Polygon<U> polygon in booleanPolygons)
+            {
+                Console.WriteLine(string.Format("Inner Polygon {0}:", innerCount));
+                PrintBooleanList(polygon);
+                innerCount++;
             }
 
             return outputPolygons;
