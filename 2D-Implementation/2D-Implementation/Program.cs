@@ -21,8 +21,12 @@ class Program
     // Test Settings
     static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = [
         SquareTestCase<PolygonVertex>,
-        TestCase1<PolygonVertex>,
-        TestCase2<PolygonVertex>
+        SquareTestCase1<PolygonVertex>,
+        SquareTestCase2<PolygonVertex>,
+        SquareTestCase3<PolygonVertex>,
+        SquareTestCase4<PolygonVertex>,
+        SquareTestCase5<PolygonVertex>,
+        OctagonTestCase<PolygonVertex>
         ];
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;
@@ -146,7 +150,7 @@ class Program
             // Draw Info Container
             Raylib.DrawRectangle(20, 20, 400, 300, Color.Gray);
 
-            Raylib.DrawText(string.Format("CurrentTest: {0}", TestName), 30, 30, 18, Color.Black);
+            Raylib.DrawText(TestName, 30, 30, 18, Color.Black);
             Raylib.DrawText(string.Format("CutResult: {0}", CutResult), 30, 50, 18, Color.Black);
             Raylib.DrawText(string.Format("TriangleCount: {0}", TriangleCount), 30, 70, 18, Color.Black);
             Raylib.DrawText(string.Format("SurfaceVerticesCount: {0}", SurfaceVerticesCount), 30, 90, 18, Color.Black);
@@ -247,7 +251,7 @@ class Program
                 {
                     if (v == v2) continue;
                     Vector2 flippedV2 = FlipY(v2);
-                    Raylib.DrawLineEx(flippedV, flippedV2, 2.0f, colors[i]);
+                    Raylib.DrawLineEx(flippedV, flippedV2, 5.0f, colors[i]);
                 }
             }
         }
@@ -337,30 +341,6 @@ class Program
     //    cutter.InsertVertexAtBack(3);
 
     //    Console.WriteLine("Loaded test6");
-    //}
-
-    //static void InsertCircle(Vector2 center, float scale = 1.0f)
-    //{
-    //    cutter = new Polygon<PolygonVertex>();
-    //    cutter.Vertices = [
-    //        new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
-    //        new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
-    //        new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
-    //        new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
-    //        new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
-    //        new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
-    //        new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
-    //        new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-    //    ];
-
-    //    cutter.InsertVertexAtBack(0);
-    //    cutter.InsertVertexAtBack(1);
-    //    cutter.InsertVertexAtBack(2);
-    //    cutter.InsertVertexAtBack(3);
-    //    cutter.InsertVertexAtBack(4);
-    //    cutter.InsertVertexAtBack(5);
-    //    cutter.InsertVertexAtBack(6);
-    //    cutter.InsertVertexAtBack(7);
     //}
 
     static Vector2 FlipY(Vector2 vector)
