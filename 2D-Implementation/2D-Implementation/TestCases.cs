@@ -322,8 +322,7 @@ namespace PSDSystem
         public static void SquareTestCase8<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {
-            // TODO: Scrap this test case, it is the same as SquareTestCase6
-            testName = "Edge Overlap (From Inside)";
+            testName = "Inside Triangle Vertex-Vertex Intersect";
             surface = new SurfaceShape<T>();
             List<Vector2> Vertices = [
                 new Vector2(550.0f, 150.0f),
@@ -342,15 +341,13 @@ namespace PSDSystem
 
             cutter = new Polygon<T>();
             cutter.Vertices = [
-                new Vector2(750.0f, 150.0f),
-                new Vector2(850.0f, 150.0f),
-                new Vector2(850.0f, 350.0f),
-                new Vector2(750.0f, 350.0f)
+                new Vector2(550.0f, 150.0f),
+                new Vector2(850.0f, 200.0f),
+                new Vector2(600.0f, 450.0f)
                 ];
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
-            cutter.InsertVertexAtBack(3);
         }
 
         public static void SquareTestCase9<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
