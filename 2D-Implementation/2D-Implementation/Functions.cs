@@ -1140,6 +1140,8 @@ namespace PSDSystem
                             distanceFromNodeToIntersection > distanceFromNodeToNext)
                         {
                             polygonNode = polygonNode.Next;
+                            distanceFromNodeToIntersection = SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], intersectionPoint);
+                            distanceFromNodeToNext = SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], polygonVertices[polygonNode.Next.Data.Index]);
                         }
 
                         // Do the actual insertions
@@ -1148,7 +1150,7 @@ namespace PSDSystem
                             int insertedVertexLocation = polygonVertices.Count;
                             polygonVertices.Add(intersectionPoint);
                             nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
-                            nodeAddedToPolygon.Data.IsAnAddedVertex = true;                
+                            nodeAddedToPolygon.Data.IsAnAddedVertex = true;
                         }
                         else
                         {
@@ -1167,6 +1169,8 @@ namespace PSDSystem
                             distanceFromNodeToIntersection > distanceFromNodeToNext)
                         {
                             cutterNode = cutterNode.Next;
+                            distanceFromNodeToIntersection = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint);
+                            distanceFromNodeToNext = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]);
                         }
 
                         if (!IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
