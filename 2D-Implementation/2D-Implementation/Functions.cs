@@ -1029,7 +1029,11 @@ namespace PSDSystem
                 // The two if statements will in 99.9% of all cases never happen...
                 // but just in case that 0.1% case does happen...
                 if (IsNearlyEqual(t, 0.0f)) nodeAddedToPolygon = polygonNode;
-                else if (IsNearlyEqual(t, 1.0f)) nodeAddedToPolygon = polygonNode.Next; // This is invalid as Next could be something else now....
+                else if (IsNearlyEqual(t, 1.0f))
+                {
+                    nodeAddedToPolygon = polygonNode.Next;
+                    while (nodeAddedToPolygon.Data.IsAnAddedVertex) nodeAddedToPolygon = nodeAddedToPolygon.Next;
+                }
                 else
                 {
                     // Make sure to insert the intersectionPoint and the correct location
@@ -1061,7 +1065,11 @@ namespace PSDSystem
 
                 // Do the same thing as above, but with cutter this time
                 if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
-                else if (IsNearlyEqual(u, 1.0f)) nodeAddedToCutter = cutterNode.Next;
+                else if (IsNearlyEqual(u, 1.0f))
+                {
+                    nodeAddedToCutter = cutterNode.Next;
+                    while (nodeAddedToCutter.Data.IsAnAddedVertex) nodeAddedToCutter = nodeAddedToCutter.Next;
+                }
                 else
                 {
                     float distanceFromNodeToIntersection = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint);
