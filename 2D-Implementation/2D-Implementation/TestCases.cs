@@ -322,6 +322,7 @@ namespace PSDSystem
         public static void SquareTestCase8<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {
+            // TODO: Scrap this test case, it is the same as SquareTestCase6
             testName = "Edge Overlap (From Inside)";
             surface = new SurfaceShape<T>();
             List<Vector2> Vertices = [
