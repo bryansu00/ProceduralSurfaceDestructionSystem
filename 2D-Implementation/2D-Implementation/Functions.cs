@@ -941,7 +941,7 @@ namespace PSDSystem
 
                     // Do the same thing as above, but with cutter this time
                     if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
-                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToCutter = cutterNode.Next;
+                    else if (IsNearlyEqual(u, 1.0f)) nodeAddedToCutter = cutterNode.Next;
                     else
                     {
                         while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
@@ -1034,35 +1034,58 @@ namespace PSDSystem
                 {
                     // Make sure to insert the intersectionPoint and the correct location
                     // if the next vertex happens to be another intersectionPoint
+                    float distanceFromNodeToIntersection = SegmentLengthSquared(outerVertices[polygonNode.Data.Index], intersectionPoint);
+                    float distanceFromNodeToNext = SegmentLengthSquared(outerVertices[polygonNode.Data.Index], outerVertices[polygonNode.Next.Data.Index]);
                     while (polygonNode.Next.Data.Cross != null && polygonNode.Next.Data.IsAnAddedVertex &&
-                        SegmentLengthSquared(outerVertices[polygonNode.Data.Index], intersectionPoint) >
-                        SegmentLengthSquared(outerVertices[polygonNode.Data.Index], outerVertices[polygonNode.Next.Data.Index]))
+                        distanceFromNodeToIntersection > distanceFromNodeToNext)
                     {
                         polygonNode = polygonNode.Next;
+                        distanceFromNodeToIntersection = SegmentLengthSquared(outerVertices[polygonNode.Data.Index], intersectionPoint);
+                        distanceFromNodeToNext = SegmentLengthSquared(outerVertices[polygonNode.Data.Index], outerVertices[polygonNode.Next.Data.Index]);
                     }
+
                     // Do the actual insertions
-                    // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX INTERSECTS THE EDGE
-                    int insertedVertexLocation = outerVertices.Count;
-                    outerVertices.Add(intersectionPoint);
-                    nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
-                    nodeAddedToPolygon.Data.IsAnAddedVertex = true;
+                    if (!IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
+                    {
+                        int insertedVertexLocation = outerVertices.Count;
+                        outerVertices.Add(intersectionPoint);
+                        nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
+                        nodeAddedToPolygon.Data.IsAnAddedVertex = true;
+                    }
+                    else
+                    {
+                        nodeAddedToPolygon = polygonNode.Next;
+                        Console.WriteLine("Outer Edge case detected 1");
+                    }
                 }
 
                 // Do the same thing as above, but with cutter this time
                 if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
-                else if (IsNearlyEqual(t, 1.0f)) nodeAddedToCutter = cutterNode.Next;
+                else if (IsNearlyEqual(u, 1.0f)) nodeAddedToCutter = cutterNode.Next;
                 else
                 {
+                    float distanceFromNodeToIntersection = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint);
+                    float distanceFromNodeToNext = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]);
                     while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
-                        SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint) >
-                        SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]))
+                        distanceFromNodeToIntersection > distanceFromNodeToNext)
                     {
                         cutterNode = cutterNode.Next;
+                        distanceFromNodeToIntersection = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint);
+                        distanceFromNodeToNext = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]);
                     }
-                    int insertedVertexLocation = cutterVertices.Count;
-                    cutterVertices.Add(intersectionPoint);
-                    nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
-                    nodeAddedToCutter.Data.IsAnAddedVertex = true;
+
+                    if (!IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
+                    {
+                        int insertedVertexLocation = cutterVertices.Count;
+                        cutterVertices.Add(intersectionPoint);
+                        nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
+                        nodeAddedToCutter.Data.IsAnAddedVertex = true;
+                    }
+                    else
+                    {
+                        nodeAddedToCutter = cutterNode.Next;
+                        Console.WriteLine("Outer Edge case detected 2");
+                    }
                 }
 
                 nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;
@@ -1103,35 +1126,52 @@ namespace PSDSystem
                     {
                         // Make sure to insert the intersectionPoint and the correct location
                         // if the next vertex happens to be another intersectionPoint
+                        float distanceFromNodeToIntersection = SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], intersectionPoint);
+                        float distanceFromNodeToNext = SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], polygonVertices[polygonNode.Next.Data.Index]);
                         while (polygonNode.Next.Data.Cross != null && polygonNode.Next.Data.IsAnAddedVertex &&
-                            SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], intersectionPoint) >
-                            SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], polygonVertices[polygonNode.Next.Data.Index]))
+                            distanceFromNodeToIntersection > distanceFromNodeToNext)
                         {
                             polygonNode = polygonNode.Next;
                         }
+
                         // Do the actual insertions
-                        // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX INTERSECTS THE EDGE
-                        int insertedVertexLocation = polygonVertices.Count;
-                        polygonVertices.Add(intersectionPoint);
-                        nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
-                        nodeAddedToPolygon.Data.IsAnAddedVertex = true;
+                        if (!IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
+                        {
+                            int insertedVertexLocation = polygonVertices.Count;
+                            polygonVertices.Add(intersectionPoint);
+                            nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
+                            nodeAddedToPolygon.Data.IsAnAddedVertex = true;                
+                        }
+                        else
+                        {
+                            nodeAddedToPolygon = polygonNode.Next;
+                        }
                     }
 
                     // Do the same thing as above, but with cutter this time
                     if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
-                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToCutter = cutterNode.Next;
+                    else if (IsNearlyEqual(u, 1.0f)) nodeAddedToCutter = cutterNode.Next;
                     else
                     {
+                        float distanceFromNodeToIntersection = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint);
+                        float distanceFromNodeToNext = SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]);
                         while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
-                            SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint) >
-                            SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]))
+                            distanceFromNodeToIntersection > distanceFromNodeToNext)
                         {
                             cutterNode = cutterNode.Next;
                         }
-                        int insertedVertexLocation = cutterVertices.Count;
-                        cutterVertices.Add(intersectionPoint);
-                        nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
-                        nodeAddedToCutter.Data.IsAnAddedVertex = true;
+
+                        if (!IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
+                        {
+                            int insertedVertexLocation = cutterVertices.Count;
+                            cutterVertices.Add(intersectionPoint);
+                            nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
+                            nodeAddedToCutter.Data.IsAnAddedVertex = true;
+                        }
+                        else
+                        {
+                            nodeAddedToCutter = cutterNode.Next;
+                        }
                     }
 
                     nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;

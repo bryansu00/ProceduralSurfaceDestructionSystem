@@ -341,10 +341,10 @@ namespace PSDSystem
 
             cutter = new Polygon<T>();
             cutter.Vertices = [
-                new Vector2(750.0f, 350.0f),
-                new Vector2(850.0f, 350.0f),
+                new Vector2(750.0f, 150.0f),
                 new Vector2(850.0f, 150.0f),
-                new Vector2(750.0f, 150.0f)
+                new Vector2(850.0f, 350.0f),
+                new Vector2(750.0f, 350.0f)
                 ];
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
