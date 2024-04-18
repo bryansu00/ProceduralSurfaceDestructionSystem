@@ -1630,38 +1630,10 @@ namespace PSDSystem
         /// <returns></returns>
         private static bool PointIsInsideTriangle(Vector2 point, Vector2 a, Vector2 b, Vector2 c)
         {
-            float ABCarea = TriangleArea(a, b, c);
-            if (IsNearlyEqual(ABCarea, 0.0f)) return false;
-
-            // Determine if the vertex is inside the triangle using Barycentric coordinates
-            // u = CAP / ABC
-            float u = TriangleArea(c, a, point) / ABCarea;
-            if (u < 0.0f || u > 1.0f)
-            {
-                return false;
-            }
-            // v = ABP / ABC
-            float v = TriangleArea(a, b, point) / ABCarea;
-            if (v < 0.0f || v > 1.0f)
-            {
-                return false;
-            }
-            // w = BCP / ABC
-            float w = TriangleArea(b, c, point) / ABCarea;
-            if (w < 0.0f || w > 1.0f)
-            {
-                return false;
-            }
-
-            if (IsNearlyEqual(u + v + w, 1.0f))
-            {
-                return true;
-            }
-
-            return false;
+            return BarycentricCoordinates(point, a, b, c, out _, out _, out _);
         }
 
-        private static bool  BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
+        private static bool BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
         {
             float ABCarea = TriangleArea(a, b, c);
             if (IsNearlyEqual(ABCarea, 0.0f))
