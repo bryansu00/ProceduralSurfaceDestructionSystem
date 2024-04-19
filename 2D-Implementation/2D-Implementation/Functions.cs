@@ -534,9 +534,12 @@ namespace PSDSystem
 
                     bool pointIsCrossingPoint = CheckSpecialAdditionCase(point);
 
-                    int insertionIndex = newPolygon.Vertices.Count;
-                    newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
-                    newPolygon.InsertVertexAtBack(insertionIndex);
+                    if (!point.Data.IsAnAddedVertex || pointIsCrossingPoint)
+                    {
+                        int insertionIndex = newPolygon.Vertices.Count;
+                        newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
+                        newPolygon.InsertVertexAtBack(insertionIndex);
+                    }
 
                     point.Data.Processed = true;
 
@@ -659,9 +662,12 @@ namespace PSDSystem
 
                     bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point);
 
-                    int insertionIndex = newPolygon.Vertices.Count;
-                    newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
-                    newPolygon.InsertVertexAtBack(insertionIndex);
+                    if (!point.Data.IsAnAddedVertex || pointIsCrossingPoint)
+                    {
+                        int insertionIndex = newPolygon.Vertices.Count;
+                        newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
+                        newPolygon.InsertVertexAtBack(insertionIndex);
+                    }
 
                     point.Data.Processed = true;
 
