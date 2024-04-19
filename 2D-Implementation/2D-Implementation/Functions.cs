@@ -1250,10 +1250,6 @@ namespace PSDSystem
                 convexVertices.Add(currentVertices[earToClip.Data.Index]);
                 convexVertices.Add(currentVertices[earToClip.Next.Data.Index]);
 
-                // Keep track of the last 'Next' and 'Prev' vertices added
-                int lastPreviousIndexAdded = earToClip.Previous.Data.Index;
-                int lastNextIndexAdded = earToClip.Next.Data.Index;
-
                 // Clip the ear and remove from the list
                 currentPolygon.ClipVertex(earToClip);
                 earTips.Remove(earToClip);
@@ -1281,69 +1277,32 @@ namespace PSDSystem
                 VertexNode<T> next = earToClip.Next;
                 while(nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
-                    // Make sure the addition of currentVertices[next.Next.Data.Index] is still an ear
-                    bool additionOfVertexIsValid = true;
-                    Vector2 vertexToAdd = currentVertices[next.Next.Data.Index];
-                    VertexNode<T> now = currentPolygon.Head;
-                    do
-                    {
-                        if (now.Data.Index == next.Data.Index ||
-                            now.Data.Index == next.Next.Data.Index ||
-                            now.Data.Index == lastPreviousIndexAdded)
-                        {
-                            now = now.Next;
-                            continue;
-                        }
+                    // Add next.Next's vertex to the list
+                    convexVertices.Add(currentVertices[next.Next.Data.Index]);
 
-                        if (PointIsInsideTriangle(currentVertices[now.Data.Index], 
-                            currentVertices[next.Data.Index], 
-                            vertexToAdd, 
-                            currentVertices[lastPreviousIndexAdded]))
-                        {
-                            additionOfVertexIsValid = false;
-                            break;
-                        }
+                    // Clip and remove from the list
+                    currentPolygon.ClipVertex(next);
+                    earTips.Remove(next);
 
-                        now = now.Next;
-                    } while (now != currentPolygon.Head);
+                    // Keep track if next is still an ear tip
+                    nextIsStillAnEarTip = earTips.Contains(next.Next);
 
-                    if (additionOfVertexIsValid)
-                    {
-                        // Add the vertex since it is still valid
+                    // next.Next and next.Prev may no longer be an ear, remove and reprocess
+                    earTips.Remove(next.Next);
+                    if (IsAnEarTip(next.Next, true))
+                        earTips.Add(next.Next);
+                    earTips.Remove(next.Previous);
+                    if (IsAnEarTip(next.Previous, true))
+                        earTips.Add(next.Previous);
 
-                        // Update the lastNextIndexAdded
-                        lastNextIndexAdded = next.Next.Data.Index;
+                    // The value may become false now due to reprocessing
+                    nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(next.Next);
 
-                        // Add next.Next's vertex to the list
-                        convexVertices.Add(currentVertices[next.Next.Data.Index]);
-
-                        // Clip and remove from the list
-                        currentPolygon.ClipVertex(next);
-                        earTips.Remove(next);
-
-                        // Keep track if next is still an ear tip
-                        nextIsStillAnEarTip = earTips.Contains(next.Next);
-
-                        // next.Next and next.Prev may no longer be an ear, remove and reprocess
-                        earTips.Remove(next.Next);
-                        if (IsAnEarTip(next.Next, true))
-                            earTips.Add(next.Next);
-                        earTips.Remove(next.Previous);
-                        if (IsAnEarTip(next.Previous, true))
-                            earTips.Add(next.Previous);
-
-                        // The value may become false now due to reprocessing
-                        nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(next.Next);
-
-                        if (next.Next == earToClip.Previous)
-                            // Update previous if next.Next happens to be earToClip.Previous
-                            previousIsStillAnEarTip = nextIsStillAnEarTip;
-                        if (next.Previous == earToClip.Previous)
-                            previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(earToClip.Previous);
-                    }
-                    else
-                        nextIsStillAnEarTip = false;
-
+                    if (next.Next == earToClip.Previous)
+                        // Update previous if next.Next happens to be earToClip.Previous
+                        previousIsStillAnEarTip = nextIsStillAnEarTip;
+                    if (next.Previous == earToClip.Previous)
+                        previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(earToClip.Previous);
 
                     next = next.Next;
                 }
@@ -1351,57 +1310,26 @@ namespace PSDSystem
                 VertexNode<T> prev = earToClip.Previous;
                 while (previousIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
-                    // Make sure the addition of currentVertices[next.Next.Data.Index] is still an ear
-                    bool additionOfVertexIsValid = true;
-                    Vector2 vertexToAdd = currentVertices[prev.Previous.Data.Index];
-                    VertexNode<T> now = currentPolygon.Head;
-                    do
-                    {
-                        if (now.Data.Index == prev.Data.Index ||
-                            now.Data.Index == prev.Previous.Data.Index ||
-                            now.Data.Index == lastNextIndexAdded)
-                        {
-                            now = now.Next;
-                            continue;
-                        }
+                    // Add prev.Previous's vertex to the list
+                    convexVertices.Add(currentVertices[prev.Previous.Data.Index]);
 
-                        if (PointIsInsideTriangle(currentVertices[now.Data.Index],
-                            currentVertices[prev.Data.Index],
-                            vertexToAdd,
-                            currentVertices[lastNextIndexAdded]))
-                        {
-                            additionOfVertexIsValid = false;
-                            break;
-                        }
+                    // Clip and remove from the list
+                    currentPolygon.ClipVertex(prev);
+                    earTips.Remove(prev);
 
-                        now = now.Next;
-                    } while (now != currentPolygon.Head);
+                    // Keep track if prev is still an ear tip
+                    previousIsStillAnEarTip = earTips.Contains(prev.Previous);
 
-                    if (additionOfVertexIsValid)
-                    {
-                        // Add prev.Previous's vertex to the list
-                        convexVertices.Add(currentVertices[prev.Previous.Data.Index]);
+                    // prev.Previous and Prev.Next may no longer be an ear, remove and reprocess
+                    earTips.Remove(prev.Previous);
+                    if (IsAnEarTip(prev.Previous, true))
+                        earTips.Add(prev.Previous);
+                    earTips.Remove(prev.Next);
+                    if (IsAnEarTip(prev.Next, true))
+                        earTips.Add(prev.Next);
 
-                        // Clip and remove from the list
-                        currentPolygon.ClipVertex(prev);
-                        earTips.Remove(prev);
-
-                        // Keep track if prev is still an ear tip
-                        previousIsStillAnEarTip = earTips.Contains(prev.Previous);
-
-                        // prev.Previous and Prev.Next may no longer be an ear, remove and reprocess
-                        earTips.Remove(prev.Previous);
-                        if (IsAnEarTip(prev.Previous, true))
-                            earTips.Add(prev.Previous);
-                        earTips.Remove(prev.Next);
-                        if (IsAnEarTip(prev.Next, true))
-                            earTips.Add(prev.Next);
-
-                        // The value may become false now due to reprocessing
-                        previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(prev.Previous);
-                    }
-                    else
-                        previousIsStillAnEarTip = false;
+                    // The value may become false now due to reprocessing
+                    previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(prev.Previous);
 
                     prev = prev.Previous;
                 }
