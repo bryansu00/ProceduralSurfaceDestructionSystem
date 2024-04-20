@@ -754,10 +754,10 @@ namespace PSDSystem
                         // ----------------------------------------------------------------------------
                         // This is extremely unlikely due to floating point precision error,
                         // but just in case...
-                        bool a0IsOnInfiniteRay = IsNearlyEqual(t, 0.0f); // a0 is intersecting with the cutter's infinite ray
-                        bool a1IsOnInfiniteRay = IsNearlyEqual(t, 1.0f);
-                        bool b0IsOnInfiniteRay = IsNearlyEqual(u, 0.0f);
-                        bool b1IsOnInfiniteRay = IsNearlyEqual(u, 1.0f);
+                        bool a0IsOnInfiniteRay = IsNearlyEqual(t, 0.0f) && (u >= 0.0f && u <= 1.0f); // a0 is intersecting with the cutter's infinite ray
+                        bool a1IsOnInfiniteRay = IsNearlyEqual(t, 1.0f) && (u >= 0.0f && u <= 1.0f);
+                        bool b0IsOnInfiniteRay = IsNearlyEqual(u, 0.0f) && (t >= 0.0f && t <= 1.0f);
+                        bool b1IsOnInfiniteRay = IsNearlyEqual(u, 1.0f) && (t >= 0.0f && t <= 1.0f);
 
                         // Check if a0 or a1 is on an edge
                         if (u >= 0.0f && u <= 1.0f)
