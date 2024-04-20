@@ -58,7 +58,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.34169, 0)
 environment = SubResource("Environment_tfeg0")
 
 [node name="ProceduralSurface" parent="." instance=ExtResource("2_lr3sj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24205, 6.29478, -5.00362)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24205, 5.1037, -5.00362)
 Material1 = SubResource("StandardMaterial3D_jwwo1")
 Material2 = SubResource("StandardMaterial3D_uw5a8")
 

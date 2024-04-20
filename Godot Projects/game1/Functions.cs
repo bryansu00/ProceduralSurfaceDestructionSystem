@@ -17,6 +17,17 @@ namespace PSDSystem
             BOTH_OUTSIDE = 3
         }
 
+        public enum CutSurfaceResult
+        {
+            UNKNOWN_ERROR = -2,
+            FAILED = -1,
+            OVERLAPPED_OUTER = 0,
+            CUTTER_INSIDE_OF_INNER = 1,
+            CUTTER_INSIDE_OUTER_BUT_NOT_INNERS = 2,
+            CUTTER_INSIDE_OUTER_OVERLAPPED_INNER = 3,
+            CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI = 4
+        }
+
         /// <summary>
         /// Given a surface and a polygon that represent the cutter, cut a 'hole' on to the surface
         /// </summary>
@@ -34,11 +45,11 @@ namespace PSDSystem
         /// 3 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing only 1 polygon.
         /// 4 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing MULTIPLE polygons, but only 1 of those polygons were kept.
         /// </returns>
-        public static int CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
+        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
-            if (surface.Polygons.Count == 0 || cutter.Head == null || cutter.Vertices == null) return -1;
+            if (surface.Polygons.Count == 0 || cutter.Head == null || cutter.Vertices == null) return CutSurfaceResult.FAILED;
 
             // Keep track of what groups to remove
             List<PolygonGroup<T>> groupsToRemove = new List<PolygonGroup<T>>();
@@ -170,7 +181,7 @@ namespace PSDSystem
                     {
                         // Cutter is completely inside an inner polygon,
                         // cutter will not produce any new polygons
-                        return 1;
+                        return CutSurfaceResult.CUTTER_INSIDE_OF_INNER;
                     }
 
                     switch (result)
@@ -193,7 +204,7 @@ namespace PSDSystem
                 {
                     // No intersection was found, cutter is a new inner polygon
                     groupCutterIsIn.InnerPolygons.Add(cutter);
-                    return 2;
+                    return CutSurfaceResult.CUTTER_INSIDE_OUTER_BUT_NOT_INNERS;
                 }
 
                 // Replace the list
@@ -205,7 +216,7 @@ namespace PSDSystem
                 {
                     // Only 1 polygon was produced
                     groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
-                    return 3;
+                    return CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER;
                 }
                 else if (polygonsProduced.Count > 1)
                 {
@@ -238,15 +249,15 @@ namespace PSDSystem
                     }
 
                     groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
-                    return 4;
+                    return CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI;
                 }
                 else
                 {
-                    return -2;
+                    return CutSurfaceResult.UNKNOWN_ERROR;
                 }
             }
 
-            return 0;
+            return CutSurfaceResult.OVERLAPPED_OUTER;
         }
 
         /// <summary>
@@ -398,7 +409,7 @@ namespace PSDSystem
             if (originalVertices.Count <= 0 || originalUVCoordinates.Count <= 0) return null;
 
             List<Vector2> output = new List<Vector2>();
-            
+
             foreach (Vector2 vertex in currentVertices)
             {
                 for (int i = 0; i < originalVertices.Count; i++)
@@ -487,9 +498,12 @@ namespace PSDSystem
 
                     bool pointIsCrossingPoint = CheckSpecialAdditionCase(point);
 
-                    int insertionIndex = newPolygon.Vertices.Count;
-                    newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
-                    newPolygon.InsertVertexAtBack(insertionIndex);
+                    if (!point.Data.IsAnAddedVertex || pointIsCrossingPoint)
+                    {
+                        int insertionIndex = newPolygon.Vertices.Count;
+                        newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
+                        newPolygon.InsertVertexAtBack(insertionIndex);
+                    }
 
                     point.Data.Processed = true;
 
@@ -591,9 +605,12 @@ namespace PSDSystem
 
                     bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point);
 
-                    int insertionIndex = newPolygon.Vertices.Count;
-                    newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
-                    newPolygon.InsertVertexAtBack(insertionIndex);
+                    if (!point.Data.IsAnAddedVertex || pointIsCrossingPoint)
+                    {
+                        int insertionIndex = newPolygon.Vertices.Count;
+                        newPolygon.Vertices.Add(point.Owner.Vertices[point.Data.Index]);
+                        newPolygon.InsertVertexAtBack(insertionIndex);
+                    }
 
                     point.Data.Processed = true;
 
@@ -832,47 +849,8 @@ namespace PSDSystem
                     List<Vector2> polygonVertices = polygonNode.Owner.Vertices;
                     List<Vector2> cutterVertices = cutterNode.Owner.Vertices;
 
-                    VertexNode<T> nodeAddedToPolygon;
-                    VertexNode<T> nodeAddedToCutter;
-
-                    // The two if statements will in 99.9% of all cases never happen...
-                    // but just in case that 0.1% case does happen...
-                    if (IsNearlyEqual(t, 0.0f)) nodeAddedToPolygon = polygonNode;
-                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToPolygon = polygonNode.Next;
-                    else
-                    {
-                        // Make sure to insert the intersectionPoint and the correct location
-                        // if the next vertex happens to be another intersectionPoint
-                        while (polygonNode.Next.Data.Cross != null && polygonNode.Next.Data.IsAnAddedVertex &&
-                            SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], intersectionPoint) >
-                            SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], polygonVertices[polygonNode.Next.Data.Index]))
-                        {
-                            polygonNode = polygonNode.Next;
-                        }
-                        // Do the actual insertions
-                        // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX INTERSECTS THE EDGE
-                        int insertedVertexLocation = polygonVertices.Count;
-                        polygonVertices.Add(intersectionPoint);
-                        nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
-                        nodeAddedToPolygon.Data.IsAnAddedVertex = true;
-                    }
-
-                    // Do the same thing as above, but with cutter this time
-                    if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
-                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToCutter = cutterNode.Next;
-                    else
-                    {
-                        while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
-                            SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint) >
-                            SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]))
-                        {
-                            cutterNode = cutterNode.Next;
-                        }
-                        int insertedVertexLocation = cutterVertices.Count;
-                        cutterVertices.Add(intersectionPoint);
-                        nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
-                        nodeAddedToCutter.Data.IsAnAddedVertex = true;
-                    }
+                    VertexNode<T> nodeAddedToPolygon = InsertSingleIntersectionPoint(polygonNode, polygonVertices, intersectionPoint, t);
+                    VertexNode<T> nodeAddedToCutter = InsertSingleIntersectionPoint(cutterNode, cutterVertices, intersectionPoint, u);
 
                     nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;
                     nodeAddedToCutter.Data.Cross = nodeAddedToPolygon;
@@ -941,47 +919,8 @@ namespace PSDSystem
                 VertexNode<T> cutterNode = result.Item4;
                 float u = result.Item5;
 
-                VertexNode<T> nodeAddedToPolygon;
-                VertexNode<T> nodeAddedToCutter;
-
-                // The two if statements will in 99.9% of all cases never happen...
-                // but just in case that 0.1% case does happen...
-                if (IsNearlyEqual(t, 0.0f)) nodeAddedToPolygon = polygonNode;
-                else if (IsNearlyEqual(t, 1.0f)) nodeAddedToPolygon = polygonNode.Next;
-                else
-                {
-                    // Make sure to insert the intersectionPoint and the correct location
-                    // if the next vertex happens to be another intersectionPoint
-                    while (polygonNode.Next.Data.Cross != null && polygonNode.Next.Data.IsAnAddedVertex &&
-                        SegmentLengthSquared(outerVertices[polygonNode.Data.Index], intersectionPoint) >
-                        SegmentLengthSquared(outerVertices[polygonNode.Data.Index], outerVertices[polygonNode.Next.Data.Index]))
-                    {
-                        polygonNode = polygonNode.Next;
-                    }
-                    // Do the actual insertions
-                    // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX INTERSECTS THE EDGE
-                    int insertedVertexLocation = outerVertices.Count;
-                    outerVertices.Add(intersectionPoint);
-                    nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
-                    nodeAddedToPolygon.Data.IsAnAddedVertex = true;
-                }
-
-                // Do the same thing as above, but with cutter this time
-                if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
-                else if (IsNearlyEqual(t, 1.0f)) nodeAddedToCutter = cutterNode.Next;
-                else
-                {
-                    while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
-                        SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint) >
-                        SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]))
-                    {
-                        cutterNode = cutterNode.Next;
-                    }
-                    int insertedVertexLocation = cutterVertices.Count;
-                    cutterVertices.Add(intersectionPoint);
-                    nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
-                    nodeAddedToCutter.Data.IsAnAddedVertex = true;
-                }
+                VertexNode<T> nodeAddedToPolygon = InsertSingleIntersectionPoint(polygonNode, outerVertices, intersectionPoint, t);
+                VertexNode<T> nodeAddedToCutter = InsertSingleIntersectionPoint(cutterNode, cutterVertices, intersectionPoint, u);
 
                 nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;
                 nodeAddedToCutter.Data.Cross = nodeAddedToPolygon;
@@ -1010,47 +949,8 @@ namespace PSDSystem
 
                     List<Vector2> polygonVertices = polygonNode.Owner.Vertices;
 
-                    VertexNode<T> nodeAddedToPolygon;
-                    VertexNode<T> nodeAddedToCutter;
-
-                    // The two if statements will in 99.9% of all cases never happen...
-                    // but just in case that 0.1% case does happen...
-                    if (IsNearlyEqual(t, 0.0f)) nodeAddedToPolygon = polygonNode;
-                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToPolygon = polygonNode.Next;
-                    else
-                    {
-                        // Make sure to insert the intersectionPoint and the correct location
-                        // if the next vertex happens to be another intersectionPoint
-                        while (polygonNode.Next.Data.Cross != null && polygonNode.Next.Data.IsAnAddedVertex &&
-                            SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], intersectionPoint) >
-                            SegmentLengthSquared(polygonVertices[polygonNode.Data.Index], polygonVertices[polygonNode.Next.Data.Index]))
-                        {
-                            polygonNode = polygonNode.Next;
-                        }
-                        // Do the actual insertions
-                        // NOTE: THIS FAILS TO HANDLE THE EDGE CASE WHERE VERTEX INTERSECTS THE EDGE
-                        int insertedVertexLocation = polygonVertices.Count;
-                        polygonVertices.Add(intersectionPoint);
-                        nodeAddedToPolygon = polygonNode.Owner.InsertVertexAfter(polygonNode, insertedVertexLocation);
-                        nodeAddedToPolygon.Data.IsAnAddedVertex = true;
-                    }
-
-                    // Do the same thing as above, but with cutter this time
-                    if (IsNearlyEqual(u, 0.0f)) nodeAddedToCutter = cutterNode;
-                    else if (IsNearlyEqual(t, 1.0f)) nodeAddedToCutter = cutterNode.Next;
-                    else
-                    {
-                        while (cutterNode.Next.Data.Cross != null && cutterNode.Next.Data.IsAnAddedVertex &&
-                            SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], intersectionPoint) >
-                            SegmentLengthSquared(cutterVertices[cutterNode.Data.Index], cutterVertices[cutterNode.Next.Data.Index]))
-                        {
-                            cutterNode = cutterNode.Next;
-                        }
-                        int insertedVertexLocation = cutterVertices.Count;
-                        cutterVertices.Add(intersectionPoint);
-                        nodeAddedToCutter = cutterNode.Owner.InsertVertexAfter(cutterNode, insertedVertexLocation);
-                        nodeAddedToCutter.Data.IsAnAddedVertex = true;
-                    }
+                    VertexNode<T> nodeAddedToPolygon = InsertSingleIntersectionPoint(polygonNode, polygonVertices, intersectionPoint, t);
+                    VertexNode<T> nodeAddedToCutter = InsertSingleIntersectionPoint(cutterNode, cutterVertices, intersectionPoint, u);
 
                     nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;
                     nodeAddedToCutter.Data.Cross = nodeAddedToPolygon;
@@ -1080,6 +980,54 @@ namespace PSDSystem
                 VertexNode<T> addedNode = outerIntersections.Polygon.InsertVertexAfter(node, insertedVertexLocation);
                 addedNode.Data.IsAnAddedVertex = true; 
             }
+        }
+
+        private static VertexNode<T> InsertSingleIntersectionPoint<T>(VertexNode<T> intersectedNode, List<Vector2> vertices, Vector2 intersectionPoint, float intersectionValue) 
+            where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        {
+            VertexNode<T> nodeAddedToPolygon;
+
+            // The two if statements will in 99.9% of all cases never happen...
+            // but just in case that 0.1% case does happen...
+            if (IsNearlyEqual(intersectionValue, 0.0f)) nodeAddedToPolygon = intersectedNode;
+            else if (IsNearlyEqual(intersectionValue, 1.0f))
+            {
+                nodeAddedToPolygon = intersectedNode.Next;
+                // Make sure the nodeAddedToPolygon isn't accidentally set to one of the newly added vertices from previous loops
+                while (nodeAddedToPolygon.Data.IsAnAddedVertex) nodeAddedToPolygon = nodeAddedToPolygon.Next;
+            }
+            else
+            {
+                // Make sure to insert the intersectionPoint and the correct location
+                // if the next vertex happens to be another intersectionPoint
+                float distanceFromNodeToIntersection = SegmentLengthSquared(vertices[intersectedNode.Data.Index], intersectionPoint);
+                float distanceFromNodeToNext = SegmentLengthSquared(vertices[intersectedNode.Data.Index], vertices[intersectedNode.Next.Data.Index]);
+                while (intersectedNode.Next.Data.Cross != null && intersectedNode.Next.Data.IsAnAddedVertex &&
+                    distanceFromNodeToIntersection > distanceFromNodeToNext)
+                {
+                    intersectedNode = intersectedNode.Next;
+                    distanceFromNodeToIntersection = SegmentLengthSquared(vertices[intersectedNode.Data.Index], intersectionPoint);
+                    distanceFromNodeToNext = SegmentLengthSquared(vertices[intersectedNode.Data.Index], vertices[intersectedNode.Next.Data.Index]);
+                }
+
+                // Do the actual insertions
+                if (!IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
+                {
+                    int insertedVertexLocation = vertices.Count;
+                    vertices.Add(intersectionPoint);
+                    nodeAddedToPolygon = intersectedNode.Owner.InsertVertexAfter(intersectedNode, insertedVertexLocation);
+                    nodeAddedToPolygon.Data.IsAnAddedVertex = true;
+                }
+                else
+                {
+                    // intersectedNode.Next is the intersection point if this code executes
+                    // No need to add a intersection point
+                    nodeAddedToPolygon = intersectedNode.Next;
+                    // NOTE: intersectedNode.Next.Data.Cross may change, and if it does, it may affect the CombinePolygon() algorithms and cause undesirable result
+                }
+            }
+
+            return nodeAddedToPolygon;
         }
 
         private static Polygon<T>? CombineGroupIntoOne<T>(PolygonGroup<T> group) where T : PolygonVertex
@@ -1252,12 +1200,15 @@ namespace PSDSystem
                 // Reprocess the neighbors
                 if (IsAnEarTip(earToClip.Previous, true))
                     earTips.Add(earToClip.Previous);
+                else
+                    previousIsStillAnEarTip = false;
+
                 if (IsAnEarTip(earToClip.Next, true))
                     earTips.Add(earToClip.Next);
+                else
+                    nextIsStillAnEarTip = false;
 
-                // The values may become false now due to reprocessing
-                nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(earToClip.Next);
-                previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(earToClip.Previous);
+                // The while loops will continue adding next.Next or prev.Prev until the next vertex makes the polygon non ear
 
                 VertexNode<T> next = earToClip.Next;
                 while(nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
@@ -1272,13 +1223,19 @@ namespace PSDSystem
                     // Keep track if next is still an ear tip
                     nextIsStillAnEarTip = earTips.Contains(next.Next);
 
-                    // next.Next may no longer be an ear, remove and reprocess
+                    // next.Next and next.Prev may no longer be an ear, remove and reprocess
                     earTips.Remove(next.Next);
+                    earTips.Remove(next.Previous);
+
                     if (IsAnEarTip(next.Next, true))
                         earTips.Add(next.Next);
+                    else
+                        nextIsStillAnEarTip = false;
 
-                    // The value may become false now due to reprocessing
-                    nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(next.Next);
+                    if (IsAnEarTip(next.Previous, true))
+                        earTips.Add(next.Previous);
+                    else if (next.Previous == earToClip.Previous)
+                        previousIsStillAnEarTip = false;
 
                     if (next.Next == earToClip.Previous)
                         // Update previous if next.Next happens to be earToClip.Previous
@@ -1300,10 +1257,17 @@ namespace PSDSystem
                     // Keep track if prev is still an ear tip
                     previousIsStillAnEarTip = earTips.Contains(prev.Previous);
 
-                    // prev.Previous may no longer be an ear, remove and reprocess
+                    // prev.Previous and Prev.Next may no longer be an ear, remove and reprocess
                     earTips.Remove(prev.Previous);
+                    earTips.Remove(prev.Next);
+
                     if (IsAnEarTip(prev.Previous, true))
                         earTips.Add(prev.Previous);
+                    else
+                        previousIsStillAnEarTip = false;
+
+                    if (IsAnEarTip(prev.Next, true))
+                        earTips.Add(prev.Next);
 
                     prev = prev.Previous;
                 }
@@ -1617,38 +1581,10 @@ namespace PSDSystem
         /// <returns></returns>
         private static bool PointIsInsideTriangle(Vector2 point, Vector2 a, Vector2 b, Vector2 c)
         {
-            float ABCarea = TriangleArea(a, b, c);
-            if (IsNearlyEqual(ABCarea, 0.0f)) return false;
-
-            // Determine if the vertex is inside the triangle using Barycentric coordinates
-            // u = CAP / ABC
-            float u = TriangleArea(c, a, point) / ABCarea;
-            if (u < 0.0f || u > 1.0f)
-            {
-                return false;
-            }
-            // v = ABP / ABC
-            float v = TriangleArea(a, b, point) / ABCarea;
-            if (v < 0.0f || v > 1.0f)
-            {
-                return false;
-            }
-            // w = BCP / ABC
-            float w = TriangleArea(b, c, point) / ABCarea;
-            if (w < 0.0f || w > 1.0f)
-            {
-                return false;
-            }
-
-            if (IsNearlyEqual(u + v + w, 1.0f))
-            {
-                return true;
-            }
-
-            return false;
+            return BarycentricCoordinates(point, a, b, c, out _, out _, out _);
         }
 
-        private static bool  BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
+        private static bool BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
         {
             float ABCarea = TriangleArea(a, b, c);
             if (IsNearlyEqual(ABCarea, 0.0f))
