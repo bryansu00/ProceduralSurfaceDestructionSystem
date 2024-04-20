@@ -213,6 +213,21 @@ namespace PSDSystem
 
             return toReturn;
         }
+
+        public List<Vector2> ToVerticesList()
+        {
+            List<Vector2> toReturn = new List<Vector2>();
+            if (Head == null || Vertices == null) return toReturn;
+
+            var now = Head;
+            do
+            {
+                toReturn.Add(Vertices[now.Data.Index]);
+                now = now.Next;
+            } while (now != Head);
+
+            return toReturn;
+        }
     }
 
     /// <summary>

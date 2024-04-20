@@ -645,6 +645,59 @@ namespace PSDSystem
             cutter.InsertVertexAtBack(7);
         }
 
+        public static void SquareAndOctagon3<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
+            where T : PolygonVertex
+        {
+            testName = "Square With Octagon Cutter (Bottom)";
+            surface = new SurfaceShape<T>();
+            List<Vector2> Vertices = [
+                new Vector2(550.0f, 150.0f),
+                new Vector2(550.0f, 400.0f),
+                new Vector2(620.7f, 429.3f),
+                new Vector2(650.0f, 500.0f),
+                new Vector2(620.7f, 570.7f),
+                new Vector2(550.0f, 600.0f),
+                new Vector2(550.0f, 650.0f),
+                new Vector2(1050.0f, 650.0f),
+                new Vector2(1050.0f, 150.0f)
+            ];
+            Polygon<T> polygon = new Polygon<T>();
+            polygon.Vertices = Vertices;
+            polygon.InsertVertexAtBack(0);
+            polygon.InsertVertexAtBack(1);
+            polygon.InsertVertexAtBack(2);
+            polygon.InsertVertexAtBack(3);
+            polygon.InsertVertexAtBack(4);
+            polygon.InsertVertexAtBack(5);
+            polygon.InsertVertexAtBack(6);
+            polygon.InsertVertexAtBack(7);
+            polygon.InsertVertexAtBack(8);
+
+            surface.AddOuterPolygon(polygon);
+
+            float scale = 10.0f;
+            Vector2 center = new Vector2(550.0f, 270.0f);
+            cutter = new Polygon<T>();
+            cutter.Vertices = [
+                new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+                ];
+            cutter.InsertVertexAtBack(0);
+            cutter.InsertVertexAtBack(1);
+            cutter.InsertVertexAtBack(2);
+            cutter.InsertVertexAtBack(3);
+            cutter.InsertVertexAtBack(4);
+            cutter.InsertVertexAtBack(5);
+            cutter.InsertVertexAtBack(6);
+            cutter.InsertVertexAtBack(7);
+        }
+
         public static void OctagonTestCase<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {

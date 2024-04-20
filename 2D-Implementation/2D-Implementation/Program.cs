@@ -36,6 +36,7 @@ class Program
         SquareTestCase14<PolygonVertex>,
         SquareAndOctagon1<PolygonVertex>,
         SquareAndOctagon2<PolygonVertex>,
+        SquareAndOctagon3<PolygonVertex>,
         OctagonTestCase<PolygonVertex>,
         OctagonTestCase1<PolygonVertex>
         ];
@@ -101,12 +102,12 @@ class Program
                     {
                         SurfaceVerticesCount += (int)group.OuterPolygon.Count;
                         Console.Write("\nOuter Polygon Indices: ");
-                        Console.WriteLine(string.Join(", ", group.OuterPolygon.ToList()));
+                        Console.WriteLine(string.Join(", ", group.OuterPolygon.ToVerticesList()));
                         int innerPolygonCount = 0;
                         foreach (Polygon<PolygonVertex> polygon in group.InnerPolygons)
                         {
                             SurfaceVerticesCount += (int)polygon.Count;
-                            Console.Write(string.Format("Inner Polygon {0} Indices: ", innerPolygonCount));
+                            Console.Write("Inner Polygon {0} Indices: ", innerPolygonCount);
                             Console.WriteLine(string.Join(", ", polygon.ToList()));
                             innerPolygonCount++;
                         }
