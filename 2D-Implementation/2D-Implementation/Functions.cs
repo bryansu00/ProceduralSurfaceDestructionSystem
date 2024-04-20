@@ -993,6 +993,11 @@ namespace PSDSystem
                 VertexNode<T> nodeAddedToPolygon = InsertSingleIntersectionPoint(polygonNode, outerVertices, intersectionPoint, t);
                 VertexNode<T> nodeAddedToCutter = InsertSingleIntersectionPoint(cutterNode, cutterVertices, intersectionPoint, u);
 
+                if (nodeAddedToPolygon.Data.Cross != null && !nodeAddedToPolygon.Data.Cross.Data.IsAnAddedVertex)
+                {
+                    Console.WriteLine("{0}, {1}", nodeAddedToPolygon.Data.Index, nodeAddedToPolygon.Data.Cross.Data.Index);
+                }
+
                 nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;
                 nodeAddedToCutter.Data.Cross = nodeAddedToPolygon;
 
