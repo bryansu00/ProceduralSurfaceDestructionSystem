@@ -410,7 +410,7 @@ namespace PSDSystem
             if (originalVertices.Count <= 0 || originalUVCoordinates.Count <= 0) return null;
 
             List<Vector2> output = new List<Vector2>();
-            
+
             foreach (Vector2 vertex in currentVertices)
             {
                 for (int i = 0; i < originalVertices.Count; i++)
@@ -1271,12 +1271,13 @@ namespace PSDSystem
                 // Reprocess the neighbors
                 if (IsAnEarTip(earToClip.Previous, true))
                     earTips.Add(earToClip.Previous);
+                else
+                    previousIsStillAnEarTip = false;
+
                 if (IsAnEarTip(earToClip.Next, true))
                     earTips.Add(earToClip.Next);
-
-                // The values may become false now due to reprocessing
-                nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(earToClip.Next);
-                previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(earToClip.Previous);
+                else
+                    nextIsStillAnEarTip = false;
 
                 // The while loops will continue adding next.Next or prev.Prev until the next vertex makes the polygon non ear
 
@@ -1295,20 +1296,21 @@ namespace PSDSystem
 
                     // next.Next and next.Prev may no longer be an ear, remove and reprocess
                     earTips.Remove(next.Next);
+                    earTips.Remove(next.Previous);
+
                     if (IsAnEarTip(next.Next, true))
                         earTips.Add(next.Next);
-                    earTips.Remove(next.Previous);
+                    else
+                        nextIsStillAnEarTip = false;
+
                     if (IsAnEarTip(next.Previous, true))
                         earTips.Add(next.Previous);
-
-                    // The value may become false now due to reprocessing
-                    nextIsStillAnEarTip = nextIsStillAnEarTip && earTips.Contains(next.Next);
+                    else if (next.Previous == earToClip.Previous)
+                        previousIsStillAnEarTip = false;
 
                     if (next.Next == earToClip.Previous)
                         // Update previous if next.Next happens to be earToClip.Previous
                         previousIsStillAnEarTip = nextIsStillAnEarTip;
-                    if (next.Previous == earToClip.Previous)
-                        previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(earToClip.Previous);
 
                     next = next.Next;
                 }
@@ -1328,14 +1330,15 @@ namespace PSDSystem
 
                     // prev.Previous and Prev.Next may no longer be an ear, remove and reprocess
                     earTips.Remove(prev.Previous);
+                    earTips.Remove(prev.Next);
+
                     if (IsAnEarTip(prev.Previous, true))
                         earTips.Add(prev.Previous);
-                    earTips.Remove(prev.Next);
+                    else
+                        previousIsStillAnEarTip = false;
+
                     if (IsAnEarTip(prev.Next, true))
                         earTips.Add(prev.Next);
-
-                    // The value may become false now due to reprocessing
-                    previousIsStillAnEarTip = previousIsStillAnEarTip && earTips.Contains(prev.Previous);
 
                     prev = prev.Previous;
                 }
