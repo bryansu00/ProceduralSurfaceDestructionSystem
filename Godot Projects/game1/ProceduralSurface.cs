@@ -45,7 +45,7 @@ public partial class ProceduralSurface : Node3D
 
     public void DamageSurface(Vector3 globalCollisionPoint)
     {
-        Vector3 localCollisionPoint = globalCollisionPoint - GlobalPosition;
+        Vector3 localCollisionPoint = ToLocal(globalCollisionPoint); ;
         Vector2 collisionPointOnPlane = _coordinateConverter.ConvertTo2D(localCollisionPoint);
         
         Polygon<PolygonVertex> cutter = CreateCircle(collisionPointOnPlane, 0.05f);
@@ -89,10 +89,10 @@ public partial class ProceduralSurface : Node3D
 
         Polygon<PolygonVertex> polygon = new Polygon<PolygonVertex>() {
             Vertices = new List<Vector2> {
-                new Vector2(-5.0f, -5.0f), // bottom left
-                new Vector2(-5.0f, 5.0f), // top left
-                new Vector2(5.0f, 5.0f), // top right
-                new Vector2(5.0f, -5.0f) // bottom right
+                new Vector2(-5.0f, -2.0f), // bottom left
+                new Vector2(-5.0f, 2.0f), // top left
+                new Vector2(5.0f, 2.0f), // top right
+                new Vector2(5.0f, -2.0f) // bottom right
             }
         };
 

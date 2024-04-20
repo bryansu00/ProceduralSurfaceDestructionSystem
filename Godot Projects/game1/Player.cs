@@ -62,17 +62,6 @@ public partial class Player : CharacterBody3D
         }
     }
 
-    private void DrawSphere(Vector3 pos)
-    {
-        var ins = new MeshInstance3D();
-        AddChild(ins);
-        ins.Position = pos;
-        var sphere = new SphereMesh();
-        sphere.Radius = 0.1f;
-        sphere.Height = 0.1f;
-        ins.Mesh = sphere;
-    }
-
     private void HandleMovement(double delta)
     {
         // Local variable to store input direction

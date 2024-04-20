@@ -43,12 +43,12 @@ albedo_texture = ExtResource("4_rul3d")
 [node name="Main" type="Node3D"]
 
 [node name="StaticBody3D" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
 shape = SubResource("BoxShape3D_hev35")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0)
 mesh = SubResource("BoxMesh_gxx0m")
 
 [node name="Player" parent="." instance=ExtResource("1_hdjmo")]
@@ -58,7 +58,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.34169, 0)
 environment = SubResource("Environment_tfeg0")
 
 [node name="ProceduralSurface" parent="." instance=ExtResource("2_lr3sj")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24205, 5.1037, -5.00362)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.24205, 2.1037, -5.00362)
+Material1 = SubResource("StandardMaterial3D_jwwo1")
+Material2 = SubResource("StandardMaterial3D_uw5a8")
+
+[node name="ProceduralSurface2" parent="." instance=ExtResource("2_lr3sj")]
+transform = Transform3D(0.760054, 0, -0.649859, 0, 1, 0, 0.649859, 0, 0.760054, 9.04379, 2.1037, -0.983885)
 Material1 = SubResource("StandardMaterial3D_jwwo1")
 Material2 = SubResource("StandardMaterial3D_uw5a8")
 
