@@ -812,16 +812,10 @@ namespace PSDSystem
             surface = new SurfaceShape<T>();
             List<Vector2> Vertices = [
                 new Vector2(550, 150),
-                //new Vector2(550, 250),
-                //new Vector2(585.35f, 264.65f),
-                //new Vector2(600, 300),
                 new Vector2(585.35f, 335.35f),
                 new Vector2(550, 350),
                 new Vector2(550, 420),
                 new Vector2(585.35f, 434.65f),
-                //new Vector2(600, 470),
-                //new Vector2(585.35f, 505.35f),
-                //new Vector2(550, 520),
                 new Vector2(550, 650),
                 new Vector2(1050, 650),
                 new Vector2(1050, 150)
@@ -836,12 +830,6 @@ namespace PSDSystem
             polygon.InsertVertexAtBack(5);
             polygon.InsertVertexAtBack(6);
             polygon.InsertVertexAtBack(7);
-            //polygon.InsertVertexAtBack(8);
-            //polygon.InsertVertexAtBack(9);
-            //polygon.InsertVertexAtBack(10);
-            //polygon.InsertVertexAtBack(11);
-            //polygon.InsertVertexAtBack(12);
-            //polygon.InsertVertexAtBack(13);
 
             surface.AddOuterPolygon(polygon);
 
