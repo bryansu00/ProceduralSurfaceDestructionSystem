@@ -49,13 +49,6 @@ public partial class ProceduralSurface : Node3D
         Vector2 collisionPointOnPlane = _coordinateConverter.ConvertTo2D(localCollisionPoint);
         
         Polygon<PolygonVertex> cutter = CreateCircle(collisionPointOnPlane, 0.05f);
-
-        GD.Print("Cutter: ");
-        GD.Print(string.Join(", ", cutter.ToVerticesList()));
-
-        GD.Print("Surface: ");
-        GD.Print(string.Join(", ", _surface.Polygons[0].OuterPolygon.ToVerticesList()));
-
         PSD.CutSurfaceResult result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter);
 
         GenerateMeshOfSurface();
@@ -199,6 +192,8 @@ public partial class ProceduralSurface : Node3D
 
         PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, _depth / 2.0f,
             sideVerts, sideNormals, sideIndices, sideUvs);
+
+        GD.Print(string.Format("sideVerts.Count: {0}, sideIndices.Count:{1}",  sideVerts.Count, sideIndices.Count));
 
         var sideSurfaceArray = new Godot.Collections.Array();
         sideSurfaceArray.Resize((int)Mesh.ArrayType.Max);
