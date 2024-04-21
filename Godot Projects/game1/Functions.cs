@@ -3,6 +3,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace PSDSystem
 {
@@ -522,6 +523,32 @@ namespace PSDSystem
             return outputPolygons;
         }
 
+        private static void PrintBooleanList<T>(Polygon<T> polygon)
+            where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        {
+            if (polygon.Head == null) return;
+
+            StringBuilder sb = new StringBuilder();
+            VertexNode<T> now = polygon.Head;
+            do
+            {
+                sb.Append(now.Data.Index);
+
+                sb.Append(", Outside: ");
+                sb.Append(now.Data.IsOutside);
+
+                sb.Append(", Cross: ");
+                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
+                else sb.Append("None");
+
+                sb.Append("\n");
+
+                now = now.Next;
+            } while (now != polygon.Head);
+
+            GD.Print(sb.ToString());
+        }
+
         /// <summary>
         /// Perform a boolean mixed addition-subtraction operation using the given information
         /// </summary>
@@ -576,6 +603,8 @@ namespace PSDSystem
 
             InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
+
+            // TODO: FIX INFINITE LOOP ISSUE
             while (true)
             {
                 VertexNode<U>? firstPoint = null, point = null;
@@ -624,11 +653,11 @@ namespace PSDSystem
 
                 } while (point != firstPoint && newPolygon.Vertices.Count < 1000);
 
-                if (newPolygon.Vertices.Count >= 500)
+                // TEMPORARY WORKAROUND FOR INFINITE LOOP
+                if (newPolygon.Vertices.Count >= 1000)
                 {
-                    var _cc = new CoordinateConverter(new Vector3(0.0f, 2.0f, 1.0f / 2.0f - 5.0f), Vector3.Right, Vector3.Up);
-                    DebugDraw3D.DrawSphere(_cc.ConvertTo3D(firstPoint.Owner.Vertices[firstPoint.Data.Index]), 0.1f, duration:60.0f);
-                    DebugDraw2D.SetText("First Point Info", string.Format("{0}, {1}, {2}", firstPoint.Data.Index, firstPoint.Data.IsAnAddedVertex, firstPoint.Data.OnEdge), duration:1000.0f);
+                    GD.Print("INFINITE LOOP OCCURRED!");
+                    continue;
                 }
 
                 outputPolygons.Add(newPolygon);
