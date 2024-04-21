@@ -1,4 +1,5 @@
 ﻿#nullable enable
+
 using Godot;
 using System;
 using System.Collections.Generic;
@@ -210,6 +211,21 @@ namespace PSDSystem
             do
             {
                 toReturn.Add(now.Data.Index);
+                now = now.Next;
+            } while (now != Head);
+
+            return toReturn;
+        }
+
+        public List<Vector2> ToVerticesList()
+        {
+            List<Vector2> toReturn = new List<Vector2>();
+            if (Head == null || Vertices == null) return toReturn;
+
+            var now = Head;
+            do
+            {
+                toReturn.Add(Vertices[now.Data.Index]);
                 now = now.Next;
             } while (now != Head);
 

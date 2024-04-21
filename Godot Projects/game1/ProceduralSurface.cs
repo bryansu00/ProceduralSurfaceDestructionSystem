@@ -49,6 +49,13 @@ public partial class ProceduralSurface : Node3D
         Vector2 collisionPointOnPlane = _coordinateConverter.ConvertTo2D(localCollisionPoint);
         
         Polygon<PolygonVertex> cutter = CreateCircle(collisionPointOnPlane, 0.05f);
+
+        GD.Print("Cutter: ");
+        GD.Print(string.Join(", ", cutter.ToVerticesList()));
+
+        GD.Print("Surface: ");
+        GD.Print(string.Join(", ", _surface.Polygons[0].OuterPolygon.ToVerticesList()));
+
         PSD.CutSurfaceResult result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter);
 
         GenerateMeshOfSurface();
