@@ -805,6 +805,59 @@ namespace PSDSystem
             cutter.InsertVertexAtBack(7);
         }
 
+        public static void GodotFoundCase2<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
+            where T : PolygonVertex
+        {
+            testName = "Simplified Infinite Loop From Godot";
+            surface = new SurfaceShape<T>();
+            List<Vector2> Vertices = [
+                new Vector2(550, 150),
+                //new Vector2(550, 250),
+                //new Vector2(585.35f, 264.65f),
+                //new Vector2(600, 300),
+                new Vector2(585.35f, 335.35f),
+                new Vector2(550, 350),
+                new Vector2(550, 420),
+                new Vector2(585.35f, 434.65f),
+                //new Vector2(600, 470),
+                //new Vector2(585.35f, 505.35f),
+                //new Vector2(550, 520),
+                new Vector2(550, 650),
+                new Vector2(1050, 650),
+                new Vector2(1050, 150)
+            ];
+            Polygon<T> polygon = new Polygon<T>();
+            polygon.Vertices = Vertices;
+            polygon.InsertVertexAtBack(0);
+            polygon.InsertVertexAtBack(1);
+            polygon.InsertVertexAtBack(2);
+            polygon.InsertVertexAtBack(3);
+            polygon.InsertVertexAtBack(4);
+            polygon.InsertVertexAtBack(5);
+            polygon.InsertVertexAtBack(6);
+            polygon.InsertVertexAtBack(7);
+            //polygon.InsertVertexAtBack(8);
+            //polygon.InsertVertexAtBack(9);
+            //polygon.InsertVertexAtBack(10);
+            //polygon.InsertVertexAtBack(11);
+            //polygon.InsertVertexAtBack(12);
+            //polygon.InsertVertexAtBack(13);
+
+            surface.AddOuterPolygon(polygon);
+
+            cutter = new Polygon<T>();
+            cutter.Vertices = [
+                new Vector2(600, 380),
+                new Vector2(550, 430),
+                new Vector2(500, 380),
+                new Vector2(550, 330),
+                ];
+            cutter.InsertVertexAtBack(0);
+            cutter.InsertVertexAtBack(1);
+            cutter.InsertVertexAtBack(2);
+            cutter.InsertVertexAtBack(3);
+        }
+
         public static void OctagonTestCase<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {
