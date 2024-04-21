@@ -118,7 +118,7 @@ class Program
                         }
                     }
                 }
-                Console.WriteLine(string.Join(", ", Cutter.ToVerticesList()));
+                
                 Cutter = null;
             }
 
