@@ -698,6 +698,113 @@ namespace PSDSystem
             cutter.InsertVertexAtBack(7);
         }
 
+        public static void GodotFoundCase1<T>(out string testName, out SurfaceShape<T> ? surface, out Polygon<T>? cutter)
+            where T : PolygonVertex
+        {
+            testName = "Square With Octagon Cutter (Bottom)";
+            surface = new SurfaceShape<T>();
+            List<Vector2> Vertices = [
+                new Vector2(550, 150),
+                new Vector2(550, 250),
+                new Vector2(585.35f, 264.65f),
+                new Vector2(600, 300),
+                new Vector2(585.35f, 335.35f),
+                new Vector2(550, 350),
+                new Vector2(550, 400),
+                new Vector2(585.35f, 414.65f),
+                new Vector2(600, 450),
+                new Vector2(585.35f, 485.35f),
+                new Vector2(550, 500),
+                new Vector2(550, 650),
+                new Vector2(1050, 650),
+                new Vector2(1050, 150)
+            ];
+            Polygon<T> polygon = new Polygon<T>();
+            polygon.Vertices = Vertices;
+            polygon.InsertVertexAtBack(0);
+            polygon.InsertVertexAtBack(1);
+            polygon.InsertVertexAtBack(2);
+            polygon.InsertVertexAtBack(3);
+            polygon.InsertVertexAtBack(4);
+            polygon.InsertVertexAtBack(5);
+            polygon.InsertVertexAtBack(6);
+            polygon.InsertVertexAtBack(7);
+            polygon.InsertVertexAtBack(8);
+            polygon.InsertVertexAtBack(9);
+            polygon.InsertVertexAtBack(10);
+            polygon.InsertVertexAtBack(11);
+            polygon.InsertVertexAtBack(12);
+            polygon.InsertVertexAtBack(13);
+
+            surface.AddOuterPolygon(polygon);
+
+            //float scale = 5.0f;
+            //Vector2 center = new Vector2(550.0f, 300.0f);
+            //cutter = new Polygon<T>();
+            //cutter.Vertices = [
+            //    new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+            //    new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+            //    new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+            //    new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+            //    new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+            //    new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+            //    new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+            //    new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+            //    ];
+            //cutter.InsertVertexAtBack(0);
+            //cutter.InsertVertexAtBack(1);
+            //cutter.InsertVertexAtBack(2);
+            //cutter.InsertVertexAtBack(3);
+            //cutter.InsertVertexAtBack(4);
+            //cutter.InsertVertexAtBack(5);
+            //cutter.InsertVertexAtBack(6);
+            //cutter.InsertVertexAtBack(7);
+
+            //float scale = 5.0f;
+            //Vector2 center = new Vector2(550.0f, 450.0f);
+            //cutter = new Polygon<T>();
+            //cutter.Vertices = [
+            //    new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+            //    new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+            //    new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+            //    new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+            //    new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+            //    new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+            //    new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+            //    new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+            //    ];
+            //cutter.InsertVertexAtBack(0);
+            //cutter.InsertVertexAtBack(1);
+            //cutter.InsertVertexAtBack(2);
+            //cutter.InsertVertexAtBack(3);
+            //cutter.InsertVertexAtBack(4);
+            //cutter.InsertVertexAtBack(5);
+            //cutter.InsertVertexAtBack(6);
+            //cutter.InsertVertexAtBack(7);
+
+            float scale = 4.0f;
+            Vector2 center = new Vector2(550.0f, 380.0f);
+            cutter = new Polygon<T>();
+            cutter.Vertices = [
+                new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+                new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+                ];
+            cutter.InsertVertexAtBack(0);
+            cutter.InsertVertexAtBack(1);
+            cutter.InsertVertexAtBack(2);
+            cutter.InsertVertexAtBack(3);
+            cutter.InsertVertexAtBack(4);
+            cutter.InsertVertexAtBack(5);
+            cutter.InsertVertexAtBack(6);
+            cutter.InsertVertexAtBack(7);
+        }
+
         public static void OctagonTestCase<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {

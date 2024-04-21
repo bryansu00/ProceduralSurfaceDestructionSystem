@@ -38,7 +38,8 @@ class Program
         SquareAndOctagon2<PolygonVertex>,
         SquareAndOctagon3<PolygonVertex>,
         OctagonTestCase<PolygonVertex>,
-        OctagonTestCase1<PolygonVertex>
+        OctagonTestCase1<PolygonVertex>,
+        GodotFoundCase1<PolygonVertex>
         ];
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;
