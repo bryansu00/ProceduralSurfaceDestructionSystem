@@ -6,6 +6,9 @@
 export.cfg
 export_presets.cfg
 
+# Addon Related
+addons/debug_draw_3d/libs/~libdd3d.windows.editor.x86_64.dll
+
 # Imported translations (automatically generated from CSV files)
 *.translation
 
