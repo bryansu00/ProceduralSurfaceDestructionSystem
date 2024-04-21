@@ -621,7 +621,15 @@ namespace PSDSystem
                     }
 
                     point = point.Next;
+
                 } while (point != firstPoint && newPolygon.Vertices.Count < 1000);
+
+                if (newPolygon.Vertices.Count >= 500)
+                {
+                    var _cc = new CoordinateConverter(new Vector3(0.0f, 2.0f, 1.0f / 2.0f - 5.0f), Vector3.Right, Vector3.Up);
+                    DebugDraw3D.DrawSphere(_cc.ConvertTo3D(firstPoint.Owner.Vertices[firstPoint.Data.Index]), 0.1f, duration:60.0f);
+                    DebugDraw2D.SetText("First Point Info", string.Format("{0}, {1}, {2}", firstPoint.Data.Index, firstPoint.Data.IsAnAddedVertex, firstPoint.Data.OnEdge), duration:1000.0f);
+                }
 
                 outputPolygons.Add(newPolygon);
             }
@@ -974,11 +982,11 @@ namespace PSDSystem
                 );
 
                 if (PointIsInsidePolygon(extraInsertionPoint, cutter) != -1) continue;
-                
+
                 int insertedVertexLocation = outerVertices.Count;
                 outerVertices.Add(extraInsertionPoint);
                 VertexNode<T> addedNode = outerIntersections.Polygon.InsertVertexAfter(node, insertedVertexLocation);
-                addedNode.Data.IsAnAddedVertex = true; 
+                addedNode.Data.IsAnAddedVertex = true;
             }
         }
 
@@ -1651,25 +1659,25 @@ namespace PSDSystem
                 Vector2 b = vertices[now.Next.Data.Index];
 
                 // Corner cases
-                if (IsNearlyEqual(point.X, a.X) && IsNearlyEqual(point.Y, a.Y) ||
-                    IsNearlyEqual(point.X, b.X) && IsNearlyEqual(point.Y, b.Y))
+                if (point.X == a.X && point.Y == a.Y ||
+                    point.X == b.X && point.Y == b.Y)
                     return 0;
-                if (IsNearlyEqual(a.Y, b.Y) && IsNearlyEqual(point.Y, a.Y)
+                if (a.Y == b.Y && point.Y == a.Y
                     && between(point.X, a.X, b.X))
                     return 0;
 
                 if (between(point.Y, a.Y, b.Y)) // If point is inside the vertical range
                 {
                     // Below is extremely unlikely
-                    if (IsNearlyEqual(point.Y, a.Y) && b.Y >= a.Y ||
-                        IsNearlyEqual(point.Y, b.Y) && a.Y >= b.Y)
+                    if (point.Y == a.Y && b.Y >= a.Y ||
+                        point.Y == b.Y && a.Y >= b.Y)
                     {
                         now = now.Next;
                         continue;
                     }
 
                     float c = (a.X - point.X) * (b.Y - point.Y) - (b.X - point.X) * (a.Y - point.Y);
-                    if (IsNearlyEqual(c, 0.0f))
+                    if (c == 0.0f)
                         return 0;
                     if ((a.Y < b.Y) == (c > 0))
                         inside = !inside;

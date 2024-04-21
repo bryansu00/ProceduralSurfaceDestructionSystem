@@ -43,6 +43,19 @@ public partial class ProceduralSurface : Node3D
         GenerateCollision();
     }
 
+    public override void _Process(double delta)
+    {
+        base._Process(delta);
+
+        DebugDraw2D.SetText("SurfacePolygonCount", _surface.Polygons.Count);
+        int i = 0;
+        foreach (PolygonGroup<PolygonVertex> group in _surface.Polygons)
+        {
+            DebugDraw2D.SetText(string.Format("Group {0} Vertex Count", i), group.OuterPolygon.Count);
+            i++;
+        }
+    }
+
     public void DamageSurface(Vector3 globalCollisionPoint)
     {
         Vector3 localCollisionPoint = ToLocal(globalCollisionPoint); ;
@@ -121,7 +134,7 @@ public partial class ProceduralSurface : Node3D
 
         // Objects needed for the procedural mesh
         List<Vector3> frontVerts;
-        List<Vector2>? frontUvs = new List<Vector2>();
+        List<Vector2>? frontUvs;
         List<Vector3> frontNormals = new List<Vector3>();
         List<int> frontIndices;
 
@@ -192,8 +205,6 @@ public partial class ProceduralSurface : Node3D
 
         PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, _depth / 2.0f,
             sideVerts, sideNormals, sideIndices, sideUvs);
-
-        GD.Print(string.Format("sideVerts.Count: {0}, sideIndices.Count:{1}",  sideVerts.Count, sideIndices.Count));
 
         var sideSurfaceArray = new Godot.Collections.Array();
         sideSurfaceArray.Resize((int)Mesh.ArrayType.Max);

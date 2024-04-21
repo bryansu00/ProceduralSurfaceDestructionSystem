@@ -54,6 +54,7 @@ class Program
     static int TriangleCount = 0;
     static int SurfaceVerticesCount = 0;
     static int ConvexGroupCount = 0;
+    static int PolygonGroupCount = 0;
 
     public static void Main()
     {
@@ -89,6 +90,8 @@ class Program
                 }
                 if (Surface != null)
                 {
+                    PolygonGroupCount = Surface.Polygons.Count;
+
                     TriangulateSurface(Surface, out Triangles, out TrianglesVertices);
                     if (Triangles != null)
                         TriangleCount = Triangles.Count / 3;
@@ -173,6 +176,7 @@ class Program
             Raylib.DrawText(string.Format("TriangleCount: {0}", TriangleCount), 30, 70, 18, Color.Black);
             Raylib.DrawText(string.Format("SurfaceVerticesCount: {0}", SurfaceVerticesCount), 30, 90, 18, Color.Black);
             Raylib.DrawText(string.Format("ConvexGroupCount: {0}", ConvexGroupCount), 30, 110, 18, Color.Black);
+            Raylib.DrawText(string.Format("PolygonGroupCount: {0}", PolygonGroupCount), 30, 130, 18, Color.Black);
 
             Raylib.DrawText(string.Format("Current View: {0}", Mode), 30, 240, 18, Color.Black);
             Raylib.DrawText(string.Format("Selected Test Case: {0}", SelectedTestCase), 30, 260, 18, Color.Black);
@@ -198,6 +202,7 @@ class Program
         TriangleCount = 0;
         SurfaceVerticesCount = 0;
         ConvexGroupCount = 0;
+        PolygonGroupCount = 0;
 
         if (SelectedTestCase < 0 || SelectedTestCase >= TestCaseDelegates.Count)
         {
