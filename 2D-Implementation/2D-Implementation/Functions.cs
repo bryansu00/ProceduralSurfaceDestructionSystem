@@ -627,6 +627,7 @@ namespace PSDSystem
             // Below is used for printing boolean list for debugging purposes
             HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
 
+            // TODO: FIX INFINITE LOOP ISSUE
             while (true)
             {
                 VertexNode<U>? firstPoint = null, point = null;
@@ -977,7 +978,7 @@ namespace PSDSystem
         {
             if (cutter.Vertices == null || outerIntersections.Polygon.Vertices == null) return;
 
-            List<VertexNode<T>> insertedOuterIntersection = new List<VertexNode<T>>();       
+            List<VertexNode<T>> insertedOuterIntersection = new List<VertexNode<T>>();
             List<Vector2> cutterVertices = cutter.Vertices;
             List<Vector2> outerVertices = outerIntersections.Polygon.Vertices;
 
@@ -992,11 +993,6 @@ namespace PSDSystem
 
                 VertexNode<T> nodeAddedToPolygon = InsertSingleIntersectionPoint(polygonNode, outerVertices, intersectionPoint, t);
                 VertexNode<T> nodeAddedToCutter = InsertSingleIntersectionPoint(cutterNode, cutterVertices, intersectionPoint, u);
-
-                if (nodeAddedToPolygon.Data.Cross != null && !nodeAddedToPolygon.Data.Cross.Data.IsAnAddedVertex)
-                {
-                    Console.WriteLine("{0}, {1}", nodeAddedToPolygon.Data.Index, nodeAddedToPolygon.Data.Cross.Data.Index);
-                }
 
                 nodeAddedToPolygon.Data.Cross = nodeAddedToCutter;
                 nodeAddedToCutter.Data.Cross = nodeAddedToPolygon;
@@ -1050,15 +1046,15 @@ namespace PSDSystem
                 );
 
                 if (PointIsInsidePolygon(extraInsertionPoint, cutter) != -1) continue;
-                
+
                 int insertedVertexLocation = outerVertices.Count;
                 outerVertices.Add(extraInsertionPoint);
                 VertexNode<T> addedNode = outerIntersections.Polygon.InsertVertexAfter(node, insertedVertexLocation);
-                addedNode.Data.IsAnAddedVertex = true; 
+                addedNode.Data.IsAnAddedVertex = true;
             }
         }
 
-        private static VertexNode<T> InsertSingleIntersectionPoint<T>(VertexNode<T> intersectedNode, List<Vector2> vertices, Vector2 intersectionPoint, float intersectionValue) 
+        private static VertexNode<T> InsertSingleIntersectionPoint<T>(VertexNode<T> intersectedNode, List<Vector2> vertices, Vector2 intersectionPoint, float intersectionValue)
             where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             VertexNode<T> nodeAddedToPolygon;
@@ -1287,7 +1283,7 @@ namespace PSDSystem
                 // The while loops will continue adding next.Next or prev.Prev until the next vertex makes the polygon non ear
 
                 VertexNode<T> next = earToClip.Next;
-                while(nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
+                while (nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
                     // Add next.Next's vertex to the list
                     convexVertices.Add(currentVertices[next.Next.Data.Index]);
@@ -1372,7 +1368,7 @@ namespace PSDSystem
             #region BridgeFinding
 
             // Get the right-most vertex of the inner polygon
-            if (innerPolygon.RightMostVertex == null) 
+            if (innerPolygon.RightMostVertex == null)
                 return null;
             VertexNode<T> rightMostInnerVertex = innerPolygon.RightMostVertex;
 
@@ -1627,7 +1623,7 @@ namespace PSDSystem
         /// <typeparam name="U">The desired BooleanVertex class</typeparam>
         /// <param name="polygon">The polygon to convert</param>
         /// <returns>Copy of the given polygon but with BooleanVertex insteadd</returns>
-        private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
+        private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
@@ -1727,25 +1723,25 @@ namespace PSDSystem
                 Vector2 b = vertices[now.Next.Data.Index];
 
                 // Corner cases
-                if (IsNearlyEqual(point.X, a.X) && IsNearlyEqual(point.Y, a.Y) ||
-                    IsNearlyEqual(point.X, b.X) && IsNearlyEqual(point.Y, b.Y))
+                if (point.X == a.X && point.Y == a.Y ||
+                    point.X == b.X && point.Y == b.Y)
                     return 0;
-                if (IsNearlyEqual(a.Y, b.Y) && IsNearlyEqual(point.Y, a.Y)
+                if (a.Y == b.Y && point.Y == a.Y
                     && between(point.X, a.X, b.X))
                     return 0;
 
                 if (between(point.Y, a.Y, b.Y)) // If point is inside the vertical range
                 {
                     // Below is extremely unlikely
-                    if (IsNearlyEqual(point.Y, a.Y) && b.Y >= a.Y ||
-                        IsNearlyEqual(point.Y, b.Y) && a.Y >= b.Y)
+                    if (point.Y == a.Y && b.Y >= a.Y ||
+                        point.Y == b.Y && a.Y >= b.Y)
                     {
                         now = now.Next;
                         continue;
                     }
 
                     float c = (a.X - point.X) * (b.Y - point.Y) - (b.X - point.X) * (a.Y - point.Y);
-                    if (IsNearlyEqual(c, 0.0f))
+                    if (c == 0.0f)
                         return 0;
                     if ((a.Y < b.Y) == (c > 0))
                         inside = !inside;
