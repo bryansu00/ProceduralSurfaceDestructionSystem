@@ -701,7 +701,7 @@ namespace PSDSystem
         public static void GodotFoundCase1<T>(out string testName, out SurfaceShape<T> ? surface, out Polygon<T>? cutter)
             where T : PolygonVertex
         {
-            testName = "Square With Octagon Cutter (Bottom)";
+            testName = "Infinite Loop From Godot";
             surface = new SurfaceShape<T>();
             List<Vector2> Vertices = [
                 new Vector2(550, 150),
@@ -710,11 +710,11 @@ namespace PSDSystem
                 new Vector2(600, 300),
                 new Vector2(585.35f, 335.35f),
                 new Vector2(550, 350),
-                new Vector2(550, 400),
-                new Vector2(585.35f, 414.65f),
-                new Vector2(600, 450),
-                new Vector2(585.35f, 485.35f),
-                new Vector2(550, 500),
+                new Vector2(550, 420),
+                new Vector2(585.35f, 434.65f),
+                new Vector2(600, 470),
+                new Vector2(585.35f, 505.35f),
+                new Vector2(550, 520),
                 new Vector2(550, 650),
                 new Vector2(1050, 650),
                 new Vector2(1050, 150)
@@ -782,7 +782,7 @@ namespace PSDSystem
             //cutter.InsertVertexAtBack(6);
             //cutter.InsertVertexAtBack(7);
 
-            float scale = 4.0f;
+            float scale = 5.0f;
             Vector2 center = new Vector2(550.0f, 380.0f);
             cutter = new Polygon<T>();
             cutter.Vertices = [

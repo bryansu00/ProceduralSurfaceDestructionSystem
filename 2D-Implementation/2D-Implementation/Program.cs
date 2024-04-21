@@ -105,14 +105,14 @@ class Program
                     foreach (PolygonGroup<PolygonVertex> group in Surface.Polygons)
                     {
                         SurfaceVerticesCount += (int)group.OuterPolygon.Count;
-                        Console.Write("\nOuter Polygon Indices: ");
-                        Console.WriteLine(string.Join(", ", group.OuterPolygon.ToVerticesList()));
+                        //Console.Write("\nOuter Polygon Indices: ");
+                        //Console.WriteLine(string.Join(", ", group.OuterPolygon.ToVerticesList()));
                         int innerPolygonCount = 0;
                         foreach (Polygon<PolygonVertex> polygon in group.InnerPolygons)
                         {
                             SurfaceVerticesCount += (int)polygon.Count;
-                            Console.Write("Inner Polygon {0} Indices: ", innerPolygonCount);
-                            Console.WriteLine(string.Join(", ", polygon.ToList()));
+                            //Console.Write("Inner Polygon {0} Indices: ", innerPolygonCount);
+                            //Console.WriteLine(string.Join(", ", polygon.ToList()));
                             innerPolygonCount++;
                         }
                     }
