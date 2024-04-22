@@ -40,7 +40,7 @@ class Program
         OctagonTestCase<PolygonVertex>,
         OctagonTestCase1<PolygonVertex>,
         GodotFoundCase1<PolygonVertex>,
-        GodotFoundCase2<PolygonVertex>,
+        GodotFoundCase2<PolygonVertex>
         ];
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;

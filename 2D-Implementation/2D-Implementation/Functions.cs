@@ -46,7 +46,7 @@ namespace PSDSystem
         /// 3 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing only 1 polygon.
         /// 4 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing MULTIPLE polygons, but only 1 of those polygons were kept.
         /// </returns>
-        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
+        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter, List<Vector2>? anchorVertices = null)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
