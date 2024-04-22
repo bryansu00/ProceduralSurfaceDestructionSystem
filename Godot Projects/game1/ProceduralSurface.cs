@@ -76,13 +76,13 @@ public partial class ProceduralSurface : Node3D
     {
         Polygon<PolygonVertex> shape = new Polygon<PolygonVertex> { Vertices = new List<Vector2> {
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
-                //new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
-                //new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(-10.0f * scale + center.X, 0.0f * scale + center.Y),
-                //new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
+                new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
-                //new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
+                new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
             }
         };
 
@@ -90,10 +90,10 @@ public partial class ProceduralSurface : Node3D
         shape.InsertVertexAtBack(1);
         shape.InsertVertexAtBack(2);
         shape.InsertVertexAtBack(3);
-        //shape.InsertVertexAtBack(4);
-        //shape.InsertVertexAtBack(5);
-        //shape.InsertVertexAtBack(6);
-        //shape.InsertVertexAtBack(7);
+        shape.InsertVertexAtBack(4);
+        shape.InsertVertexAtBack(5);
+        shape.InsertVertexAtBack(6);
+        shape.InsertVertexAtBack(7);
 
         return shape;
     }

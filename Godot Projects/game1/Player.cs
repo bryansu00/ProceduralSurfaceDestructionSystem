@@ -102,9 +102,15 @@ public partial class Player : CharacterBody3D
     {
         base._UnhandledInput(@event);
 
-        if (@event is InputEventKey eventKey && eventKey.Pressed && eventKey.Keycode == Key.Escape)
+        if (@event is InputEventKey eventKey && eventKey.Pressed)
         {
-            GetTree().Quit();
+            if (eventKey.Keycode == Key.Escape)
+                GetTree().Quit();
+            if (eventKey.Keycode == Key.P)
+            {
+                //RenderingServer.SetDebugGenerateWireframes(true);
+                GetViewport().DebugDraw = GetViewport().DebugDraw ^ Viewport.DebugDrawEnum.Wireframe;
+            }
         }
 
         // Process Mouse Input
