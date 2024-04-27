@@ -138,16 +138,53 @@ namespace PSDSystem
                 if (polygonsProduced.Count == 1)
                 {
                     // Only one polygon was produced,
-                    // First, check to see if it has any anchor vertices
+                    // First, check to see if the outside polygon is 'achored' by the anchor polygon
+                    if (anchorPolygon != null)
+                    {
+                        bool isAnchored = false;
+                        VertexNode<T>? now = polygonsProduced[0].Head;
+                        do
+                        {
+                            if (PointIsInsidePolygon(polygonsProduced[0].Vertices[now.Data.Index], anchorPolygon) == 0)
+                            {
+                                isAnchored = true;
+                                break;
+                            }
+                            now = now.Next;
+                        } while (now != polygonsProduced[0].Head);
 
-                    // add it as a new outer polygon
-                    surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
+                        if (isAnchored) surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
+                    }
+                    else
+                    {
+                        // add it as a new outer polygon
+                        surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
+                    }
                 }
                 else if (polygonsProduced.Count > 1)
                 {
                     // More than one polygon was produced
                     for (int i = 0; i < polygonsProduced.Count; i++)
                     {
+                        // Check to make sure the current polygon is an anchored polygon
+                        if (anchorPolygon != null)
+                        {
+                            bool isAnchored = false;
+                            VertexNode<T>? now = polygonsProduced[i].Head;
+                            do
+                            {
+                                if (PointIsInsidePolygon(polygonsProduced[i].Vertices[now.Data.Index], anchorPolygon) == 0)
+                                {
+                                    isAnchored = true;
+                                    break;
+                                }
+                                now = now.Next;
+                            } while (now != polygonsProduced[i].Head);
+
+                            // Skip this polygon if it is not anchored
+                            if (!isAnchored) continue;
+                        }
+
                         // Find which nonIntersectedInnerPolygons belong to which new polygon
                         List<Polygon<T>> newInnerPolygons = new List<Polygon<T>>();
 

@@ -16,7 +16,6 @@ namespace PSDSystem
             testName = "Square Test";
             surface = new SurfaceShape<T>();
             cutter = null;
-            anchorVertices = null;
 
             List<Vector2> Vertices = [
                 new Vector2(550.0f, 150.0f),
@@ -33,6 +32,8 @@ namespace PSDSystem
             polygon.InsertVertexAtBack(3);
 
             surface.AddOuterPolygon(polygon);
+
+            anchorVertices = new Polygon<T>(polygon);
 
             return;
         }
