@@ -36,6 +36,7 @@ namespace PSDSystem
         /// <typeparam name="U">The polygon vertex containing properties needed for polygon boolean operations</typeparam>
         /// <param name="surface">The surface to be cut</param>
         /// <param name="cutter">The cutter polygon</param>
+        /// <param name="anchorPolygon">Polygon used to test whether a polygon should kept or not</param>
         /// <returns>
         /// -2 if something went wrong (reason is unknown).
         /// -1 if the operation can not be performed.
@@ -46,7 +47,7 @@ namespace PSDSystem
         /// 3 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing only 1 polygon.
         /// 4 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing MULTIPLE polygons, but only 1 of those polygons were kept.
         /// </returns>
-        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter)
+        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter, Polygon<T>? anchorPolygon = null)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
@@ -131,19 +132,59 @@ namespace PSDSystem
                             break;
                     }
                 }
-
+          
                 // The implementation of CombinePolygons below has a work around for the incorrect logic define above. Should be fixed
                 List<Polygon<T>> polygonsProduced = CombinePolygons<T, U>(booleanCutter, outerIntersectionPoints, listOfInnerIntersections);
                 if (polygonsProduced.Count == 1)
                 {
-                    // Only one polygon was produced, add it as a new outer polygon
-                    surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
+                    // Only one polygon was produced,
+                    // First, check to see if the outside polygon is 'achored' by the anchor polygon
+                    if (anchorPolygon != null)
+                    {
+                        bool isAnchored = false;
+                        VertexNode<T>? now = polygonsProduced[0].Head;
+                        do
+                        {
+                            if (PointIsInsidePolygon(polygonsProduced[0].Vertices[now.Data.Index], anchorPolygon) == 0)
+                            {
+                                isAnchored = true;
+                                break;
+                            }
+                            now = now.Next;
+                        } while (now != polygonsProduced[0].Head);
+
+                        if (isAnchored) surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
+                    }
+                    else
+                    {
+                        // add it as a new outer polygon
+                        surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
+                    }
                 }
                 else if (polygonsProduced.Count > 1)
                 {
                     // More than one polygon was produced
                     for (int i = 0; i < polygonsProduced.Count; i++)
                     {
+                        // Check to make sure the current polygon is an anchored polygon
+                        if (anchorPolygon != null)
+                        {
+                            bool isAnchored = false;
+                            VertexNode<T>? now = polygonsProduced[i].Head;
+                            do
+                            {
+                                if (PointIsInsidePolygon(polygonsProduced[i].Vertices[now.Data.Index], anchorPolygon) == 0)
+                                {
+                                    isAnchored = true;
+                                    break;
+                                }
+                                now = now.Next;
+                            } while (now != polygonsProduced[i].Head);
+
+                            // Skip this polygon if it is not anchored
+                            if (!isAnchored) continue;
+                        }
+
                         // Find which nonIntersectedInnerPolygons belong to which new polygon
                         List<Polygon<T>> newInnerPolygons = new List<Polygon<T>>();
 
@@ -289,106 +330,106 @@ namespace PSDSystem
             return;
         }
 
-        public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth,
-            List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
-        {
-            frontNormal = frontNormal.Normalized();
+        //public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth,
+        //    List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
+        //{
+        //    frontNormal = frontNormal.Normalized();
 
-            // For each group...
-            foreach (PolygonGroup<T> group in surface.Polygons)
-            {
-                // Create side cap for each line segment of the outer polygon
-                List<Vector2> outerVertices = group.OuterPolygon.Vertices;
-                VertexNode<T> outerNow = group.OuterPolygon.Head;
-                do
-                {
-                    int verticesPreviousCount = vertices.Count;
+        //    // For each group...
+        //    foreach (PolygonGroup<T> group in surface.Polygons)
+        //    {
+        //        // Create side cap for each line segment of the outer polygon
+        //        List<Vector2> outerVertices = group.OuterPolygon.Vertices;
+        //        VertexNode<T> outerNow = group.OuterPolygon.Head;
+        //        do
+        //        {
+        //            int verticesPreviousCount = vertices.Count;
 
-                    Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
-                    Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
+        //            Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
+        //            Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
 
-                    Vector3 aCopy = a - (frontNormal * depth);
-                    Vector3 bCopy = b - (frontNormal * depth);
+        //            Vector3 aCopy = a - (frontNormal * depth);
+        //            Vector3 bCopy = b - (frontNormal * depth);
 
-                    // Add these vertices to the list
-                    vertices.Add(a);
-                    vertices.Add(b);
-                    vertices.Add(bCopy);
-                    vertices.Add(aCopy);
+        //            // Add these vertices to the list
+        //            vertices.Add(a);
+        //            vertices.Add(b);
+        //            vertices.Add(bCopy);
+        //            vertices.Add(aCopy);
 
-                    // Add the indices for the triangle
-                    indices.Add(verticesPreviousCount + 0);
-                    indices.Add(verticesPreviousCount + 1);
-                    indices.Add(verticesPreviousCount + 2);
-                    // The other triangle
-                    indices.Add(verticesPreviousCount + 2);
-                    indices.Add(verticesPreviousCount + 3);
-                    indices.Add(verticesPreviousCount + 0);
+        //            // Add the indices for the triangle
+        //            indices.Add(verticesPreviousCount + 0);
+        //            indices.Add(verticesPreviousCount + 1);
+        //            indices.Add(verticesPreviousCount + 2);
+        //            // The other triangle
+        //            indices.Add(verticesPreviousCount + 2);
+        //            indices.Add(verticesPreviousCount + 3);
+        //            indices.Add(verticesPreviousCount + 0);
 
-                    // Calculate normal for the triangles and add it to the list of normals
-                    Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
-                    normals.Add(triangleNormal);
-                    normals.Add(triangleNormal);
-                    normals.Add(triangleNormal);
-                    normals.Add(triangleNormal);
+        //            // Calculate normal for the triangles and add it to the list of normals
+        //            Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+        //            normals.Add(triangleNormal);
+        //            normals.Add(triangleNormal);
+        //            normals.Add(triangleNormal);
+        //            normals.Add(triangleNormal);
 
-                    // Add uvs...
-                    uvs.Add(Vector2.Zero);
-                    uvs.Add(Vector2.Zero);
-                    uvs.Add(Vector2.Zero);
-                    uvs.Add(Vector2.Zero);
+        //            // Add uvs...
+        //            uvs.Add(Vector2.Zero);
+        //            uvs.Add(Vector2.Zero);
+        //            uvs.Add(Vector2.Zero);
+        //            uvs.Add(Vector2.Zero);
 
-                    outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
-                } while (outerNow != group.OuterPolygon.Head);
+        //            outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
+        //        } while (outerNow != group.OuterPolygon.Head);
 
-                // Now for each inner polygons
-                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-                {
-                    List<Vector2> innerVertices = innerPolygon.Vertices;
-                    VertexNode<T> innerNow = innerPolygon.Head;
-                    do
-                    {
-                        int verticesPreviousCount = vertices.Count;
+        //        // Now for each inner polygons
+        //        foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+        //        {
+        //            List<Vector2> innerVertices = innerPolygon.Vertices;
+        //            VertexNode<T> innerNow = innerPolygon.Head;
+        //            do
+        //            {
+        //                int verticesPreviousCount = vertices.Count;
 
-                        Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
-                        Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
+        //                Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
+        //                Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
 
-                        Vector3 aCopy = a - (frontNormal * depth);
-                        Vector3 bCopy = b - (frontNormal * depth);
+        //                Vector3 aCopy = a - (frontNormal * depth);
+        //                Vector3 bCopy = b - (frontNormal * depth);
 
-                        // Add these vertices to the list
-                        vertices.Add(a);
-                        vertices.Add(b);
-                        vertices.Add(bCopy);
-                        vertices.Add(aCopy);
+        //                // Add these vertices to the list
+        //                vertices.Add(a);
+        //                vertices.Add(b);
+        //                vertices.Add(bCopy);
+        //                vertices.Add(aCopy);
 
-                        // Add the indices for the triangle
-                        indices.Add(verticesPreviousCount + 0);
-                        indices.Add(verticesPreviousCount + 1);
-                        indices.Add(verticesPreviousCount + 2);
-                        // The other triangle
-                        indices.Add(verticesPreviousCount + 2);
-                        indices.Add(verticesPreviousCount + 3);
-                        indices.Add(verticesPreviousCount + 0);
+        //                // Add the indices for the triangle
+        //                indices.Add(verticesPreviousCount + 0);
+        //                indices.Add(verticesPreviousCount + 1);
+        //                indices.Add(verticesPreviousCount + 2);
+        //                // The other triangle
+        //                indices.Add(verticesPreviousCount + 2);
+        //                indices.Add(verticesPreviousCount + 3);
+        //                indices.Add(verticesPreviousCount + 0);
 
-                        // Calculate normal for the triangles and add it to the list of normals
-                        Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
-                        normals.Add(triangleNormal);
-                        normals.Add(triangleNormal);
-                        normals.Add(triangleNormal);
-                        normals.Add(triangleNormal);
+        //                // Calculate normal for the triangles and add it to the list of normals
+        //                Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+        //                normals.Add(triangleNormal);
+        //                normals.Add(triangleNormal);
+        //                normals.Add(triangleNormal);
+        //                normals.Add(triangleNormal);
 
-                        // Add uvs...
-                        uvs.Add(Vector2.Zero);
-                        uvs.Add(Vector2.Zero);
-                        uvs.Add(Vector2.Zero);
-                        uvs.Add(Vector2.Zero);
+        //                // Add uvs...
+        //                uvs.Add(Vector2.Zero);
+        //                uvs.Add(Vector2.Zero);
+        //                uvs.Add(Vector2.Zero);
+        //                uvs.Add(Vector2.Zero);
 
-                        innerNow = innerNow.Previous;
-                    } while (innerNow != innerPolygon.Head);
-                }
-            }
-        }
+        //                innerNow = innerNow.Previous;
+        //            } while (innerNow != innerPolygon.Head);
+        //        }
+        //    }
+        //}
 
         public static List<List<Vector2>>? FindConvexVerticesOfSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
         {
@@ -437,6 +478,32 @@ namespace PSDSystem
             return output;
         }
 
+        private static void PrintBooleanList<T>(Polygon<T> polygon)
+            where T : PolygonVertex, IHasBooleanVertexProperties<T>
+        {
+            if (polygon.Head == null) return;
+
+            StringBuilder sb = new StringBuilder();
+            VertexNode<T> now = polygon.Head;
+            do
+            {
+                sb.Append(now.Data.Index);
+
+                sb.Append(", Outside: ");
+                sb.Append(now.Data.IsOutside);
+
+                sb.Append(", Cross: ");
+                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
+                else sb.Append("None");
+
+                sb.Append("\n");
+
+                now = now.Next;
+            } while (now != polygon.Head);
+
+            Console.Write(sb.ToString());
+        }
+
         /// <summary>
         /// Perform a boolean addition operation using the given information
         /// </summary>
@@ -468,6 +535,9 @@ namespace PSDSystem
             // Insert Points
             InsertIntersectionPoints(center, intersections);
 
+            // Below is used for printing boolean list for debugging purposes
+            HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
+
             // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
             // WHY: I DO NOT KNOW, PROBABLY HAS TO DO WITH ONE OF THE EDGE CASES
             while (true)
@@ -497,6 +567,12 @@ namespace PSDSystem
                         continue;
                     }
 
+                    // DEBUG STUFF
+                    if (point.Owner != center)
+                    {
+                        booleanPolygons.Add(point.Owner);
+                    }
+
                     bool pointIsCrossingPoint = CheckSpecialAdditionCase(point);
 
                     if (!point.Data.IsAnAddedVertex || pointIsCrossingPoint)
@@ -520,33 +596,19 @@ namespace PSDSystem
                 outputPolygons.Add(newPolygon);
             }
 
-            return outputPolygons;
-        }
-
-        private static void PrintBooleanList<T>(Polygon<T> polygon)
-            where T : PolygonVertex, IHasBooleanVertexProperties<T>
-        {
-            if (polygon.Head == null) return;
-
-            StringBuilder sb = new StringBuilder();
-            VertexNode<T> now = polygon.Head;
-            do
+            // Print Boolean List for Debugging
+            Console.WriteLine("\nFrom Within the Polygon Addition Version CombinePolygons()");
+            Console.WriteLine("Cutter:");
+            PrintBooleanList(center);
+            int innerCount = 0;
+            foreach (Polygon<U> polygon in booleanPolygons)
             {
-                sb.Append(now.Data.Index);
+                Console.WriteLine(string.Format("Inner Polygon {0}:", innerCount));
+                PrintBooleanList(polygon);
+                innerCount++;
+            }
 
-                sb.Append(", Outside: ");
-                sb.Append(now.Data.IsOutside);
-
-                sb.Append(", Cross: ");
-                if (now.Data.Cross != null) sb.Append(now.Data.Cross.Data.Index);
-                else sb.Append("None");
-
-                sb.Append("\n");
-
-                now = now.Next;
-            } while (now != polygon.Head);
-
-            GD.Print(sb.ToString());
+            return outputPolygons;
         }
 
         /// <summary>
@@ -603,10 +665,8 @@ namespace PSDSystem
 
             InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
-            GD.Print("cutter:");
-            PrintBooleanList(center);
-            GD.Print("outer:");
-            PrintBooleanList(outerPolygon);
+            // Below is used for printing boolean list for debugging purposes
+            HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
 
             // TODO: FIX INFINITE LOOP ISSUE
             while (true)
@@ -636,6 +696,12 @@ namespace PSDSystem
                         continue;
                     }
 
+                    // DEBUG STUFF
+                    if (point.Owner != center && point.Owner != outerPolygon)
+                    {
+                        booleanPolygons.Add(point.Owner);
+                    }
+
                     bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point);
 
                     if (!point.Data.IsAnAddedVertex || pointIsCrossingPoint)
@@ -654,17 +720,23 @@ namespace PSDSystem
                     }
 
                     point = point.Next;
-
                 } while (point != firstPoint && newPolygon.Vertices.Count < 1000);
 
-                //// TEMPORARY WORKAROUND FOR INFINITE LOOP
-                //if (newPolygon.Vertices.Count >= 1000)
-                //{
-                //    GD.Print("INFINITE LOOP OCCURRED!");
-                //    continue;
-                //}
-
                 outputPolygons.Add(newPolygon);
+            }
+
+            // Print Boolean List for Debugging
+            Console.WriteLine("\nFrom Within the Polygon Mixed Addition-Subtraction Version CombinePolygons()");
+            Console.WriteLine("Cutter:");
+            PrintBooleanList(center);
+            Console.WriteLine("Outer Polygon:");
+            PrintBooleanList(outerPolygon);
+            int innerCount = 0;
+            foreach (Polygon<U> polygon in booleanPolygons)
+            {
+                Console.WriteLine(string.Format("Inner Polygon {0}:", innerCount));
+                PrintBooleanList(polygon);
+                innerCount++;
             }
 
             return outputPolygons;
@@ -947,7 +1019,7 @@ namespace PSDSystem
         {
             if (cutter.Vertices == null || outerIntersections.Polygon.Vertices == null) return;
 
-            List<VertexNode<T>> insertedOuterIntersection = new List<VertexNode<T>>();       
+            List<VertexNode<T>> insertedOuterIntersection = new List<VertexNode<T>>();
             List<Vector2> cutterVertices = cutter.Vertices;
             List<Vector2> outerVertices = outerIntersections.Polygon.Vertices;
 
@@ -1023,7 +1095,7 @@ namespace PSDSystem
             }
         }
 
-        private static VertexNode<T> InsertSingleIntersectionPoint<T>(VertexNode<T> intersectedNode, List<Vector2> vertices, Vector2 intersectionPoint, float intersectionValue) 
+        private static VertexNode<T> InsertSingleIntersectionPoint<T>(VertexNode<T> intersectedNode, List<Vector2> vertices, Vector2 intersectionPoint, float intersectionValue)
             where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
             VertexNode<T> nodeAddedToPolygon;
@@ -1252,7 +1324,7 @@ namespace PSDSystem
                 // The while loops will continue adding next.Next or prev.Prev until the next vertex makes the polygon non ear
 
                 VertexNode<T> next = earToClip.Next;
-                while(nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
+                while (nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
                     // Add next.Next's vertex to the list
                     convexVertices.Add(currentVertices[next.Next.Data.Index]);
@@ -1337,7 +1409,7 @@ namespace PSDSystem
             #region BridgeFinding
 
             // Get the right-most vertex of the inner polygon
-            if (innerPolygon.RightMostVertex == null) 
+            if (innerPolygon.RightMostVertex == null)
                 return null;
             VertexNode<T> rightMostInnerVertex = innerPolygon.RightMostVertex;
 
@@ -1592,7 +1664,7 @@ namespace PSDSystem
         /// <typeparam name="U">The desired BooleanVertex class</typeparam>
         /// <param name="polygon">The polygon to convert</param>
         /// <returns>Copy of the given polygon but with BooleanVertex insteadd</returns>
-        private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon) 
+        private static Polygon<U> ConvertPolygonToBooleanList<T, U>(Polygon<T> polygon)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
