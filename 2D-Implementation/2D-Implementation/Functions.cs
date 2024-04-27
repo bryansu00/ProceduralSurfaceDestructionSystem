@@ -36,6 +36,7 @@ namespace PSDSystem
         /// <typeparam name="U">The polygon vertex containing properties needed for polygon boolean operations</typeparam>
         /// <param name="surface">The surface to be cut</param>
         /// <param name="cutter">The cutter polygon</param>
+        /// <param name="anchorPolygon">Polygon used to test whether a polygon should kept or not</param>
         /// <returns>
         /// -2 if something went wrong (reason is unknown).
         /// -1 if the operation can not be performed.
@@ -46,7 +47,7 @@ namespace PSDSystem
         /// 3 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing only 1 polygon.
         /// 4 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing MULTIPLE polygons, but only 1 of those polygons were kept.
         /// </returns>
-        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter, List<Vector2>? anchorVertices = null)
+        public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter, Polygon<T>? anchorPolygon = null)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
         {
@@ -131,12 +132,15 @@ namespace PSDSystem
                             break;
                     }
                 }
-
+          
                 // The implementation of CombinePolygons below has a work around for the incorrect logic define above. Should be fixed
                 List<Polygon<T>> polygonsProduced = CombinePolygons<T, U>(booleanCutter, outerIntersectionPoints, listOfInnerIntersections);
                 if (polygonsProduced.Count == 1)
                 {
-                    // Only one polygon was produced, add it as a new outer polygon
+                    // Only one polygon was produced,
+                    // First, check to see if it has any anchor vertices
+
+                    // add it as a new outer polygon
                     surface.AddPair(polygonsProduced[0], nonIntersectedInnerPolygons);
                 }
                 else if (polygonsProduced.Count > 1)
