@@ -21,10 +21,13 @@ public partial class Player : CharacterBody3D
     private float _totalPitch = 0.0f;
 
     private readonly StringName _fireString = new StringName("fire");
+    private readonly StringName _altFireString = new StringName("alt_fire");
     private readonly StringName _moveRightString = new StringName("move_right");
     private readonly StringName _moveLeftString = new StringName("move_left");
     private readonly StringName _moveForwardString = new StringName("move_forward");
     private readonly StringName _moveBackString = new StringName("move_back");
+
+    PackedScene projectile = GD.Load<PackedScene>("res://TestProjectile.tscn");
 
     public override void _Ready()
     {
@@ -58,6 +61,17 @@ public partial class Player : CharacterBody3D
                 {
                     surface.DamageSurface((Vector3)result["position"]);
                 }
+            }
+        }
+        if (Input.IsActionJustPressed(_altFireString))
+        {
+            Node root = GetNode("/root");
+            Node instance = projectile.Instantiate();
+            if (root != null && instance != null && instance is TestProjectile testProjectile)
+            {
+                testProjectile.Direction = _springArm.Basis.Z * -10.0f;
+                root.AddChild(instance);
+                testProjectile.GlobalPosition = _camera.GlobalPosition + _springArm.Basis.Z * -1.0f;
             }
         }
     }
