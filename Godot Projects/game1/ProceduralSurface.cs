@@ -14,15 +14,16 @@ public partial class ProceduralSurface : Node3D
     [Export]
     private Material? MaterialSide = null;
 
-    private MeshInstance3D _meshInstance;
+    private MeshInstance3D? _meshInstance;
 
-    private StaticBody3D _staticBody3D;
+    private StaticBody3D? _staticBody3D;
 
-    private SurfaceShape<PolygonVertex> _surface;
-    private List<Vector2> _originalVertices;
-    private List<Vector2> _originalUvs;
+    private SurfaceShape<PolygonVertex>? _surface;
+    private Polygon<PolygonVertex>? _anchorPolygon;
+    private List<Vector2>? _originalVertices;
+    private List<Vector2>? _originalUvs;
 
-    private CoordinateConverter _coordinateConverter;
+    private CoordinateConverter? _coordinateConverter;
 
     private readonly float _depth = 1.0f;
 
@@ -58,14 +59,18 @@ public partial class ProceduralSurface : Node3D
 
     public void DamageSurface(Vector3 globalCollisionPoint)
     {
+        // Convert global coordinate to local, and then onto 2D surface
         Vector3 localCollisionPoint = ToLocal(globalCollisionPoint); ;
         Vector2 collisionPointOnPlane = _coordinateConverter.ConvertTo2D(localCollisionPoint);
         
+        // Process the Surface with a cutter
         Polygon<PolygonVertex> cutter = CreateCircle(collisionPointOnPlane, 0.05f);
-        PSD.CutSurfaceResult result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter);
+        PSD.CutSurfaceResult result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter, _anchorPolygon);
 
+        // DEBUG Purpose
         GD.Print(string.Format("Distance From Top Left: {0}", 2.0f - cutter.Vertices[cutter.Head.Data.Index].Y));
 
+        // Generate the surface and collision
         GenerateMeshOfSurface();
         GenerateCollision();
 
@@ -115,6 +120,8 @@ public partial class ProceduralSurface : Node3D
         polygon.InsertVertexAtBack(1);
         polygon.InsertVertexAtBack(2);
         polygon.InsertVertexAtBack(3);
+
+        _anchorPolygon = new Polygon<PolygonVertex>(polygon);
 
         _surface.AddOuterPolygon(polygon);
 
