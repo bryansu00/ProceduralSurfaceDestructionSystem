@@ -262,32 +262,11 @@ namespace PSDSystem
                     // NOTE: Some optimization can be done in the AddPolygons() function side
 
                     // Multiple polygons was produced
-                    // Find the polygon that is on the outside
-                    int outsidePolygonIndex = 0;
-                    bool outsidePolygonFound = false;
-                    while (!outsidePolygonFound)
-                    {
-                        outsidePolygonFound = true;
-                        foreach (Polygon<T> polygon in polygonsProduced)
-                        {
-                            if (polygon == polygonsProduced[outsidePolygonIndex]) continue;
+                    // Find the polygon that is on the outside, which can be done by sorting list of polygons by rightmost vertices,
+                    // and then polygonsProduced[0] should be the polygon that is on the outside
+                    polygonsProduced.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
 
-                            Polygon<T> polygonBeingObserved = polygonsProduced[outsidePolygonIndex];
-
-                            if (PointIsInsidePolygon(polygonBeingObserved.Vertices[polygonBeingObserved.Head.Data.Index], polygon) != -1)
-                            {
-                                outsidePolygonFound = false;
-                                break;
-                            }
-                        }
-
-                        if (!outsidePolygonFound)
-                        {
-                            outsidePolygonIndex++;
-                        }
-                    }
-
-                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
+                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
                     return CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI;
                 }
                 else
@@ -1123,7 +1102,7 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Insert a single intersection point, used by InsertIntersectionPoints
+        /// Insert a single intersection point, used by both InsertIntersectionPoints() functions
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="intersectedNode"></param>
