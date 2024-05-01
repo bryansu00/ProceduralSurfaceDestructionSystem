@@ -9,7 +9,7 @@ public partial class TestProjectile : RigidBody3D
 		set;
 	} = Vector3.Forward;
 
-	private float _left = 1.0f;
+	private float _left = 2.0f;
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()

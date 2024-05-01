@@ -3,11 +3,11 @@
 [ext_resource type="Script" path="res://TestProjectile.cs" id="1_scw25"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_vb24s"]
-radius = 0.1
+radius = 0.3
 
 [sub_resource type="SphereMesh" id="SphereMesh_0ljoa"]
-radius = 0.1
-height = 0.2
+radius = 0.3
+height = 0.6
 
 [node name="TestProjectile" type="RigidBody3D"]
 script = ExtResource("1_scw25")

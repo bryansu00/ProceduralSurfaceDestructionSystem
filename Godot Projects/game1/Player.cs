@@ -69,7 +69,7 @@ public partial class Player : CharacterBody3D
             Node instance = projectile.Instantiate();
             if (root != null && instance != null && instance is TestProjectile testProjectile)
             {
-                testProjectile.Direction = _springArm.Basis.Z * -10.0f;
+                testProjectile.Direction = _springArm.Basis.Z * -20.0f;
                 root.AddChild(instance);
                 testProjectile.GlobalPosition = _camera.GlobalPosition + _springArm.Basis.Z * -1.0f;
             }
