@@ -31,14 +31,18 @@ public partial class ProceduralSurface : Node3D
     {
         base._Ready();
 
+        // Turn off the visibility of the placeholder mesh
         MeshInstance3D placeHolder = GetNode<MeshInstance3D>("Placeholder");
         placeHolder.Visible = false;
 
+        // Get and set the variables for the nodes
         _staticBody3D = GetNode<StaticBody3D>("StaticBody3D");
         _meshInstance = GetNode<MeshInstance3D>("MeshInstance3D");
 
+        // Create and Initialize the CoordinateConverter
         _coordinateConverter = new CoordinateConverter(new Vector3(0.0f, 0.0f, _depth / 2.0f), Vector3.Right, Vector3.Up);
 
+        // Initialize the surface and generate the initial meshes and collisions
         InitSurface();
         GenerateMeshOfSurface();
         GenerateCollision();
@@ -48,6 +52,7 @@ public partial class ProceduralSurface : Node3D
     {
         base._Process(delta);
 
+        // Below is for debugging purposes
         DebugDraw2D.SetText("SurfacePolygonCount", _surface.Polygons.Count);
         int i = 0;
         foreach (PolygonGroup<PolygonVertex> group in _surface.Polygons)
@@ -74,9 +79,16 @@ public partial class ProceduralSurface : Node3D
         GenerateMeshOfSurface();
         GenerateCollision();
 
+        // Print the result of the CutSurface function
         GD.Print(result);
     }
 
+    /// <summary>
+    /// Create a circule shaped polygon
+    /// </summary>
+    /// <param name="center"></param>
+    /// <param name="scale"></param>
+    /// <returns></returns>
     private Polygon<PolygonVertex> CreateCircle(Vector2 center, float scale = 1.0f)
     {
         Polygon<PolygonVertex> shape = new Polygon<PolygonVertex> { Vertices = new List<Vector2> {
@@ -103,6 +115,9 @@ public partial class ProceduralSurface : Node3D
         return shape;
     }
 
+    /// <summary>
+    /// Initialize the surface of this procedural mesh
+    /// </summary>
     private void InitSurface()
     {
         _surface = new SurfaceShape<PolygonVertex>();
@@ -125,7 +140,9 @@ public partial class ProceduralSurface : Node3D
 
         _surface.AddOuterPolygon(polygon);
 
+        // Store the original initial surface needed for "anchors"
         _originalVertices = new List<Vector2>(polygon.Vertices);
+        // Store the initial UV values for the surface
         _originalUvs = new List<Vector2>
         {
             new Vector2(0.0f, 1.0f),
@@ -139,30 +156,39 @@ public partial class ProceduralSurface : Node3D
     {
         ArrayMesh arrayMesh = new ArrayMesh();
 
+        // ------------------------------------------------------------------------------------------
         // Generate Front Face
 
-        // Objects needed for the procedural mesh
+        // Lists needed for the procedural mesh
         List<Vector3> frontVerts;
         List<Vector2>? frontUvs;
         List<Vector3> frontNormals = new List<Vector3>();
         List<int> frontIndices;
 
-        // Begine generating the mesh here
-
+        // Triangulate the surface
         List<Vector2> verts2D;
         PSD.TriangulateSurface(_surface, out frontIndices, out verts2D);
-        if (frontIndices == null || verts2D == null) return;
+        if (frontIndices == null || verts2D == null)
+        {
+            // Given surface cannot be triangulated,
+            // thus no mesh will be generated
+            _meshInstance.Mesh = arrayMesh;
+            return;
+        }
 
+        // Convert triangulation into 3D
         frontVerts = _coordinateConverter.ConvertListTo3D(verts2D);
-
+        // Add the normals for the front face, it is Vector3.Back by default
         for (int i = 0; i < frontVerts.Count; i++)
         {
             frontNormals.Add(Vector3.Back);
         }
 
+        // Compute the UV coordinates of the front face
         frontUvs = PSD.ComputeUVCoordinates(_originalVertices, _originalUvs, verts2D);
         if (frontUvs == null) return;
 
+        // Create the arrays for mesh
         var frontSurfaceArray = new Godot.Collections.Array();
         frontSurfaceArray.Resize((int)Mesh.ArrayType.Max);
 
@@ -175,7 +201,6 @@ public partial class ProceduralSurface : Node3D
         arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, frontSurfaceArray);
 
         // ------------------------------------------------------------------------------------------
-
         // Generate Back Face
 
         List<Vector3> backVerts = new List<Vector3>();
@@ -183,14 +208,18 @@ public partial class ProceduralSurface : Node3D
         List<Vector3> backNormals = new List<Vector3>();
         List<int> backIndices = new List<int>();
 
+        // Reuse the triangulation from prior computation to generate the backface
         for (int i = 0; i < verts2D.Count; i++)
         {
             backVerts.Add(frontVerts[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
             backNormals.Add(Vector3.Forward);
         }
 
+        // Copy the front face UVs, (Should be recalculated using a different
+        // originalUVs list for the back face, else the texture will be flipped horizontally)
         backUvs.AddRange(frontUvs);
 
+        // Add the indices of triangulation for the back face
         for (int i = frontIndices.Count - 1; i >= 0; i--)
         {
             backIndices.Add(frontIndices[i]);
@@ -206,7 +235,9 @@ public partial class ProceduralSurface : Node3D
 
         arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, backSurfaceArray);
 
+        // ------------------------------------------------------------------------------------------
         // Generate Side cap
+
         List<Vector3> sideVerts = new List<Vector3>();
         List<Vector2> sideUvs = new List<Vector2>();
         List<Vector3> sideNormals = new List<Vector3>();
@@ -236,13 +267,14 @@ public partial class ProceduralSurface : Node3D
     private void GenerateCollision()
     {
         List<List<Vector2>>? convexVertices = PSD.FindConvexVerticesOfSurface(_surface);
-        if (convexVertices == null) return;
 
         foreach (Node child in _staticBody3D.GetChildren())
         {
             _staticBody3D.RemoveChild(child);
             child.QueueFree();
         }
+
+        if (convexVertices == null) return;
 
         foreach (List<Vector2> vertexGroup in convexVertices)
         {
