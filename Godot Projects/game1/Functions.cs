@@ -1158,6 +1158,12 @@ namespace PSDSystem
             return nodeAddedToPolygon;
         }
 
+        /// <summary>
+        /// Combine all polygons in a group into a single polygon
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group">The group of polygons to combine into one</param>
+        /// <returns>A single polygon that is the same as the group</returns>
         private static Polygon<T>? CombineGroupIntoOne<T>(PolygonGroup<T> group) where T : PolygonVertex
         {
             Polygon<T> currentPolygon;
@@ -1165,7 +1171,7 @@ namespace PSDSystem
             // If there is any inner polygons, combined with the outer polygon
             if (group.InnerPolygons.Count > 0)
             {
-                // Sort inner polygons from right-most to least right-most
+                // Sort inner polygons from right-most to least right-most vertices
                 group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
 
                 currentPolygon = group.OuterPolygon;
@@ -1264,6 +1270,12 @@ namespace PSDSystem
             }
         }
 
+        /// <summary>
+        /// Find convex vertices of the group
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group"></param>
+        /// <param name="convexVerticesGroups"></param>
         private static void FindConvexVerticesOfGroup<T>(PolygonGroup<T> group, List<List<Vector2>> convexVerticesGroups) where T : PolygonVertex
         {
             if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
@@ -1712,6 +1724,17 @@ namespace PSDSystem
             return BarycentricCoordinates(point, a, b, c, out _, out _, out _);
         }
 
+        /// <summary>
+        /// Compute the barycentricoordinates, which can be used for computing UV coordinates or determining if point is inside triangule
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <param name="w"></param>
+        /// <returns></returns>
         private static bool BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
         {
             float ABCarea = TriangleArea(a, b, c);

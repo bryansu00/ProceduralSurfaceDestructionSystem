@@ -71,7 +71,7 @@ public partial class Player : CharacterBody3D
             {
                 testProjectile.Direction = _springArm.Basis.Z * -20.0f;
                 root.AddChild(instance);
-                testProjectile.GlobalPosition = _camera.GlobalPosition + _springArm.Basis.Z * -1.0f;
+                testProjectile.GlobalPosition = _camera.GlobalPosition + _springArm.Basis.Z * -1.2f;
             }
         }
     }
