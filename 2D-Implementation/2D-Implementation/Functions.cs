@@ -9,6 +9,9 @@ namespace PSDSystem
 {
     public static class PSD
     {
+        /// <summary>
+        /// Result of an intersection test between two polygons
+        /// </summary>
         public enum IntersectionResult
         {
             FAILED = -1,
@@ -18,6 +21,9 @@ namespace PSDSystem
             BOTH_OUTSIDE = 3
         }
 
+        /// <summary>
+        /// Result of the cut surface function
+        /// </summary>
         public enum CutSurfaceResult
         {
             UNKNOWN_ERROR = -2,
@@ -37,16 +43,7 @@ namespace PSDSystem
         /// <param name="surface">The surface to be cut</param>
         /// <param name="cutter">The cutter polygon</param>
         /// <param name="anchorPolygon">Polygon used to test whether a polygon should kept or not</param>
-        /// <returns>
-        /// -2 if something went wrong (reason is unknown).
-        /// -1 if the operation can not be performed.
-        /// 0 if the cutter polygon overlaps with one or more outer polygons, and one or more outer polygons was replaced with new one
-        /// 1 if the cutter polygon is completely inside of an inner polygon, thus operation cannot be performed.
-        /// 2 if the cutter polygon is completely inside of an outer polygon, does not overlap with any inner polygon, 
-        /// thus the cutter polygon can be placed as an inner polygon without any boolean operations.
-        /// 3 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing only 1 polygon.
-        /// 4 if the cutter polygon is completely inside of an outer polygon, does overlap with any inner polygon, thus boolean operation was performed producing MULTIPLE polygons, but only 1 of those polygons were kept.
-        /// </returns>
+        /// <returns>Result of the surface being cut</returns>
         public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter, Polygon<T>? anchorPolygon = null)
             where T : PolygonVertex
             where U : PolygonVertex, IHasBooleanVertexProperties<U>
@@ -98,7 +95,7 @@ namespace PSDSystem
                 surface.RemoveGroup(group);
             }
 
-            // Case 2
+            // Case 2 - Cutter intersects one or more outer polygons
             // For each outer polygon that was intersected...
             foreach (Tuple<PolygonGroup<T>, Polygon<U>, IntersectionPoints<U>> tuple in intersectedGroups)
             {
@@ -204,7 +201,7 @@ namespace PSDSystem
                 }
             }
 
-            // Case 1
+            // Case 1 - Cutter is completely inside an outer polygon
             if (groupCutterIsIn != null)
             {
                 Polygon<U> booleanCutter = ConvertPolygonToBooleanList<T, U>(cutter);
@@ -265,32 +262,11 @@ namespace PSDSystem
                     // NOTE: Some optimization can be done in the AddPolygons() function side
 
                     // Multiple polygons was produced
-                    // Find the polygon that is on the outside
-                    int outsidePolygonIndex = 0;
-                    bool outsidePolygonFound = false;
-                    while (!outsidePolygonFound)
-                    {
-                        outsidePolygonFound = true;
-                        foreach (Polygon<T> polygon in polygonsProduced)
-                        {
-                            if (polygon == polygonsProduced[outsidePolygonIndex]) continue;
+                    // Find the polygon that is on the outside, which can be done by sorting list of polygons by rightmost vertices,
+                    // and then polygonsProduced[0] should be the polygon that is on the outside
+                    polygonsProduced.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
 
-                            Polygon<T> polygonBeingObserved = polygonsProduced[outsidePolygonIndex];
-
-                            if (PointIsInsidePolygon(polygonBeingObserved.Vertices[polygonBeingObserved.Head.Data.Index], polygon) != -1)
-                            {
-                                outsidePolygonFound = false;
-                                break;
-                            }
-                        }
-
-                        if (!outsidePolygonFound)
-                        {
-                            outsidePolygonIndex++;
-                        }
-                    }
-
-                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[outsidePolygonIndex]);
+                    groupCutterIsIn.InnerPolygons.Add(polygonsProduced[0]);
                     return CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI;
                 }
                 else
@@ -330,6 +306,18 @@ namespace PSDSystem
             return;
         }
 
+        /// <summary>
+        /// Generate the values needed for the sides of the surfaces
+        /// </summary>
+        /// <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
+        /// <param name="surface">The surface to create the sides for</param>
+        /// <param name="coordinateConverter">The CoordinateConverter needed for translating from 2D to 3D</param>
+        /// <param name="frontNormal">The normal of the front face of the surface, needed to determine the direction of the sides cap to extrude to</param>
+        /// <param name="depth">The depth of the sides</param>
+        /// <param name="vertices">List of vertices to append the new vertices into</param>
+        /// <param name="normals">List of normals to append the new normals into</param>
+        /// <param name="indices">List of triangles to append the new indices into</param>
+        /// <param name="uvs">List of UVs to append the new uvs into</param>
         //public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth,
         //    List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
         //{
@@ -431,6 +419,12 @@ namespace PSDSystem
         //    }
         //}
 
+        /// <summary>
+        /// Find convex groups of vertices from a given surface
+        /// </summary>
+        /// <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
+        /// <param name="surface">The surface to find convex groups of vertices</param>
+        /// <returns>List of lists, where each list contains vertices that make up a convex groups</returns>
         public static List<List<Vector2>>? FindConvexVerticesOfSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
         {
             if (surface.Polygons.Count <= 0) return null;
@@ -446,9 +440,16 @@ namespace PSDSystem
             return output;
         }
 
+        /// <summary>
+        /// Compute UV coordinates for each of the given vertices list
+        /// </summary>
+        /// <param name="originalVertices">The original vertices</param>
+        /// <param name="originalUVCoordinates">The original UV coordinates</param>
+        /// <param name="currentVertices">List of vertices to create UV coordinates based off of</param>
+        /// <returns>List of UV coordinates for the given currentVertices</returns>
         public static List<Vector2>? ComputeUVCoordinates(List<Vector2> originalVertices, List<Vector2> originalUVCoordinates, List<Vector2> currentVertices)
         {
-            if (originalVertices.Count <= 0 || originalUVCoordinates.Count <= 0) return null;
+            if (originalVertices.Count <= 0 || originalUVCoordinates.Count <= 0 || originalVertices.Count != originalUVCoordinates.Count) return null;
 
             List<Vector2> output = new List<Vector2>();
 
@@ -478,6 +479,11 @@ namespace PSDSystem
             return output;
         }
 
+        /// <summary>
+        /// For DEBUGGING purposes
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="polygon"></param>
         private static void PrintBooleanList<T>(Polygon<T> polygon)
             where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
@@ -1095,6 +1101,15 @@ namespace PSDSystem
             }
         }
 
+        /// <summary>
+        /// Insert a single intersection point, used by both InsertIntersectionPoints() functions
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="intersectedNode"></param>
+        /// <param name="vertices"></param>
+        /// <param name="intersectionPoint"></param>
+        /// <param name="intersectionValue"></param>
+        /// <returns></returns>
         private static VertexNode<T> InsertSingleIntersectionPoint<T>(VertexNode<T> intersectedNode, List<Vector2> vertices, Vector2 intersectionPoint, float intersectionValue)
             where T : PolygonVertex, IHasBooleanVertexProperties<T>
         {
@@ -1143,6 +1158,12 @@ namespace PSDSystem
             return nodeAddedToPolygon;
         }
 
+        /// <summary>
+        /// Combine all polygons in a group into a single polygon
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group">The group of polygons to combine into one</param>
+        /// <returns>A single polygon that is the same as the group</returns>
         private static Polygon<T>? CombineGroupIntoOne<T>(PolygonGroup<T> group) where T : PolygonVertex
         {
             Polygon<T> currentPolygon;
@@ -1150,7 +1171,7 @@ namespace PSDSystem
             // If there is any inner polygons, combined with the outer polygon
             if (group.InnerPolygons.Count > 0)
             {
-                // Sort inner polygons from right-most to least right-most
+                // Sort inner polygons from right-most to least right-most vertices
                 group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
 
                 currentPolygon = group.OuterPolygon;
@@ -1249,6 +1270,12 @@ namespace PSDSystem
             }
         }
 
+        /// <summary>
+        /// Find convex vertices of the group
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group"></param>
+        /// <param name="convexVerticesGroups"></param>
         private static void FindConvexVerticesOfGroup<T>(PolygonGroup<T> group, List<List<Vector2>> convexVerticesGroups) where T : PolygonVertex
         {
             if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
@@ -1697,6 +1724,17 @@ namespace PSDSystem
             return BarycentricCoordinates(point, a, b, c, out _, out _, out _);
         }
 
+        /// <summary>
+        /// Compute the barycentricoordinates, which can be used for computing UV coordinates or determining if point is inside triangule
+        /// </summary>
+        /// <param name="point"></param>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <param name="u"></param>
+        /// <param name="v"></param>
+        /// <param name="w"></param>
+        /// <returns></returns>
         private static bool BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
         {
             float ABCarea = TriangleArea(a, b, c);
