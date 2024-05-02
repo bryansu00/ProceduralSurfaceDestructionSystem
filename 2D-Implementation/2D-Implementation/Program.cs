@@ -300,7 +300,7 @@ class Program
             Vector2 toUse = FlipY(polygon.Vertices[now.Data.Index]);
             Vector2 toUseNext = FlipY(polygon.Vertices[now.Next.Data.Index]);
 
-            Raylib.DrawLineEx(toUse, toUseNext, 2.0f, color);
+            Raylib.DrawLineEx(toUse, toUseNext, 3.0f, color);
             now = now.Next;
         } while (now != polygon.Head);
 
