@@ -62,6 +62,16 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -5)
 Material1 = SubResource("StandardMaterial3D_jwwo1")
 Material2 = SubResource("StandardMaterial3D_uw5a8")
 
+[node name="ProceduralSurface2" parent="." instance=ExtResource("2_lr3sj")]
+transform = Transform3D(0.697077, 0, 0.716996, 0, 1, 0, -0.716996, 0, 0.697077, -8.79758, -4.82686, -1.24271)
+Material1 = SubResource("StandardMaterial3D_jwwo1")
+Material2 = SubResource("StandardMaterial3D_uw5a8")
+
+[node name="ProceduralSurface4" parent="." instance=ExtResource("2_lr3sj")]
+transform = Transform3D(0.646311, 0, -0.763075, 0, 1, 0, 0.763075, 0, 0.646311, 8.24831, -4.82685, -0.754141)
+Material1 = SubResource("StandardMaterial3D_jwwo1")
+Material2 = SubResource("StandardMaterial3D_uw5a8")
+
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.864354, 0.502884, 0, -0.502884, 0.864354, 0, 8.05519, 4.41396)
 shadow_enabled = true
