@@ -1,9 +1,16 @@
 ﻿#nullable enable
 
+//#define USING_GODOT
+
 using System;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Text;
+
+#if USING_GODOT
+    using Godot;
+#else
+    using System.Numerics;
+#endif
 
 namespace PSDSystem
 {
