@@ -44,6 +44,8 @@ namespace PSDSystem
             CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI = 4
         }
 
+        #region SURFACE_FUNCTIONS
+
         /// <summary>
         /// Given a surface and a polygon that represent the cutter, cut a 'hole' on to the surface
         /// </summary>
@@ -138,7 +140,7 @@ namespace PSDSystem
                             break;
                     }
                 }
-          
+
                 // The implementation of CombinePolygons below has a work around for the incorrect logic define above. Should be fixed
                 List<Polygon<T>> polygonsProduced = CombinePolygons<T, U>(booleanCutter, outerIntersectionPoints, listOfInnerIntersections);
                 if (polygonsProduced.Count == 1)
@@ -313,8 +315,32 @@ namespace PSDSystem
             }
         }
 
-        #if USING_GODOT
+        /// <summary>
+        /// Find convex groups of vertices from a given surface
+        /// </summary>
+        /// <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
+        /// <param name="surface">The surface to find convex groups of vertices</param>
+        /// <returns>List of lists, where each list contains vertices that make up a convex groups</returns>
+        public static List<List<Vector2>>? FindConvexVerticesOfSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
+        {
+            if (surface.Polygons.Count <= 0) return null;
 
+            List<List<Vector2>> output = new List<List<Vector2>>();
+
+            // Find convex vertices of each group
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                FindConvexVerticesOfGroup(group, output);
+            }
+
+            return output;
+        }
+
+        #endregion
+
+        #region MISC_FUNCTIONS
+
+#if USING_GODOT
         /// <summary>
         /// Generate the values needed for the sides of the surfaces
         /// </summary>
@@ -427,29 +453,7 @@ namespace PSDSystem
                 }
             }
         }
-        #endif
-
-        /// <summary>
-        /// Find convex groups of vertices from a given surface
-        /// </summary>
-        /// <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
-        /// <param name="surface">The surface to find convex groups of vertices</param>
-        /// <returns>List of lists, where each list contains vertices that make up a convex groups</returns>
-        public static List<List<Vector2>>? FindConvexVerticesOfSurface<T>(SurfaceShape<T> surface) where T : PolygonVertex
-        {
-            if (surface.Polygons.Count <= 0) return null;
-
-            List<List<Vector2>> output = new List<List<Vector2>>();
-
-            // Find convex vertices of each group
-            foreach (PolygonGroup<T> group in surface.Polygons)
-            {
-                FindConvexVerticesOfGroup(group, output);
-            }
-
-            return output;
-        }
-
+#endif
 
         /// <summary>
         /// Compute UV coordinates for each of the given vertices list
@@ -489,11 +493,13 @@ namespace PSDSystem
 
             return output;
         }
+        #endregion
 
         #endregion
 
         #region PRIVATE
 
+#if DEBUG
         /// <summary>
         /// For DEBUGGING purposes
         /// </summary>
@@ -524,6 +530,7 @@ namespace PSDSystem
 
             Console.Write(sb.ToString());
         }
+#endif
 
         /// <summary>
         /// Perform a boolean addition operation using the given information
