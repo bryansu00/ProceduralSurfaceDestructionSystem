@@ -17,6 +17,7 @@ namespace PSDSystem
 {
     public static class PSD
     {
+        #region PUBLIC
         /// <summary>
         /// Result of an intersection test between two polygons
         /// </summary>
@@ -150,7 +151,7 @@ namespace PSDSystem
                         VertexNode<T>? now = polygonsProduced[0].Head;
                         do
                         {
-                            if (PointIsInsidePolygon(polygonsProduced[0].Vertices[now.Data.Index], anchorPolygon) == 0)
+                            if (MathHelpers.PointIsInsidePolygon(polygonsProduced[0].Vertices[now.Data.Index], anchorPolygon) == 0)
                             {
                                 isAnchored = true;
                                 break;
@@ -178,7 +179,7 @@ namespace PSDSystem
                             VertexNode<T>? now = polygonsProduced[i].Head;
                             do
                             {
-                                if (PointIsInsidePolygon(polygonsProduced[i].Vertices[now.Data.Index], anchorPolygon) == 0)
+                                if (MathHelpers.PointIsInsidePolygon(polygonsProduced[i].Vertices[now.Data.Index], anchorPolygon) == 0)
                                 {
                                     isAnchored = true;
                                     break;
@@ -197,7 +198,7 @@ namespace PSDSystem
                         {
                             if (innerPolygon.Vertices == null || innerPolygon.Head == null) continue;
 
-                            if (PointIsInsidePolygon(innerPolygon.Vertices[innerPolygon.Head.Data.Index], polygonsProduced[i]) == 1)
+                            if (MathHelpers.PointIsInsidePolygon(innerPolygon.Vertices[innerPolygon.Head.Data.Index], polygonsProduced[i]) == 1)
                             {
                                 newInnerPolygons.Add(innerPolygon);
                             }
@@ -312,6 +313,8 @@ namespace PSDSystem
             }
         }
 
+        #if USING_GODOT
+
         /// <summary>
         /// Generate the values needed for the sides of the surfaces
         /// </summary>
@@ -324,106 +327,107 @@ namespace PSDSystem
         /// <param name="normals">List of normals to append the new normals into</param>
         /// <param name="indices">List of triangles to append the new indices into</param>
         /// <param name="uvs">List of UVs to append the new uvs into</param>
-        //public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth,
-        //    List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
-        //{
-        //    frontNormal = frontNormal.Normalized();
+        public static void CreateSideCapOfSurface<T>(SurfaceShape<T> surface, CoordinateConverter coordinateConverter, Vector3 frontNormal, float depth,
+            List<Vector3> vertices, List<Vector3> normals, List<int> indices, List<Vector2> uvs) where T : PolygonVertex
+        {
+            frontNormal = frontNormal.Normalized();
 
-        //    // For each group...
-        //    foreach (PolygonGroup<T> group in surface.Polygons)
-        //    {
-        //        // Create side cap for each line segment of the outer polygon
-        //        List<Vector2> outerVertices = group.OuterPolygon.Vertices;
-        //        VertexNode<T> outerNow = group.OuterPolygon.Head;
-        //        do
-        //        {
-        //            int verticesPreviousCount = vertices.Count;
+            // For each group...
+            foreach (PolygonGroup<T> group in surface.Polygons)
+            {
+                // Create side cap for each line segment of the outer polygon
+                List<Vector2> outerVertices = group.OuterPolygon.Vertices;
+                VertexNode<T> outerNow = group.OuterPolygon.Head;
+                do
+                {
+                    int verticesPreviousCount = vertices.Count;
 
-        //            Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
-        //            Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
+                    Vector3 a = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Data.Index]);
+                    Vector3 b = coordinateConverter.ConvertTo3D(outerVertices[outerNow.Previous.Data.Index]);
 
-        //            Vector3 aCopy = a - (frontNormal * depth);
-        //            Vector3 bCopy = b - (frontNormal * depth);
+                    Vector3 aCopy = a - (frontNormal * depth);
+                    Vector3 bCopy = b - (frontNormal * depth);
 
-        //            // Add these vertices to the list
-        //            vertices.Add(a);
-        //            vertices.Add(b);
-        //            vertices.Add(bCopy);
-        //            vertices.Add(aCopy);
+                    // Add these vertices to the list
+                    vertices.Add(a);
+                    vertices.Add(b);
+                    vertices.Add(bCopy);
+                    vertices.Add(aCopy);
 
-        //            // Add the indices for the triangle
-        //            indices.Add(verticesPreviousCount + 0);
-        //            indices.Add(verticesPreviousCount + 1);
-        //            indices.Add(verticesPreviousCount + 2);
-        //            // The other triangle
-        //            indices.Add(verticesPreviousCount + 2);
-        //            indices.Add(verticesPreviousCount + 3);
-        //            indices.Add(verticesPreviousCount + 0);
+                    // Add the indices for the triangle
+                    indices.Add(verticesPreviousCount + 0);
+                    indices.Add(verticesPreviousCount + 1);
+                    indices.Add(verticesPreviousCount + 2);
+                    // The other triangle
+                    indices.Add(verticesPreviousCount + 2);
+                    indices.Add(verticesPreviousCount + 3);
+                    indices.Add(verticesPreviousCount + 0);
 
-        //            // Calculate normal for the triangles and add it to the list of normals
-        //            Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
-        //            normals.Add(triangleNormal);
-        //            normals.Add(triangleNormal);
-        //            normals.Add(triangleNormal);
-        //            normals.Add(triangleNormal);
+                    // Calculate normal for the triangles and add it to the list of normals
+                    Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
+                    normals.Add(triangleNormal);
 
-        //            // Add uvs...
-        //            uvs.Add(Vector2.Zero);
-        //            uvs.Add(Vector2.Zero);
-        //            uvs.Add(Vector2.Zero);
-        //            uvs.Add(Vector2.Zero);
+                    // Add uvs...
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
+                    uvs.Add(Vector2.Zero);
 
-        //            outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
-        //        } while (outerNow != group.OuterPolygon.Head);
+                    outerNow = outerNow.Previous; // Assuming the outer polygon is CW, we must do this CCW to get correct triangles
+                } while (outerNow != group.OuterPolygon.Head);
 
-        //        // Now for each inner polygons
-        //        foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-        //        {
-        //            List<Vector2> innerVertices = innerPolygon.Vertices;
-        //            VertexNode<T> innerNow = innerPolygon.Head;
-        //            do
-        //            {
-        //                int verticesPreviousCount = vertices.Count;
+                // Now for each inner polygons
+                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+                {
+                    List<Vector2> innerVertices = innerPolygon.Vertices;
+                    VertexNode<T> innerNow = innerPolygon.Head;
+                    do
+                    {
+                        int verticesPreviousCount = vertices.Count;
 
-        //                Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
-        //                Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
+                        Vector3 a = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Data.Index]);
+                        Vector3 b = coordinateConverter.ConvertTo3D(innerVertices[innerNow.Previous.Data.Index]);
 
-        //                Vector3 aCopy = a - (frontNormal * depth);
-        //                Vector3 bCopy = b - (frontNormal * depth);
+                        Vector3 aCopy = a - (frontNormal * depth);
+                        Vector3 bCopy = b - (frontNormal * depth);
 
-        //                // Add these vertices to the list
-        //                vertices.Add(a);
-        //                vertices.Add(b);
-        //                vertices.Add(bCopy);
-        //                vertices.Add(aCopy);
+                        // Add these vertices to the list
+                        vertices.Add(a);
+                        vertices.Add(b);
+                        vertices.Add(bCopy);
+                        vertices.Add(aCopy);
 
-        //                // Add the indices for the triangle
-        //                indices.Add(verticesPreviousCount + 0);
-        //                indices.Add(verticesPreviousCount + 1);
-        //                indices.Add(verticesPreviousCount + 2);
-        //                // The other triangle
-        //                indices.Add(verticesPreviousCount + 2);
-        //                indices.Add(verticesPreviousCount + 3);
-        //                indices.Add(verticesPreviousCount + 0);
+                        // Add the indices for the triangle
+                        indices.Add(verticesPreviousCount + 0);
+                        indices.Add(verticesPreviousCount + 1);
+                        indices.Add(verticesPreviousCount + 2);
+                        // The other triangle
+                        indices.Add(verticesPreviousCount + 2);
+                        indices.Add(verticesPreviousCount + 3);
+                        indices.Add(verticesPreviousCount + 0);
 
-        //                // Calculate normal for the triangles and add it to the list of normals
-        //                Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
-        //                normals.Add(triangleNormal);
-        //                normals.Add(triangleNormal);
-        //                normals.Add(triangleNormal);
-        //                normals.Add(triangleNormal);
+                        // Calculate normal for the triangles and add it to the list of normals
+                        Vector3 triangleNormal = (bCopy - a).Cross(b - a).Normalized();
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
+                        normals.Add(triangleNormal);
 
-        //                // Add uvs...
-        //                uvs.Add(Vector2.Zero);
-        //                uvs.Add(Vector2.Zero);
-        //                uvs.Add(Vector2.Zero);
-        //                uvs.Add(Vector2.Zero);
+                        // Add uvs...
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
+                        uvs.Add(Vector2.Zero);
 
-        //                innerNow = innerNow.Previous;
-        //            } while (innerNow != innerPolygon.Head);
-        //        }
-        //    }
-        //}
+                        innerNow = innerNow.Previous;
+                    } while (innerNow != innerPolygon.Head);
+                }
+            }
+        }
+        #endif
 
         /// <summary>
         /// Find convex groups of vertices from a given surface
@@ -445,6 +449,7 @@ namespace PSDSystem
 
             return output;
         }
+
 
         /// <summary>
         /// Compute UV coordinates for each of the given vertices list
@@ -468,7 +473,7 @@ namespace PSDSystem
                     Vector2 b = originalVertices[(i + 1) % originalVertices.Count];
                     Vector2 c = originalVertices[(i + 2) % originalVertices.Count];
 
-                    if (BarycentricCoordinates(vertex, a, b, c, out float u, out float v, out float w))
+                    if (MathHelpers.BarycentricCoordinates(vertex, a, b, c, out float u, out float v, out float w))
                     {
                         Vector2 aUv = originalUVCoordinates[i];
                         Vector2 bUv = originalUVCoordinates[(i + 1) % originalVertices.Count];
@@ -484,6 +489,10 @@ namespace PSDSystem
 
             return output;
         }
+
+        #endregion
+
+        #region PRIVATE
 
         /// <summary>
         /// For DEBUGGING purposes
@@ -547,10 +556,10 @@ namespace PSDSystem
             // Insert Points
             InsertIntersectionPoints(center, intersections);
 
-            #if DEBUG
+#if DEBUG
             // Below is used for printing boolean list for debugging purposes
             HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
-            #endif
+#endif
 
             // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
             // WHY: I DO NOT KNOW, PROBABLY HAS TO DO WITH ONE OF THE EDGE CASES
@@ -581,13 +590,13 @@ namespace PSDSystem
                         continue;
                     }
 
-                    #if DEBUG
+#if DEBUG
                     // DEBUG STUFF
                     if (point.Owner != center)
                     {
                         booleanPolygons.Add(point.Owner);
                     }
-                    #endif
+#endif
 
                     bool pointIsCrossingPoint = CheckSpecialAdditionCase(point);
 
@@ -612,7 +621,7 @@ namespace PSDSystem
                 outputPolygons.Add(newPolygon);
             }
 
-            #if DEBUG
+#if DEBUG
             // Print Boolean List for Debugging
             Console.WriteLine("\nFrom Within the Polygon Addition Version CombinePolygons()");
             Console.WriteLine("Cutter:");
@@ -624,7 +633,7 @@ namespace PSDSystem
                 PrintBooleanList(polygon);
                 innerCount++;
             }
-            #endif
+#endif
 
             return outputPolygons;
         }
@@ -683,10 +692,10 @@ namespace PSDSystem
 
             InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
-            #if DEBUG
+#if DEBUG
             // Below is used for printing boolean list for debugging purposes
             HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
-            #endif
+#endif
 
             // TODO: FIX INFINITE LOOP ISSUE
             while (true)
@@ -716,13 +725,13 @@ namespace PSDSystem
                         continue;
                     }
 
-                    #if DEBUG
+#if DEBUG
                     // DEBUG STUFF
                     if (point.Owner != center && point.Owner != outerPolygon)
                     {
                         booleanPolygons.Add(point.Owner);
                     }
-                    #endif
+#endif
 
                     bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point);
 
@@ -747,7 +756,7 @@ namespace PSDSystem
                 outputPolygons.Add(newPolygon);
             }
 
-            #if DEBUG
+#if DEBUG
             // Print Boolean List for Debugging
             Console.WriteLine("\nFrom Within the Polygon Mixed Addition-Subtraction Version CombinePolygons()");
             Console.WriteLine("Cutter:");
@@ -761,7 +770,7 @@ namespace PSDSystem
                 PrintBooleanList(polygon);
                 innerCount++;
             }
-            #endif
+#endif
 
             return outputPolygons;
         }
@@ -811,7 +820,7 @@ namespace PSDSystem
                     Vector2 b1 = cutterVertices[cutterNow.Next.Data.Index];
 
                     // Perform a line calculation
-                    int result = PartialLineIntersection(a0, a1, b0, b1, out float t, out float u);
+                    int result = MathHelpers.PartialLineIntersection(a0, a1, b0, b1, out float t, out float u);
 
                     // Both line segments are non-colinear, thus t and u can be used to determine if they intersect
                     if (result == 1)
@@ -820,10 +829,10 @@ namespace PSDSystem
                         // ----------------------------------------------------------------------------
                         // This is extremely unlikely due to floating point precision error,
                         // but just in case...
-                        bool a0IsOnInfiniteRay = IsNearlyEqual(t, 0.0f) && u >= 0.0f; // a0 is intersecting with the cutter's infinite ray
-                        bool a1IsOnInfiniteRay = IsNearlyEqual(t, 1.0f) && u >= 0.0f;
-                        bool b0IsOnInfiniteRay = IsNearlyEqual(u, 0.0f) && t >= 0.0f;
-                        bool b1IsOnInfiniteRay = IsNearlyEqual(u, 1.0f) && t >= 0.0f;
+                        bool a0IsOnInfiniteRay = MathHelpers.IsNearlyEqual(t, 0.0f) && u >= 0.0f; // a0 is intersecting with the cutter's infinite ray
+                        bool a1IsOnInfiniteRay = MathHelpers.IsNearlyEqual(t, 1.0f) && u >= 0.0f;
+                        bool b0IsOnInfiniteRay = MathHelpers.IsNearlyEqual(u, 0.0f) && t >= 0.0f;
+                        bool b1IsOnInfiniteRay = MathHelpers.IsNearlyEqual(u, 1.0f) && t >= 0.0f;
 
                         // Check if a0 or a1 is on an edge
                         if (u >= 0.0f && u <= 1.0f)
@@ -865,9 +874,9 @@ namespace PSDSystem
                             bool polygonIntersectsAPoint = b0IsOnInfiniteRay || b1IsOnInfiniteRay;
                             float polygonCrossProductToCuttersLine = 0.0f;
                             // Line intersection occured at cutter's point b0
-                            if (b0IsOnInfiniteRay) polygonCrossProductToCuttersLine = CrossProduct2D(b0 - a0, b1 - a0);
+                            if (b0IsOnInfiniteRay) polygonCrossProductToCuttersLine = MathHelpers.CrossProduct2D(b0 - a0, b1 - a0);
                             // Line intersection occured at cutter's point b1
-                            else if (b1IsOnInfiniteRay) polygonCrossProductToCuttersLine = CrossProduct2D(b1 - a0, b0 - a0);
+                            else if (b1IsOnInfiniteRay) polygonCrossProductToCuttersLine = MathHelpers.CrossProduct2D(b1 - a0, b0 - a0);
 
                             if (polygonIntersectsAPoint && polygonCrossProductToCuttersLine > 0.0f)
                             {
@@ -890,9 +899,9 @@ namespace PSDSystem
                             bool cutterIntersectsAPoint = a0IsOnInfiniteRay || a1IsOnInfiniteRay;
                             float cutterCrossProductToPolygonLine = 0.0f;
                             // Line intersection occured at polygon's a0
-                            if (a0IsOnInfiniteRay) cutterCrossProductToPolygonLine = CrossProduct2D(a0 - b0, a1 - b0);
+                            if (a0IsOnInfiniteRay) cutterCrossProductToPolygonLine = MathHelpers.CrossProduct2D(a0 - b0, a1 - b0);
                             // Line intersection occured at polygon's a1
-                            else if (a1IsOnInfiniteRay) cutterCrossProductToPolygonLine = CrossProduct2D(a1 - b0, a0 - b0);
+                            else if (a1IsOnInfiniteRay) cutterCrossProductToPolygonLine = MathHelpers.CrossProduct2D(a1 - b0, a0 - b0);
 
                             if (cutterIntersectsAPoint && cutterCrossProductToPolygonLine > 0.0f)
                             {
@@ -1016,7 +1025,7 @@ namespace PSDSystem
                 foreach (IntersectionPoints<T> intersectionResults in allIntersections)
                 {
                     // Skip if the point is inside the polygon or is on the edge of the polygon
-                    if (PointIsInsidePolygon(extraInsertionPoint, intersectionResults.Polygon) != -1)
+                    if (MathHelpers.PointIsInsidePolygon(extraInsertionPoint, intersectionResults.Polygon) != -1)
                     {
                         insideAnotherPoly = true;
                         break;
@@ -1112,7 +1121,7 @@ namespace PSDSystem
                 );
 
                 // Skip if the point is inside the cutter or is on the edge of the cutter's polygon
-                if (PointIsInsidePolygon(extraInsertionPoint, cutter) != -1) continue;
+                if (MathHelpers.PointIsInsidePolygon(extraInsertionPoint, cutter) != -1) continue;
 
                 int insertedVertexLocation = outerVertices.Count;
                 outerVertices.Add(extraInsertionPoint);
@@ -1137,8 +1146,8 @@ namespace PSDSystem
 
             // The two if statements will in 99.9% of all cases never happen...
             // but just in case that 0.1% case does happen...
-            if (IsNearlyEqual(intersectionValue, 0.0f)) nodeAddedToPolygon = intersectedNode;
-            else if (IsNearlyEqual(intersectionValue, 1.0f))
+            if (MathHelpers.IsNearlyEqual(intersectionValue, 0.0f)) nodeAddedToPolygon = intersectedNode;
+            else if (MathHelpers.IsNearlyEqual(intersectionValue, 1.0f))
             {
                 nodeAddedToPolygon = intersectedNode.Next;
                 // Make sure the nodeAddedToPolygon isn't accidentally set to one of the newly added vertices from previous loops
@@ -1148,18 +1157,18 @@ namespace PSDSystem
             {
                 // Make sure to insert the intersectionPoint and the correct location
                 // if the next vertex happens to be another intersectionPoint
-                float distanceFromNodeToIntersection = SegmentLengthSquared(vertices[intersectedNode.Data.Index], intersectionPoint);
-                float distanceFromNodeToNext = SegmentLengthSquared(vertices[intersectedNode.Data.Index], vertices[intersectedNode.Next.Data.Index]);
+                float distanceFromNodeToIntersection = MathHelpers.SegmentLengthSquared(vertices[intersectedNode.Data.Index], intersectionPoint);
+                float distanceFromNodeToNext = MathHelpers.SegmentLengthSquared(vertices[intersectedNode.Data.Index], vertices[intersectedNode.Next.Data.Index]);
                 while (intersectedNode.Next.Data.Cross != null && intersectedNode.Next.Data.IsAnAddedVertex &&
                     distanceFromNodeToIntersection > distanceFromNodeToNext)
                 {
                     intersectedNode = intersectedNode.Next;
-                    distanceFromNodeToIntersection = SegmentLengthSquared(vertices[intersectedNode.Data.Index], intersectionPoint);
-                    distanceFromNodeToNext = SegmentLengthSquared(vertices[intersectedNode.Data.Index], vertices[intersectedNode.Next.Data.Index]);
+                    distanceFromNodeToIntersection = MathHelpers.SegmentLengthSquared(vertices[intersectedNode.Data.Index], intersectionPoint);
+                    distanceFromNodeToNext = MathHelpers.SegmentLengthSquared(vertices[intersectedNode.Data.Index], vertices[intersectedNode.Next.Data.Index]);
                 }
 
                 // Do the actual insertions
-                if (!IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
+                if (!MathHelpers.IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
                 {
                     int insertedVertexLocation = vertices.Count;
                     vertices.Add(intersectionPoint);
@@ -1486,7 +1495,7 @@ namespace PSDSystem
                 }
 
                 // Perform the intersection test
-                int result = PartialLineIntersection(innerVertices[rightMostInnerVertex.Data.Index], pointRightOfInnerVertex,
+                int result = MathHelpers.PartialLineIntersection(innerVertices[rightMostInnerVertex.Data.Index], pointRightOfInnerVertex,
                     outerVertices[IndexA], outerVertices[IndexB], out float t, out float u);
 
                 if (result == 1 && t >= 0.0f && u >= 0.0f && u <= 1.0f)
@@ -1495,7 +1504,7 @@ namespace PSDSystem
                     Vector2 intersectionPoint = new Vector2(innerVertices[rightMostInnerVertex.Data.Index].X + t * (pointRightOfInnerVertex.X - innerVertices[rightMostInnerVertex.Data.Index].X),
                         innerVertices[rightMostInnerVertex.Data.Index].Y + t * (pointRightOfInnerVertex.Y - innerVertices[rightMostInnerVertex.Data.Index].Y));
 
-                    float length = SegmentLengthSquared(innerVertices[rightMostInnerVertex.Data.Index], intersectionPoint);
+                    float length = MathHelpers.SegmentLengthSquared(innerVertices[rightMostInnerVertex.Data.Index], intersectionPoint);
                     if (length < shortestLength)
                     {
                         shortestLength = length;
@@ -1523,9 +1532,9 @@ namespace PSDSystem
             // then M and P are mutually visible
             VertexNode<T> visibleOuterVertex = vertexP;
 
-            float MIPArea = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]);
+            float MIPArea = MathHelpers.TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]);
             // If MIPArea == 0, then M and P are colinear, M and P must be mutually visible in this case
-            if (!IsNearlyEqual(MIPArea, 0.0f))
+            if (!MathHelpers.IsNearlyEqual(MIPArea, 0.0f))
             {
                 bool MandPareVisible = true;
                 List<VertexNode<T>> possibleRVertices = new List<VertexNode<T>>();
@@ -1533,14 +1542,14 @@ namespace PSDSystem
                 do
                 {
                     // vertex is the same as p or is not convex
-                    if (now == vertexP || IsConvex(now))
+                    if (now == vertexP || MathHelpers.IsConvex(now))
                     {
                         now = now.Next;
                         continue;
                     }
 
                     // Determine if the vertex is inside the triangle (M, I, P) using Barycentric coordinates
-                    if (PointIsInsideTriangle(outerVertices[now.Data.Index], innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]))
+                    if (MathHelpers.PointIsInsideTriangle(outerVertices[now.Data.Index], innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]))
                     {
                         // M and P are not mutually visible, but an R candidate identified
                         MandPareVisible = false;
@@ -1554,10 +1563,10 @@ namespace PSDSystem
                 {
                     // M and P are not mutually visible, Search for the reflex R with a minimum angle angle
                     // between ⟨M , I⟩ and ⟨M , R⟩; then M and R are mutually visible and the algorithm terminates.
-                    float shortestAngle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexP.Data.Index]);
+                    float shortestAngle = MathHelpers.DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexP.Data.Index]);
                     foreach (VertexNode<T> vertexR in possibleRVertices)
                     {
-                        float angle = DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexR.Data.Index]);
+                        float angle = MathHelpers.DiamondAngleBetweenTwoVectors(closestIntersectionPoint.Value, innerVertices[rightMostInnerVertex.Data.Index], outerVertices[vertexR.Data.Index]);
                         if (angle < shortestAngle)
                         {
                             shortestAngle = angle;
@@ -1619,7 +1628,7 @@ namespace PSDSystem
         {
             // It is an eartip if it is convex and there is no other vertices inside its triangle
             // It's reflex, then it is not an ear tip
-            if (!IsConvex(node, includeZeroAngles)) return false;
+            if (!MathHelpers.IsConvex(node, includeZeroAngles)) return false;
 
             List<Vector2> vertices = node.Owner.Vertices;
 
@@ -1637,7 +1646,7 @@ namespace PSDSystem
                     continue;
                 }
 
-                if (PointIsInsideTriangle(vertices[now.Data.Index],
+                if (MathHelpers.PointIsInsideTriangle(vertices[now.Data.Index],
                     vertices[node.Previous.Data.Index],
                     vertices[node.Data.Index],
                     vertices[node.Next.Data.Index]))
@@ -1708,6 +1717,14 @@ namespace PSDSystem
             return toReturn;
         }
 
+        #endregion
+    }
+
+    /// <summary>
+    /// Class full of helper functions related to math 
+    /// </summary>
+    internal static class MathHelpers
+    {
         /// <summary>
         /// Determine if the given point is inside triangle abc
         /// </summary>
@@ -1716,7 +1733,7 @@ namespace PSDSystem
         /// <param name="b"></param>
         /// <param name="c"></param>
         /// <returns></returns>
-        private static bool PointIsInsideTriangle(Vector2 point, Vector2 a, Vector2 b, Vector2 c)
+        public static bool PointIsInsideTriangle(Vector2 point, Vector2 a, Vector2 b, Vector2 c)
         {
             return BarycentricCoordinates(point, a, b, c, out _, out _, out _);
         }
@@ -1732,7 +1749,7 @@ namespace PSDSystem
         /// <param name="v"></param>
         /// <param name="w"></param>
         /// <returns>true if point is inside triangle abc, false otherwise</returns>
-        private static bool BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
+        public static bool BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
         {
             // TODO: Optimization for determining if a vertex is inside a triangle can be done
             float ABCarea = TriangleArea(a, b, c);
@@ -1838,7 +1855,7 @@ namespace PSDSystem
         /// <param name="b"></param>
         /// <param name="c"></param>
         /// <returns></returns>
-        private static float TriangleArea(Vector2 a, Vector2 b, Vector2 c)
+        public static float TriangleArea(Vector2 a, Vector2 b, Vector2 c)
         {
             return MathF.Abs(CrossProduct2D(b - a, c - a) / 2.0f);
         }
@@ -1849,7 +1866,7 @@ namespace PSDSystem
         /// <typeparam name="T"></typeparam>
         /// <param name="node"></param>
         /// <returns></returns>
-        private static bool IsConvex<T>(VertexNode<T> node, bool includeZeroAngles = false) where T : PolygonVertex
+        public static bool IsConvex<T>(VertexNode<T> node, bool includeZeroAngles = false) where T : PolygonVertex
         {
             if (node.Owner.Vertices == null) return false;
             List<Vector2> vertices = node.Owner.Vertices;
@@ -1881,7 +1898,7 @@ namespace PSDSystem
         /// <returns>Returns 1 if the given lines are not parallel,
         /// Returns 0 if the given lines are colinear,
         /// Returns -1 if the given lines are parallel</returns>
-        private static int PartialLineIntersection(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out float tValue, out float uValue)
+        public static int PartialLineIntersection(Vector2 a0, Vector2 a1, Vector2 b0, Vector2 b1, out float tValue, out float uValue)
         {
             float determinant = (a0.X - a1.X) * (b0.Y - b1.Y) - (a0.Y - a1.Y) * (b0.X - b1.X);
             if (!IsNearlyEqual(determinant, 0.0f))
@@ -1913,7 +1930,7 @@ namespace PSDSystem
         /// <param name="b"></param>
         /// <param name="c"></param>
         /// <returns></returns>
-        private static float DiamondAngleBetweenTwoVectors(Vector2 a, Vector2 b, Vector2 c)
+        public static float DiamondAngleBetweenTwoVectors(Vector2 a, Vector2 b, Vector2 c)
         {
             Vector2 ba = a - b;
             Vector2 bc = c - b;
@@ -1928,7 +1945,7 @@ namespace PSDSystem
         /// </summary>
         /// <param name="v"></param>
         /// <returns></returns>
-        private static float VectorToDiamondAngle(Vector2 v)
+        public static float VectorToDiamondAngle(Vector2 v)
         {
             if (IsNearlyEqual(v.LengthSquared(), 0.0f))
                 return 0.0f;
@@ -1954,7 +1971,7 @@ namespace PSDSystem
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        private static float CrossProduct2D(Vector2 a, Vector2 b)
+        public static float CrossProduct2D(Vector2 a, Vector2 b)
         {
             return (a.X * b.Y) - (a.Y * b.X);
         }
@@ -1965,7 +1982,7 @@ namespace PSDSystem
         /// <param name="a">First point of the line segment</param>
         /// <param name="b">Second point of the line segment</param>
         /// <returns>Squared length of a line segment</returns>
-        private static float SegmentLengthSquared(Vector2 a, Vector2 b)
+        public static float SegmentLengthSquared(Vector2 a, Vector2 b)
         {
             float x = b.X - a.X;
             float y = b.Y - a.Y;
@@ -1979,11 +1996,9 @@ namespace PSDSystem
         /// <param name="b">The second value</param>
         /// <param name="epsilon">The threshold for comparison</param>
         /// <returns>True if they are nearly equal to each other, false otherwise</returns>
-        private static bool IsNearlyEqual(float a, float b, float epsilon = 0.00001f)
+        public static bool IsNearlyEqual(float a, float b, float epsilon = 0.00001f)
         {
             return MathF.Abs(a - b) <= epsilon;
         }
     }
-
-
 }

@@ -3,7 +3,6 @@ using PSDSystem;
 using System.Numerics;
 using static PSDSystem.PSD;
 using static PSDSystem.TestCases;
-using System.Diagnostics.Metrics;
 
 class Program
 {
@@ -17,7 +16,6 @@ class Program
 
     const int HEIGHT = 720;
     private static List<Color> colors = new List<Color>();
-
     // Test Settings
     static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = [
         SquareTestCase<PolygonVertex>,
