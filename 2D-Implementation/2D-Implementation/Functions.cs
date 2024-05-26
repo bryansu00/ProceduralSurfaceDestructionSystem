@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 //#define USING_GODOT
+#define DEBUG
 
 using System;
 using System.Collections.Generic;
@@ -309,8 +310,6 @@ namespace PSDSystem
             {
                 TriangulateGroup(group, triangles, vertices);
             }
-
-            return;
         }
 
         /// <summary>
@@ -548,8 +547,10 @@ namespace PSDSystem
             // Insert Points
             InsertIntersectionPoints(center, intersections);
 
+            #if DEBUG
             // Below is used for printing boolean list for debugging purposes
             HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
+            #endif
 
             // INFINITE LOOP CAN OCCUR IN THIS SECTION OF CODE
             // WHY: I DO NOT KNOW, PROBABLY HAS TO DO WITH ONE OF THE EDGE CASES
@@ -580,11 +581,13 @@ namespace PSDSystem
                         continue;
                     }
 
+                    #if DEBUG
                     // DEBUG STUFF
                     if (point.Owner != center)
                     {
                         booleanPolygons.Add(point.Owner);
                     }
+                    #endif
 
                     bool pointIsCrossingPoint = CheckSpecialAdditionCase(point);
 
@@ -609,6 +612,7 @@ namespace PSDSystem
                 outputPolygons.Add(newPolygon);
             }
 
+            #if DEBUG
             // Print Boolean List for Debugging
             Console.WriteLine("\nFrom Within the Polygon Addition Version CombinePolygons()");
             Console.WriteLine("Cutter:");
@@ -620,6 +624,7 @@ namespace PSDSystem
                 PrintBooleanList(polygon);
                 innerCount++;
             }
+            #endif
 
             return outputPolygons;
         }
@@ -678,8 +683,10 @@ namespace PSDSystem
 
             InsertIntersectionPoints(center, outerIntersections, innerIntersections);
 
+            #if DEBUG
             // Below is used for printing boolean list for debugging purposes
             HashSet<Polygon<U>> booleanPolygons = new HashSet<Polygon<U>>();
+            #endif
 
             // TODO: FIX INFINITE LOOP ISSUE
             while (true)
@@ -709,11 +716,13 @@ namespace PSDSystem
                         continue;
                     }
 
+                    #if DEBUG
                     // DEBUG STUFF
                     if (point.Owner != center && point.Owner != outerPolygon)
                     {
                         booleanPolygons.Add(point.Owner);
                     }
+                    #endif
 
                     bool pointIsCrossingPoint = CheckSpecialSubtractionCase(point);
 
@@ -738,6 +747,7 @@ namespace PSDSystem
                 outputPolygons.Add(newPolygon);
             }
 
+            #if DEBUG
             // Print Boolean List for Debugging
             Console.WriteLine("\nFrom Within the Polygon Mixed Addition-Subtraction Version CombinePolygons()");
             Console.WriteLine("Cutter:");
@@ -751,6 +761,7 @@ namespace PSDSystem
                 PrintBooleanList(polygon);
                 innerCount++;
             }
+            #endif
 
             return outputPolygons;
         }
@@ -949,7 +960,7 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Helper function for inserting intersection points for an addition boolean operation
+        /// Helper function for inserting intersection points into the intersected polygons for an addition boolean operation
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="cutter"></param>
@@ -1004,6 +1015,7 @@ namespace PSDSystem
                 bool insideAnotherPoly = false;
                 foreach (IntersectionPoints<T> intersectionResults in allIntersections)
                 {
+                    // Skip if the point is inside the polygon or is on the edge of the polygon
                     if (PointIsInsidePolygon(extraInsertionPoint, intersectionResults.Polygon) != -1)
                     {
                         insideAnotherPoly = true;
@@ -1022,7 +1034,7 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Helper function for inserting intersection points need for a mixed addition-subtraction boolean operation
+        /// Helper function for inserting intersection points needed for a mixed addition-subtraction boolean operation
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="cutter"></param>
@@ -1099,6 +1111,7 @@ namespace PSDSystem
                     (outerVertices[node.Next.Data.Index].Y - outerVertices[node.Data.Index].Y) / 2.0f + outerVertices[node.Data.Index].Y
                 );
 
+                // Skip if the point is inside the cutter or is on the edge of the cutter's polygon
                 if (PointIsInsidePolygon(extraInsertionPoint, cutter) != -1) continue;
 
                 int insertedVertexLocation = outerVertices.Count;
@@ -1163,45 +1176,6 @@ namespace PSDSystem
             }
 
             return nodeAddedToPolygon;
-        }
-
-        /// <summary>
-        /// Combine all polygons in a group into a single polygon
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="group">The group of polygons to combine into one</param>
-        /// <returns>A single polygon that is the same as the group</returns>
-        private static Polygon<T>? CombineGroupIntoOne<T>(PolygonGroup<T> group) where T : PolygonVertex
-        {
-            Polygon<T> currentPolygon;
-            List<Vector2>? currentVertices;
-            // If there is any inner polygons, combined with the outer polygon
-            if (group.InnerPolygons.Count > 0)
-            {
-                // Sort inner polygons from right-most to least right-most vertices
-                group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
-
-                currentPolygon = group.OuterPolygon;
-                currentVertices = new List<Vector2>(group.OuterPolygon.Vertices);
-                // Connect the outer polygon with the inner polygons
-                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
-                {
-                    Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon, currentVertices);
-                    if (result != null)
-                    {
-                        currentPolygon = result;
-                        // No need to do below as it should be done already in ConnectOuterAndInnerPolygon
-                        // currentPolygon.Vertices = currentVertices;
-                    }
-                }
-            }
-            else
-            {
-                // Otherwise return null as there is no need 'combine' when there is not inner polygons 
-                return null;
-            }
-
-            return currentPolygon;
         }
 
         /// <summary>
@@ -1424,7 +1398,46 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Given an outer polygon and a polygon that is inside of the outer polygon, form a bridge between these two polygons
+        /// Combine all polygons in a group into a single polygon
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="group">The group of polygons to combine into one</param>
+        /// <returns>A single polygon that is the same as the group</returns>
+        private static Polygon<T>? CombineGroupIntoOne<T>(PolygonGroup<T> group) where T : PolygonVertex
+        {
+            Polygon<T> currentPolygon;
+            List<Vector2>? currentVertices;
+            // If there is any inner polygons, combined with the outer polygon
+            if (group.InnerPolygons.Count > 0)
+            {
+                // Sort inner polygons from right-most to least right-most vertices
+                group.InnerPolygons.Sort((polygonA, polygonB) => -polygonA.Vertices[polygonA.RightMostVertex.Data.Index].X.CompareTo(polygonB.Vertices[polygonB.RightMostVertex.Data.Index].X));
+
+                currentPolygon = group.OuterPolygon;
+                currentVertices = new List<Vector2>(group.OuterPolygon.Vertices);
+                // Connect the outer polygon with the inner polygons
+                foreach (Polygon<T> innerPolygon in group.InnerPolygons)
+                {
+                    Polygon<T>? result = ConnectOuterAndInnerPolygon(currentPolygon, innerPolygon, currentVertices);
+                    if (result != null)
+                    {
+                        currentPolygon = result;
+                        // No need to do below as it should be done already in ConnectOuterAndInnerPolygon
+                        // currentPolygon.Vertices = currentVertices;
+                    }
+                }
+            }
+            else
+            {
+                // Otherwise return null as there is no need 'combine' when there is no inner polygons 
+                return null;
+            }
+
+            return currentPolygon;
+        }
+
+        /// <summary>
+        /// Given an outer polygon and a polygon that is inside of the outer polygon, form a bridge between the two polygons
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="outerPolygon">The polygon on the outside</param>
@@ -1526,32 +1539,8 @@ namespace PSDSystem
                         continue;
                     }
 
-                    // TODO: Optimization for determining if a vertex is inside a triangle can be done below
-
                     // Determine if the vertex is inside the triangle (M, I, P) using Barycentric coordinates
-                    // u = CAP / ABC
-                    float u = TriangleArea(outerVertices[vertexP.Data.Index], innerVertices[rightMostInnerVertex.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
-                    if (u < 0.0f || u > 1.0f)
-                    {
-                        now = now.Next;
-                        continue;
-                    }
-                    // v = ABP / ABC
-                    float v = TriangleArea(innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[now.Data.Index]) / MIPArea;
-                    if (v < 0.0f || v > 1.0f)
-                    {
-                        now = now.Next;
-                        continue;
-                    }
-                    // w = BCP / ABC
-                    float w = TriangleArea(closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index], outerVertices[now.Data.Index]) / MIPArea;
-                    if (w < 0.0f || w > 1.0f)
-                    {
-                        now = now.Next;
-                        continue;
-                    }
-
-                    if (IsNearlyEqual(u + v + w, 1.0f))
+                    if (PointIsInsideTriangle(outerVertices[now.Data.Index], innerVertices[rightMostInnerVertex.Data.Index], closestIntersectionPoint.Value, outerVertices[vertexP.Data.Index]))
                     {
                         // M and P are not mutually visible, but an R candidate identified
                         MandPareVisible = false;
@@ -1580,6 +1569,7 @@ namespace PSDSystem
             #endregion
             // visibleOuterVertex and rightMostInnerVertex are vertices that are mutually visible and a bridge can be form between these two vertices
 
+            // Remake the polygon, but with the bridge added
             Polygon<T> output = new Polygon<T>();
             // We are assuming that the vertices list will represent output's list of vertices
             output.Vertices = vertices;
@@ -1587,17 +1577,17 @@ namespace PSDSystem
             VertexNode<T> outerNow = outerPolygon.Head;
             do
             {
-                // Insert the index of the outerNow since it's 
+                // Insert the index of the outerNow since output.Vertices should be the same as outerPolygon's
                 output.InsertVertexAtBack(outerNow.Data.Index);
 
                 // Transition to inner polygon
                 if (outerNow == visibleOuterVertex)
                 {
-                    // Insert the rightMostInnerVertex into the output polygon
+                    // Insert the rightMostInnerVertex of the inner polygon into the output polygon
                     int rightMostInnerVertexIndex = output.Vertices.Count;
                     output.Vertices.Add(innerVertices[rightMostInnerVertex.Data.Index]);
                     output.InsertVertexAtBack(rightMostInnerVertexIndex);
-                    // Switch to the inner polygon
+                    // Switch to the inner polygon and add all the vertices of the inner polygon
                     VertexNode<T> innerNow = rightMostInnerVertex.Next;
                     while (innerNow != rightMostInnerVertex)
                     {
@@ -1741,9 +1731,10 @@ namespace PSDSystem
         /// <param name="u"></param>
         /// <param name="v"></param>
         /// <param name="w"></param>
-        /// <returns></returns>
+        /// <returns>true if point is inside triangle abc, false otherwise</returns>
         private static bool BarycentricCoordinates(Vector2 point, Vector2 a, Vector2 b, Vector2 c, out float u, out float v, out float w)
         {
+            // TODO: Optimization for determining if a vertex is inside a triangle can be done
             float ABCarea = TriangleArea(a, b, c);
             if (IsNearlyEqual(ABCarea, 0.0f))
             {
