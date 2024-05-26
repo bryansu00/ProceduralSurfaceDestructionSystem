@@ -1,4 +1,8 @@
-﻿using System.Numerics;
+﻿#if USING_GODOT
+    using Godot;
+#else
+using System.Numerics;
+#endif
 
 namespace PSDSystem
 {
