@@ -1271,8 +1271,8 @@ namespace PSDSystem
         /// Find convex vertices of the group
         /// </summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="group"></param>
-        /// <param name="convexVerticesGroups"></param>
+        /// <param name="group">The polygon group to find convex vertices for</param>
+        /// <param name="convexVerticesGroups">The list of convex vertices groups to add to</param>
         private static void FindConvexVerticesOfGroup<T>(PolygonGroup<T> group, List<List<Vector2>> convexVerticesGroups) where T : PolygonVertex
         {
             if (group.OuterPolygon.Head == null || group.OuterPolygon.Count < 3 || group.OuterPolygon.Vertices == null)
@@ -1292,26 +1292,23 @@ namespace PSDSystem
             // Combine the given group into one polygon
             Polygon<T>? currentPolygon = CombineGroupIntoOne(group);
             List<Vector2> currentVertices;
-            if (currentPolygon == null)
-            {
-                // CombineGroupIntoOne failed probably because lack of inner polygons
-                // Make a copy
-                currentPolygon = new Polygon<T>(group.OuterPolygon);
-                currentVertices = new List<Vector2>(currentPolygon.Vertices);
-            }
-            else
-                currentVertices = currentPolygon.Vertices;
+
+            // CombineGroupIntoOne failed probably because lack of inner polygons
+            // Make a copy
+            if (currentPolygon == null) currentPolygon = new Polygon<T>(group.OuterPolygon);
+
+            // Set current vertices to the currentPolygon's vertices
+            currentVertices = currentPolygon.Vertices;
 
             // Identify the eartips of currentPolygon
             List<VertexNode<T>>? earTips = FindEarTips(currentPolygon, true);
             // No ear tips was found, thus no convex group of vertices exist
-            if (earTips == null)
-            {
-                return;
-            }
+            if (earTips == null) return;
 
+            // Loop until there is no more eartips or vertices to process
             while (earTips.Count > 0 && currentPolygon.Count > 2)
             {
+                // List of convex vertices to keep track of
                 List<Vector2> convexVertices = new List<Vector2>();
 
                 // Get the ear to clip
@@ -1409,6 +1406,7 @@ namespace PSDSystem
                     prev = prev.Previous;
                 }
 
+                // Convex vertices group finished, add it to the list
                 convexVerticesGroups.Add(convexVertices);
             }
         }
