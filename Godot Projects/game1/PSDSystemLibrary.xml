@@ -1,0 +1,447 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>PSDSystemLibrary</name>
+    </assembly>
+    <members>
+        <member name="M:PSDSystem.CoordinateConverter.ConvertTo3D(Godot.Vector2)">
+            <summary>
+            Convert the given 2D vector to a 3D vector
+            </summary>
+            <param name="v">The 2D vector to convert</param>
+            <returns>3D vector converted from the given 2D vector</returns>
+        </member>
+        <member name="M:PSDSystem.CoordinateConverter.ConvertListTo3D(System.Collections.Generic.List{Godot.Vector2})">
+            <summary>
+            Convert a list of 3D vectors to a list of 2D vectors
+            </summary>
+            <param name="vectors">List of 2D vectors to convert</param>
+            <returns>List of 3D vectors</returns>
+        </member>
+        <member name="M:PSDSystem.CoordinateConverter.ConvertTo2D(Godot.Vector3)">
+            <summary>
+            Convert the given 3D vector to a 2D vector
+            </summary>
+            <param name="v">The 3D vector to convert</param>
+            <returns>2D vector converted from the given 3D vector</returns>
+        </member>
+        <member name="M:PSDSystem.CoordinateConverter.ConvertListTo2D(System.Collections.Generic.List{Godot.Vector3})">
+            <summary>
+            Convert a list of 2D vectors to a list of 3D vectors
+            </summary>
+            <param name="vectors">List of 3D vectors to convert</param>
+            <returns>List of 2D vectors</returns>
+        </member>
+        <member name="T:PSDSystem.PSD.IntersectionResult">
+            <summary>
+            Result of an intersection test between two polygons
+            </summary>
+        </member>
+        <member name="T:PSDSystem.PSD.CutSurfaceResult">
+            <summary>
+            Result of the cut surface function
+            </summary>
+        </member>
+        <member name="M:PSDSystem.PSD.CutSurface``2(PSDSystem.SurfaceShape{``0},PSDSystem.Polygon{``0},PSDSystem.Polygon{``0})">
+            <summary>
+            Given a surface and a polygon that represent the cutter, cut a 'hole' on to the surface
+            </summary>
+            <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
+            <typeparam name="U">The polygon vertex containing properties needed for polygon boolean operations</typeparam>
+            <param name="surface">The surface to be cut</param>
+            <param name="cutter">The cutter polygon</param>
+            <param name="anchorPolygon">Polygon used to test whether a polygon should kept or not</param>
+            <returns>Result of the surface being cut</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.TriangulateSurface``1(PSDSystem.SurfaceShape{``0},System.Collections.Generic.List{System.Int32}@,System.Collections.Generic.List{Godot.Vector2}@)">
+            <summary>
+            Triangulate a polygon surface
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="surface">The surface to be triangulated</param>
+            <param name="triangles">The list of triangles generated from triangulation</param>
+            <param name="vertices">The list of vertices that make up the surface</param>
+        </member>
+        <member name="M:PSDSystem.PSD.FindConvexVerticesOfSurface``1(PSDSystem.SurfaceShape{``0})">
+            <summary>
+            Find convex groups of vertices from a given surface
+            </summary>
+            <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
+            <param name="surface">The surface to find convex groups of vertices</param>
+            <returns>List of lists, where each list contains vertices that make up a convex groups</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.CreateSideCapOfSurface``1(PSDSystem.SurfaceShape{``0},PSDSystem.CoordinateConverter,Godot.Vector3,System.Single,System.Collections.Generic.List{Godot.Vector3},System.Collections.Generic.List{Godot.Vector3},System.Collections.Generic.List{System.Int32},System.Collections.Generic.List{Godot.Vector2})">
+            <summary>
+            Generate the values needed for the sides of the surfaces
+            </summary>
+            <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
+            <param name="surface">The surface to create the sides for</param>
+            <param name="coordinateConverter">The CoordinateConverter needed for translating from 2D to 3D</param>
+            <param name="frontNormal">The normal of the front face of the surface, needed to determine the direction of the sides cap to extrude to</param>
+            <param name="depth">The depth of the sides</param>
+            <param name="vertices">List of vertices to append the new vertices into</param>
+            <param name="normals">List of normals to append the new normals into</param>
+            <param name="indices">List of triangles to append the new indices into</param>
+            <param name="uvs">List of UVs to append the new uvs into</param>
+        </member>
+        <member name="M:PSDSystem.PSD.ComputeUVCoordinates(System.Collections.Generic.List{Godot.Vector2},System.Collections.Generic.List{Godot.Vector2},System.Collections.Generic.List{Godot.Vector2})">
+            <summary>
+            Compute UV coordinates for each of the given vertices list
+            </summary>
+            <param name="originalVertices">The original vertices</param>
+            <param name="originalUVCoordinates">The original UV coordinates</param>
+            <param name="currentVertices">List of vertices to create UV coordinates based off of</param>
+            <returns>List of UV coordinates for the given currentVertices</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.CombinePolygons``2(PSDSystem.Polygon{``1},System.Collections.Generic.List{PSDSystem.IntersectionPoints{``1}})">
+            <summary>
+            Perform a boolean addition operation using the given information
+            </summary>
+            <typeparam name="T">The polygon vertex type to be return</typeparam>
+            <typeparam name="U">The polygon vertex that has properties needed to perform boolean operations</typeparam>
+            <param name="center">The polygon where the operation will be performed around (should be the hole inserted)</param>
+            <param name="intersections">List of intersection points produced from IntersectCutterAndPolygon</param>
+            <returns>List of polygons produced from this operation</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.CombinePolygons``2(PSDSystem.Polygon{``1},PSDSystem.IntersectionPoints{``1},System.Collections.Generic.List{PSDSystem.IntersectionPoints{``1}})">
+            <summary>
+            Perform a boolean mixed addition-subtraction operation using the given information
+            </summary>
+            <typeparam name="T">The polygon vertex type to be return</typeparam>
+            <typeparam name="U">The polygon vertex that has properties needed to perform boolean operations</typeparam>
+            <param name="center">The polygon where the operation will be performed around (should be the hole inserted)</param>
+            <param name="outerIntersections">The intersecion points for the outer polygon produced from IntersectCutterAndPolygon</param>
+            <param name="innerIntersections">List of intersection points for inner polygons produced from IntersectCutterAndPolygon</param>
+            <returns>List of polygons produced from this operation</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.IntersectCutterAndPolygon``1(PSDSystem.Polygon{``0},PSDSystem.Polygon{``0},PSDSystem.IntersectionPoints{``0}@)">
+            <summary>
+            Intersect a cutter polygon with another polygon and returns the findings between the two
+            </summary>
+            <typeparam name="T">A vertex class that has boolean vertex properties to represent each vertex of a polygon and store additional results from the intersection test</typeparam>
+            <param name="cutter">The cutter polygon</param>
+            <param name="polygon">The other polygon</param>
+            <param name="intersectionPoints">List of intersection points to return</param>
+            <returns>The result from intersecting the two given polygons</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.InsertIntersectionPoints``1(PSDSystem.Polygon{``0},System.Collections.Generic.List{PSDSystem.IntersectionPoints{``0}})">
+            <summary>
+            Helper function for inserting intersection points into the intersected polygons for an addition boolean operation
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="cutter"></param>
+            <param name="allIntersections"></param>
+        </member>
+        <member name="M:PSDSystem.PSD.InsertIntersectionPoints``1(PSDSystem.Polygon{``0},PSDSystem.IntersectionPoints{``0},System.Collections.Generic.List{PSDSystem.IntersectionPoints{``0}})">
+            <summary>
+            Helper function for inserting intersection points needed for a mixed addition-subtraction boolean operation
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="cutter"></param>
+            <param name="outerIntersections"></param>
+            <param name="innerIntersections"></param>
+        </member>
+        <member name="M:PSDSystem.PSD.InsertSingleIntersectionPoint``1(PSDSystem.VertexNode{``0},System.Collections.Generic.List{Godot.Vector2},Godot.Vector2,System.Single)">
+            <summary>
+            Insert a single intersection point, used by both InsertIntersectionPoints() functions
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="intersectedNode"></param>
+            <param name="vertices"></param>
+            <param name="intersectionPoint"></param>
+            <param name="intersectionValue"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.TriangulateGroup``1(PSDSystem.PolygonGroup{``0},System.Collections.Generic.List{System.Int32},System.Collections.Generic.List{Godot.Vector2})">
+            <summary>
+            Triangulate a group outer polygon and its inner polygons
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="group">The group of polygons to triangulate</param>
+            <param name="triangles">The list of triangles to add on to</param>
+            <param name="vertices">The list of vertices to add on to</param>
+        </member>
+        <member name="M:PSDSystem.PSD.FindConvexVerticesOfGroup``1(PSDSystem.PolygonGroup{``0},System.Collections.Generic.List{System.Collections.Generic.List{Godot.Vector2}})">
+            <summary>
+            Find convex vertices of the group
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="group">The polygon group to find convex vertices for</param>
+            <param name="convexVerticesGroups">The list of convex vertices groups to add to</param>
+        </member>
+        <member name="M:PSDSystem.PSD.CombineGroupIntoOne``1(PSDSystem.PolygonGroup{``0})">
+            <summary>
+            Combine all polygons in a group into a single polygon
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="group">The group of polygons to combine into one</param>
+            <returns>A single polygon that is the same as the group</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.ConnectOuterAndInnerPolygon``1(PSDSystem.Polygon{``0},PSDSystem.Polygon{``0},System.Collections.Generic.List{Godot.Vector2})">
+            <summary>
+            Given an outer polygon and a polygon that is inside of the outer polygon, form a bridge between the two polygons
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="outerPolygon">The polygon on the outside</param>
+            <param name="innerPolygon">The polygon inside of the outerPolygon</param>
+            <param name="vertices">The list vertices to modify and add to, should be the same as outerPolygon.Vertices</param>
+            <returns>Polygon that was the result of combining the inner and outer polygon</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.IsAnEarTip``1(PSDSystem.VertexNode{``0},System.Boolean)">
+            <summary>
+            Check if the given node is an ear tip
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="node">The node to be checked</param>
+            <returns>True if the node is an ear tip, false otherwise</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.FindEarTips``1(PSDSystem.Polygon{``0},System.Boolean)">
+            <summary>
+            A function that finds all ear tips of the given polygon
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="polygon">The polygon to find the ear tips for</param>
+            <returns>List of nodes that have been identified to be ear tips, null if no eartips was found, or is not possible</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.ConvertPolygonToBooleanList``2(PSDSystem.Polygon{``0})">
+            <summary>
+            Convert the PolygonVertex of the given polygon into a BooleanVertex
+            </summary>
+            <typeparam name="T">The original PolygonVertex of the given polygon</typeparam>
+            <typeparam name="U">The desired BooleanVertex class</typeparam>
+            <param name="polygon">The polygon to convert</param>
+            <returns>Copy of the given polygon but with BooleanVertex insteadd</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.PointIsInsideTriangle(Godot.Vector2,Godot.Vector2,Godot.Vector2,Godot.Vector2)">
+            <summary>
+            Determine if the given point is inside triangle abc
+            </summary>
+            <param name="point"></param>
+            <param name="a"></param>
+            <param name="b"></param>
+            <param name="c"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.BarycentricCoordinates(Godot.Vector2,Godot.Vector2,Godot.Vector2,Godot.Vector2,System.Single@,System.Single@,System.Single@)">
+            <summary>
+            Compute the barycentricoordinates, which can be used for computing UV coordinates or determining if point is inside triangule
+            </summary>
+            <param name="point"></param>
+            <param name="a"></param>
+            <param name="b"></param>
+            <param name="c"></param>
+            <param name="u"></param>
+            <param name="v"></param>
+            <param name="w"></param>
+            <returns>true if point is inside triangle abc, false otherwise</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.PointIsInsidePolygon``1(Godot.Vector2,PSDSystem.Polygon{``0})">
+            <summary>
+            Determine if the given point is inside the given polygon
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="point"></param>
+            <param name="polygon"></param>
+            <returns>Returns 1, if the given point is inside the given polygon.
+            Returns 0, if the given point is on the edge or vertex of the given polygon.
+            Returns -1, if the given point is outside the given polygon.</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.TriangleArea(Godot.Vector2,Godot.Vector2,Godot.Vector2)">
+            <summary>
+            Compute the area of triangle abc
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <param name="c"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.IsConvex``1(PSDSystem.VertexNode{``0},System.Boolean)">
+            <summary>
+            Determine if the given node is convex
+            </summary>
+            <typeparam name="T"></typeparam>
+            <param name="node"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.IsConvex(Godot.Vector2,Godot.Vector2,Godot.Vector2,System.Boolean)">
+            <summary>
+            Determine if Vector b is convex or not
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <param name="c"></param>
+            <param name="includeZeroAngles"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.PartialLineIntersection(Godot.Vector2,Godot.Vector2,Godot.Vector2,Godot.Vector2,System.Single@,System.Single@)">
+            <summary>
+            Perform a partial line intersection computation between two lines
+            </summary>
+            <param name="a0">Starting point of Line A</param>
+            <param name="a1">End point of Line A</param>
+            <param name="b0">Starting point of Line B</param>
+            <param name="b1">End point of Line B</param>
+            <param name="tValue">The t value computed</param>
+            <param name="uValue">The u value computed</param>
+            <returns>Returns 1 if the given lines are not parallel,
+            Returns 0 if the given lines are colinear,
+            Returns -1 if the given lines are parallel</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.DiamondAngleBetweenTwoVectors(Godot.Vector2,Godot.Vector2,Godot.Vector2)">
+            <summary>
+            Get the angle diamond difference between vector ba and bc
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <param name="c"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.VectorToDiamondAngle(Godot.Vector2)">
+            <summary>
+            Convert a 2D vector into diamond angle measurement
+            </summary>
+            <param name="v"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.CrossProduct2D(Godot.Vector2,Godot.Vector2)">
+            <summary>
+            Perform a cross product between two 2D vectors and return the Z value
+            </summary>
+            <param name="a"></param>
+            <param name="b"></param>
+            <returns></returns>
+        </member>
+        <member name="M:PSDSystem.PSD.SegmentLengthSquared(Godot.Vector2,Godot.Vector2)">
+            <summary>
+            Get squared length of a line segment
+            </summary>
+            <param name="a">First point of the line segment</param>
+            <param name="b">Second point of the line segment</param>
+            <returns>Squared length of a line segment</returns>
+        </member>
+        <member name="M:PSDSystem.PSD.IsNearlyEqual(System.Single,System.Single,System.Single)">
+            <summary>
+            Check if the given two float values are nearly equal to each other
+            </summary>
+            <param name="a">The first value</param>
+            <param name="b">The second value</param>
+            <param name="epsilon">The threshold for comparison</param>
+            <returns>True if they are nearly equal to each other, false otherwise</returns>
+        </member>
+        <member name="T:PSDSystem.Polygon`1">
+            <summary>
+            Class representing a 2D Polygon
+            </summary>
+            <typeparam name="T">A vertex class that represent each vertex of a polygon.</typeparam>
+        </member>
+        <member name="P:PSDSystem.Polygon`1.Head">
+            <summary>
+            The head node of a vertex of the polygon
+            </summary>
+        </member>
+        <member name="P:PSDSystem.Polygon`1.RightMostVertex">
+            <summary>
+            The right most vertex of the polygon
+            </summary>
+        </member>
+        <member name="P:PSDSystem.Polygon`1.Count">
+            <summary>
+            The number of vertex in the polygon
+            </summary>
+        </member>
+        <member name="P:PSDSystem.Polygon`1.Vertices">
+            <summary>
+            The list of vertices the polygon is referring to
+            </summary>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.InsertVertexAtBack(System.Int32)">
+            <summary>
+            Inserts a vertex with the given index to the polygon
+            </summary>
+            <param name="index">The index that the vertex will refer to</param>
+            <returns>The vertex inserted at the back</returns>
+            <exception cref="T:System.Exception">Failed to instantiate a Vertex</exception>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.InsertVertexAfter(PSDSystem.VertexNode{`0},System.Int32)">
+            <summary>
+            Insert a vertex after the given node
+            </summary>
+            <param name="node">The node to insert a vertex after</param>
+            <param name="index">The index that the vertex will refer to</param>
+            <returns>The vertex inserted</returns>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.ClipVertex(PSDSystem.VertexNode{`0})">
+            <summary>
+            Remove the given node from the polygon
+            </summary>
+            <param name="node">The node to remove</param>
+            <exception cref="T:System.InvalidOperationException">The vertex given belongs to a different polygon</exception>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.ToList">
+            <summary>
+            Convert the polygon to list of indices referring to this.Vertices
+            </summary>
+            <returns>List of indices</returns>
+        </member>
+        <member name="T:PSDSystem.PolygonVertex">
+            <summary>
+            Class representing a single vertex of a polygon
+            </summary>
+        </member>
+        <member name="P:PSDSystem.PolygonVertex.Index">
+            <summary>
+            The index that this vertex refers to
+            </summary>
+        </member>
+        <member name="M:PSDSystem.PolygonVertex.CopyData(PSDSystem.PolygonVertex)">
+            <summary>
+            Copy data from the given vertex to this vertex
+            </summary>
+            <param name="vertex">The vertex to copy data from</param>
+        </member>
+        <member name="T:PSDSystem.VertexNode`1">
+            <summary>
+            Node to hold a vertex
+            </summary>
+            <typeparam name="T">The vertex that holds the data</typeparam>
+        </member>
+        <member name="T:PSDSystem.SurfaceShape`1">
+            <summary>
+            Represents the current shape of the surface after modifications
+            </summary>
+            <typeparam name="T">A vertex class that represent each vertex of a polygon.</typeparam>
+        </member>
+        <member name="P:PSDSystem.SurfaceShape`1.Polygons">
+            <summary>
+            Each PolygonGroup in this variable represents an outer polygon and
+            its groups of inner polygons
+            </summary>
+        </member>
+        <member name="M:PSDSystem.SurfaceShape`1.AddOuterPolygon(PSDSystem.Polygon{`0})">
+            <summary>
+            Add a polygon as an outer polygon
+            </summary>
+            <param name="polygon">The outer polygon</param>
+        </member>
+        <member name="M:PSDSystem.SurfaceShape`1.AddPair(PSDSystem.Polygon{`0},System.Collections.Generic.List{PSDSystem.Polygon{`0}})">
+            <summary>
+            Add a outer polygon and its list of inner polygons
+            as part of the SurfaceShape
+            </summary>
+            <param name="outerPolygon">The outer polygon</param>
+            <param name="innerPolygons">The list of inner polygons</param>
+        </member>
+        <member name="M:PSDSystem.SurfaceShape`1.RemoveGroup(PSDSystem.PolygonGroup{`0})">
+            <summary>
+            Remove a group of polygons from the SurfaceShape
+            </summary>
+            <param name="group"></param>
+        </member>
+        <member name="T:PSDSystem.PolygonGroup`1">
+            <summary>
+            Represent a group of polygons on a surface
+            </summary>
+            <typeparam name="T"></typeparam>
+        </member>
+    </members>
+</doc>
