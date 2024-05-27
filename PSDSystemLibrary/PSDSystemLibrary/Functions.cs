@@ -1,7 +1,5 @@
 ﻿#nullable enable
 
-//#define USING_GODOT
-
 using System;
 using System.Collections.Generic;
 using System.Text;
