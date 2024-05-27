@@ -17,12 +17,13 @@ namespace PSDSystem
             surface = new SurfaceShape<T>();
             cutter = null;
 
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
 
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
@@ -44,12 +45,13 @@ namespace PSDSystem
             testName = "Vertices and Edge Overlap";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -60,14 +62,15 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 150.0f),
                 new Vector2(750.0f, 50.0f),
                 new Vector2(950.0f, 50.0f),
                 new Vector2(950.0f, 250.0f),
                 new Vector2(850.0f, 250.0f),
                 new Vector2(850.0f, 150.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -83,12 +86,13 @@ namespace PSDSystem
             anchorVertices = null;
             testName = "Surface with Single Hole";
             surface = new SurfaceShape<T>();
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -98,12 +102,13 @@ namespace PSDSystem
 
             surface.AddOuterPolygon(polygon);
 
-            List<Vector2> innerVertices = [
+            List<Vector2> innerVertices = new List<Vector2>()
+            {
                 new Vector2(950.0f, 550.0f),
                 new Vector2(650.0f, 550.0f),
                 new Vector2(650.0f, 250.0f),
                 new Vector2(950.0f, 250.0f)
-            ];
+            };
             Polygon<T> innerPolygon = new Polygon<T>();
             innerPolygon.Vertices = innerVertices;
             innerPolygon.InsertVertexAtBack(0);
@@ -120,12 +125,13 @@ namespace PSDSystem
             testName = "Surface with Single Hole and a Cutter";
             surface = new SurfaceShape<T>();
             anchorVertices = null;
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -135,12 +141,13 @@ namespace PSDSystem
 
             surface.AddOuterPolygon(polygon);
 
-            List<Vector2> innerVertices = [
+            List<Vector2> innerVertices = new List<Vector2>()
+            {
                 new Vector2(950.0f, 550.0f),
                 new Vector2(650.0f, 550.0f),
                 new Vector2(650.0f, 250.0f),
                 new Vector2(950.0f, 250.0f)
-            ];
+            };
             Polygon<T> innerPolygon = new Polygon<T>();
             innerPolygon.Vertices = innerVertices;
             innerPolygon.InsertVertexAtBack(0);
@@ -151,12 +158,13 @@ namespace PSDSystem
             surface.Polygons[0].InnerPolygons.Add(innerPolygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 350.0f),
                 new Vector2(750.0f, 50.0f),
                 new Vector2(850.0f, 50.0f),
                 new Vector2(850.0f, 350.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -169,12 +177,13 @@ namespace PSDSystem
             testName = "Surface with Single Hole and Long Cutter";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -184,12 +193,13 @@ namespace PSDSystem
 
             surface.AddOuterPolygon(polygon);
 
-            List<Vector2> innerVertices = [
+            List<Vector2> innerVertices = new List<Vector2>()
+            {
                 new Vector2(950.0f, 550.0f),
                 new Vector2(650.0f, 550.0f),
                 new Vector2(650.0f, 250.0f),
                 new Vector2(950.0f, 250.0f)
-            ];
+            };
             Polygon<T> innerPolygon = new Polygon<T>();
             innerPolygon.Vertices = innerVertices;
             innerPolygon.InsertVertexAtBack(0);
@@ -200,12 +210,13 @@ namespace PSDSystem
             surface.Polygons[0].InnerPolygons.Add(innerPolygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 570.0f),
                 new Vector2(750.0f, 50.0f),
                 new Vector2(850.0f, 50.0f),
                 new Vector2(850.0f, 570.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -218,12 +229,13 @@ namespace PSDSystem
             testName = "Surface with Single Hole and Very Long Cutter";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -233,12 +245,13 @@ namespace PSDSystem
 
             surface.AddOuterPolygon(polygon);
 
-            List<Vector2> innerVertices = [
+            List<Vector2> innerVertices = new List<Vector2>()
+            {
                 new Vector2(950.0f, 550.0f),
                 new Vector2(650.0f, 550.0f),
                 new Vector2(650.0f, 250.0f),
                 new Vector2(950.0f, 250.0f)
-            ];
+            };
             Polygon<T> innerPolygon = new Polygon<T>();
             innerPolygon.Vertices = innerVertices;
             innerPolygon.InsertVertexAtBack(0);
@@ -249,12 +262,13 @@ namespace PSDSystem
             surface.Polygons[0].InnerPolygons.Add(innerPolygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 700.0f),
                 new Vector2(750.0f, 50.0f),
                 new Vector2(850.0f, 50.0f),
                 new Vector2(850.0f, 700.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -267,12 +281,13 @@ namespace PSDSystem
             testName = "Surface with Square Cutter Inside Overlapping Edge";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -283,12 +298,13 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 450.0f),
                 new Vector2(750.0f, 150.0f),
                 new Vector2(850.0f, 150.0f),
                 new Vector2(850.0f, 450.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -301,12 +317,13 @@ namespace PSDSystem
             testName = "Surface with Triangle Cutter Inside - Vertex Touches Edge";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -317,11 +334,12 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 450.0f),
                 new Vector2(750.0f, 150.0f),
                 new Vector2(850.0f, 450.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -333,12 +351,13 @@ namespace PSDSystem
             testName = "Inside Triangle Vertex-Vertex Intersect";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -349,11 +368,12 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(850.0f, 200.0f),
                 new Vector2(600.0f, 450.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -365,12 +385,13 @@ namespace PSDSystem
             testName = "Surface with Triangle Cutter Outside - Vertex Touches Edge";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -381,11 +402,12 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(850.0f, 50.0f),
                 new Vector2(750.0f, 150.0f),
                 new Vector2(750.0f, 50.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -397,12 +419,13 @@ namespace PSDSystem
             testName = "Vertices Overlap with Edges Intersecting";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -413,11 +436,12 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(850.0f, 140.0f),
                 new Vector2(540.0f, 450.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -429,12 +453,13 @@ namespace PSDSystem
             testName = "Vertices Overlap (From Outside)";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -445,11 +470,12 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 50.0f),
                 new Vector2(550.0f, 150.0f),
                 new Vector2(450.0f, 150.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -461,12 +487,13 @@ namespace PSDSystem
             testName = "Corner Vertices and Edges Overlap";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -477,11 +504,12 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(850.0f, 150.0f),
                 new Vector2(550.0f, 450.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -493,12 +521,13 @@ namespace PSDSystem
             testName = "Surface with Single Hole and a Cutter's Edge Overlaps";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
             polygon.InsertVertexAtBack(0);
@@ -508,12 +537,13 @@ namespace PSDSystem
 
             surface.AddOuterPolygon(polygon);
 
-            List<Vector2> innerVertices = [
+            List<Vector2> innerVertices = new List<Vector2>()
+            {
                 new Vector2(950.0f, 550.0f),
                 new Vector2(650.0f, 550.0f),
                 new Vector2(650.0f, 250.0f),
                 new Vector2(950.0f, 250.0f)
-            ];
+            };
             Polygon<T> innerPolygon = new Polygon<T>();
             innerPolygon.Vertices = innerVertices;
             innerPolygon.InsertVertexAtBack(0);
@@ -524,12 +554,13 @@ namespace PSDSystem
             surface.Polygons[0].InnerPolygons.Add(innerPolygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 250.0f),
                 new Vector2(750.0f, 150.0f),
                 new Vector2(850.0f, 150.0f),
                 new Vector2(850.0f, 250.0f)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -542,12 +573,13 @@ namespace PSDSystem
             testName = "Vertices and Edge Overlap (From Inside)";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -558,14 +590,15 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(750.0f, 250.0f),
                 new Vector2(750.0f, 150.0f),
                 new Vector2(850.0f, 150.0f),
                 new Vector2(850.0f, 50.0f),
                 new Vector2(950.0f, 50.0f),
                 new Vector2(950.0f, 250.0f),
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -580,12 +613,13 @@ namespace PSDSystem
             testName = "Square With Octagon Cutter";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -598,7 +632,8 @@ namespace PSDSystem
             float scale = 10.0f;
             Vector2 center = new Vector2(550.0f, 400.0f);
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
@@ -607,7 +642,7 @@ namespace PSDSystem
                 new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -624,12 +659,13 @@ namespace PSDSystem
             testName = "Square With Octagon Cutter (Bottom)";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -642,7 +678,8 @@ namespace PSDSystem
             float scale = 10.0f;
             Vector2 center = new Vector2(550.0f, 200.0f);
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
@@ -651,7 +688,7 @@ namespace PSDSystem
                 new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -668,7 +705,8 @@ namespace PSDSystem
             testName = "Square With Octagon Cutter (Bottom)";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550.0f, 150.0f),
                 new Vector2(550.0f, 400.0f),
                 new Vector2(620.7f, 429.3f),
@@ -678,7 +716,7 @@ namespace PSDSystem
                 new Vector2(550.0f, 650.0f),
                 new Vector2(1050.0f, 650.0f),
                 new Vector2(1050.0f, 150.0f)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -696,7 +734,8 @@ namespace PSDSystem
             float scale = 10.0f;
             Vector2 center = new Vector2(550.0f, 270.0f);
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
@@ -705,7 +744,7 @@ namespace PSDSystem
                 new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -722,7 +761,8 @@ namespace PSDSystem
             testName = "Infinite Loop From Godot";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550, 150),
                 new Vector2(550, 250),
                 new Vector2(585.35f, 264.65f),
@@ -737,7 +777,7 @@ namespace PSDSystem
                 new Vector2(550, 650),
                 new Vector2(1050, 650),
                 new Vector2(1050, 150)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -804,7 +844,8 @@ namespace PSDSystem
             float scale = 5.0f;
             Vector2 center = new Vector2(550.0f, 380.0f);
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
@@ -813,7 +854,7 @@ namespace PSDSystem
                 new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -830,7 +871,8 @@ namespace PSDSystem
             testName = "Simplified Infinite Loop From Godot";
             anchorVertices = null;
             surface = new SurfaceShape<T>();
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(550, 150),
                 new Vector2(585.35f, 335.35f),
                 new Vector2(550, 350),
@@ -839,7 +881,7 @@ namespace PSDSystem
                 new Vector2(550, 650),
                 new Vector2(1050, 650),
                 new Vector2(1050, 150)
-            ];
+            };
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
             polygon.InsertVertexAtBack(0);
@@ -854,12 +896,13 @@ namespace PSDSystem
             surface.AddOuterPolygon(polygon);
 
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(600, 380),
                 new Vector2(550, 430),
                 new Vector2(500, 380),
                 new Vector2(550, 330),
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);
@@ -875,7 +918,8 @@ namespace PSDSystem
             anchorVertices = null;
             float scale = 20.0f;
             Vector2 center = new Vector2(775.0f, 400.0f);
-            List<Vector2> Vertices = [
+            List<Vector2> Vertices = new List<Vector2>()
+            {
                 new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                 new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
@@ -884,7 +928,7 @@ namespace PSDSystem
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y)
-            ];
+            };
 
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = Vertices;
@@ -910,7 +954,8 @@ namespace PSDSystem
             anchorVertices = null;
             float scale = 20.0f;
             Vector2 center = new Vector2(775.0f, 400.0f);
-            List<Vector2> outerVertices = [
+            List<Vector2> outerVertices = new List<Vector2>()
+            {
                 new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                 new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
@@ -919,7 +964,7 @@ namespace PSDSystem
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y)
-            ];
+            };
 
             Polygon<T> polygon = new Polygon<T>();
             polygon.Vertices = outerVertices;
@@ -936,7 +981,8 @@ namespace PSDSystem
 
             scale = 10.0f;
             cutter = new Polygon<T>();
-            cutter.Vertices = [
+            cutter.Vertices = new List<Vector2>()
+            {
                 new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
@@ -945,7 +991,7 @@ namespace PSDSystem
                 new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
                 new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                 new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-                ];
+            };
             cutter.InsertVertexAtBack(0);
             cutter.InsertVertexAtBack(1);
             cutter.InsertVertexAtBack(2);

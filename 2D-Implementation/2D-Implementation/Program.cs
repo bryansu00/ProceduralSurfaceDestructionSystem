@@ -17,7 +17,8 @@ class Program
     const int HEIGHT = 720;
     private static List<Color> colors = new List<Color>();
     // Test Settings
-    static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = [
+    static List<TestCaseDel<PolygonVertex>> TestCaseDelegates = new List<TestCaseDel<PolygonVertex>>()
+    {
         SquareTestCase<PolygonVertex>,
         SquareTestCase1<PolygonVertex>,
         SquareTestCase2<PolygonVertex>,
@@ -40,7 +41,7 @@ class Program
         OctagonTestCase1<PolygonVertex>,
         GodotFoundCase1<PolygonVertex>,
         GodotFoundCase2<PolygonVertex>
-        ];
+    };
     static int SelectedTestCase = 0;
     static ViewMode Mode = ViewMode.Surface;
     static bool FreeCutting = false;
@@ -134,7 +135,8 @@ class Program
                 float scale = 5.0f;
                 Vector2 center = FlipY(Raylib.GetMousePosition());
                 Cutter = new Polygon<PolygonVertex>();
-                Cutter.Vertices = [
+                Cutter.Vertices = new List<Vector2>()
+                {
                     new Vector2(10.0f * scale + center.X, 0.0f * scale + center.Y),
                     new Vector2(7.07f * scale + center.X, 7.07f * scale + center.Y),
                     new Vector2(0.0f * scale + center.X, 10.0f * scale + center.Y),
@@ -143,7 +145,7 @@ class Program
                     new Vector2(-7.07f * scale + center.X, -7.07f * scale + center.Y),
                     new Vector2(0.0f * scale + center.X, -10.0f * scale + center.Y),
                     new Vector2(7.07f * scale + center.X, -7.07f * scale + center.Y)
-                    ];
+                };
                 Cutter.InsertVertexAtBack(0);
                 Cutter.InsertVertexAtBack(1);
                 Cutter.InsertVertexAtBack(2);
