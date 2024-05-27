@@ -1890,6 +1890,14 @@ namespace PSDSystem
             return IsConvex(a, b, c, includeZeroAngles);
         }
 
+        /// <summary>
+        /// Determine if Vector b is convex or not
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <param name="c"></param>
+        /// <param name="includeZeroAngles"></param>
+        /// <returns></returns>
         private static bool IsConvex(Vector2 a, Vector2 b, Vector2 c, bool includeZeroAngles = false)
         {
             // Takes advantage of the fact that triangulation is
