@@ -1308,16 +1308,17 @@ namespace PSDSystem
             // Loop until there is no more eartips or vertices to process
             while (earTips.Count > 0 && currentPolygon.Count > 2)
             {
-                // List of convex vertices to keep track of
-                List<Vector2> convexVertices = new List<Vector2>();
+                // Keep track of the convex polygon
+                Polygon<T> convexPolygon = new Polygon<T>();
+                convexPolygon.Vertices = currentVertices;
 
                 // Get the ear to clip
                 VertexNode<T> earToClip = earTips[0];
 
                 // Add the vertices
-                convexVertices.Add(currentVertices[earToClip.Previous.Data.Index]);
-                convexVertices.Add(currentVertices[earToClip.Data.Index]);
-                convexVertices.Add(currentVertices[earToClip.Next.Data.Index]);
+                VertexNode<T> lastAddedPrevVertex = convexPolygon.InsertVertexAtBack(earToClip.Previous.Data.Index);
+                convexPolygon.InsertVertexAtBack(earToClip.Data.Index);
+                VertexNode<T> lastAddedNextVertex = convexPolygon.InsertVertexAtBack(earToClip.Next.Data.Index);
 
                 // Clip the ear and remove from the list
                 currentPolygon.ClipVertex(earToClip);
@@ -1342,13 +1343,18 @@ namespace PSDSystem
                 else
                     nextIsStillAnEarTip = false;
 
-                // The while loops will continue adding next.Next or prev.Prev until the next vertex makes the polygon non ear
+                // The while loops will continue adding next.Next or prev.Prev until the next vertex makes the polygon concave
 
                 VertexNode<T> next = earToClip.Next;
                 while (nextIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
-                    // Add next.Next's vertex to the list
-                    convexVertices.Add(currentVertices[next.Next.Data.Index]);
+                    // Add next.Next's vertex to the polygon and check if to see if it is still convex
+                    VertexNode<T> addedVertex = convexPolygon.InsertVertexAfter(lastAddedNextVertex, next.Next.Data.Index);
+                    if (!IsConvex(addedVertex.Next, true))
+                    {
+                        convexPolygon.ClipVertex(addedVertex);
+                        break;
+                    }
 
                     // Clip and remove from the list
                     currentPolygon.ClipVertex(next);
@@ -1375,6 +1381,7 @@ namespace PSDSystem
                         // Update previous if next.Next happens to be earToClip.Previous
                         previousIsStillAnEarTip = nextIsStillAnEarTip;
 
+                    lastAddedNextVertex = addedVertex;
                     next = next.Next;
                 }
 
@@ -1382,7 +1389,12 @@ namespace PSDSystem
                 while (previousIsStillAnEarTip && earTips.Count > 0 && currentPolygon.Count > 2)
                 {
                     // Add prev.Previous's vertex to the list
-                    convexVertices.Add(currentVertices[prev.Previous.Data.Index]);
+                    VertexNode<T> addedVertex = convexPolygon.InsertVertexBefore(lastAddedPrevVertex, prev.Previous.Data.Index);
+                    if (!IsConvex(addedVertex.Previous, true))
+                    {
+                        convexPolygon.ClipVertex(addedVertex);
+                        break;
+                    }
 
                     // Clip and remove from the list
                     currentPolygon.ClipVertex(prev);
@@ -1403,11 +1415,12 @@ namespace PSDSystem
                     if (IsAnEarTip(prev.Next, true))
                         earTips.Add(prev.Next);
 
+                    lastAddedPrevVertex = addedVertex;
                     prev = prev.Previous;
                 }
 
                 // Convex vertices group finished, add it to the list
-                convexVerticesGroups.Add(convexVertices);
+                convexVerticesGroups.Add(convexPolygon.ToVerticesList());
             }
         }
 
