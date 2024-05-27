@@ -130,8 +130,6 @@ namespace PSDSystem
         /// <param name="node">The node to insert a vertex after</param>
         /// <param name="index">The index that the vertex will refer to</param>
         /// <returns>The vertex inserted</returns>
-        /// <exception cref="InvalidOperationException">The vertex given belongs to a different polygon</exception>
-        /// <exception cref="Exception">Failed to instantiate a Vertex</exception>
         public VertexNode<T>? InsertVertexAfter(VertexNode<T> node, int index)
         {
             if (node == null || node.Owner != this) return null;
@@ -148,6 +146,29 @@ namespace PSDSystem
             node.Next = newNode;
             // Relink the next node
             newNode.Next.Previous = newNode;
+
+            // Increment count of the polygon
+            Count++;
+
+            return newNode;
+        }
+
+        public VertexNode<T>? InsertVertexBefore(VertexNode<T> node, int index)
+        {
+            if (node == null || node.Owner != this) return null;
+
+            T? data = (T?)Activator.CreateInstance(typeof(T), index);
+            if (data == null) return null;
+
+            VertexNode<T> newNode = new VertexNode<T>(this, data);
+
+            // Link up new node
+            newNode.Next = node;
+            newNode.Previous = node.Previous;
+            // Relink the given node
+            node.Previous = newNode;
+            // Relink the previous node
+            newNode.Previous.Next = newNode;
 
             // Increment count of the polygon
             Count++;
