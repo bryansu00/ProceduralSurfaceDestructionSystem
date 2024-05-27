@@ -1,7 +1,6 @@
 ﻿#nullable enable
 
 //#define USING_GODOT
-#define DEBUG
 
 using System;
 using System.Collections.Generic;

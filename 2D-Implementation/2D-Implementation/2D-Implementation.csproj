@@ -12,4 +12,10 @@
     <PackageReference Include="Raylib-cs" Version="6.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="PSDSystemLibrary">
+      <HintPath>PSDSystemLibrary.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
