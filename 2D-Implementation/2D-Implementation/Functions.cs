@@ -1869,13 +1869,20 @@ namespace PSDSystem
         {
             if (node.Owner.Vertices == null) return false;
             List<Vector2> vertices = node.Owner.Vertices;
+
+            Vector2 a = vertices[node.Previous.Data.Index];
+            Vector2 b = vertices[node.Data.Index];
+            Vector2 c = vertices[node.Next.Data.Index];
+
+            return IsConvex(a, b, c, includeZeroAngles);
+        }
+
+        private static bool IsConvex(Vector2 a, Vector2 b, Vector2 c, bool includeZeroAngles = false)
+        {
             // Takes advantage of the fact that triangulation is
             // done for 2D polygons. Thus the cross product
             // of two 2D vectors result in either a positive or
             // negative Z axis value
-            Vector2 a = vertices[node.Previous.Data.Index];
-            Vector2 b = vertices[node.Data.Index];
-            Vector2 c = vertices[node.Next.Data.Index];
 
             float crossResult = CrossProduct2D(a - b, c - b);
 
