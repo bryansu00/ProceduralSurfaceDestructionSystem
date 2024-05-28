@@ -46,6 +46,19 @@ public partial class ProceduralSurface : Node3D
         InitSurface();
         GenerateMeshOfSurface();
         GenerateCollision();
+
+        InitDamage();
+    }
+
+    private void InitDamage()
+    {
+        // Process the Surface with a cutter
+        Polygon<PolygonVertex> cutter = CreateCircle(new Vector2(5.0f, -1.3657429f), 0.05f);
+        PSD.CutSurfaceResult result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter, _anchorPolygon);
+
+        // Generate the surface and collision
+        GenerateMeshOfSurface();
+        GenerateCollision();
     }
 
     public override void _Process(double delta)
@@ -73,7 +86,7 @@ public partial class ProceduralSurface : Node3D
         PSD.CutSurfaceResult result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter, _anchorPolygon);
 
         // DEBUG Purpose
-        GD.Print(string.Format("Distance From Top Left: {0}", 2.0f - cutter.Vertices[cutter.Head.Data.Index].Y));
+        GD.Print(string.Format("Distance From Top Left: {0}, Position: {1}", 2.0f - cutter.Vertices[cutter.Head.Data.Index].Y, collisionPointOnPlane));
 
         // Generate the surface and collision
         GenerateMeshOfSurface();

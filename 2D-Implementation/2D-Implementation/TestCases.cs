@@ -755,7 +755,7 @@ namespace PSDSystem
             cutter.InsertVertexAtBack(7);
         }
 
-        public static void GodotFoundCase1<T>(out string testName, out SurfaceShape<T> ? surface, out Polygon<T>? cutter, out Polygon<T>? anchorVertices)
+        public static void GodotFoundCase1<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter, out Polygon<T>? anchorVertices)
             where T : PolygonVertex
         {
             testName = "Infinite Loop From Godot";
@@ -1002,6 +1002,61 @@ namespace PSDSystem
             cutter.InsertVertexAtBack(7);
 
             return;
+        }
+
+        public static void GodotFoundCase3<T>(out string testName, out SurfaceShape<T>? surface, out Polygon<T>? cutter, out Polygon<T>? anchorVertices)
+            where T : PolygonVertex
+        {
+            testName = "Godot Test";
+            surface = new SurfaceShape<T>();
+            anchorVertices = null;
+
+            float scale = 32.0f; // scale must be either 1.0f or a base of 2
+            Vector2 offset = new Vector2(800.0f, 90); // offset.Y has to be a specific number
+
+            Polygon<T> polygon = new Polygon<T>()
+            {
+                Vertices = new List<Vector2> {
+                new Vector2(-5.0f * scale + offset.X, -2.0f * scale + offset.Y), // bottom left
+                new Vector2(-5.0f * scale + offset.X, 2.0f * scale + offset.Y), // top left
+                new Vector2(5.0f * scale + offset.X, 2.0f * scale + offset.Y), // top right
+                new Vector2(5.0f * scale + offset.X, -2.0f * scale + offset.Y) // bottom right
+            }
+            };
+
+            polygon.InsertVertexAtBack(0);
+            polygon.InsertVertexAtBack(1);
+            polygon.InsertVertexAtBack(2);
+            polygon.InsertVertexAtBack(3);
+
+            anchorVertices = new Polygon<T>(polygon);
+
+            surface.AddOuterPolygon(polygon);
+
+            float cutterScale = 0.05f * scale;
+            Vector2 center =  new Vector2(5.0f * scale + offset.X, -1.3657429f * scale + offset.Y);
+            cutter = new Polygon<T>
+            {
+                Vertices = new List<Vector2> {
+                new Vector2(10.0f * cutterScale + center.X, 0.0f * cutterScale + center.Y),
+                new Vector2(7.07f * cutterScale + center.X, 7.07f * cutterScale + center.Y),
+                new Vector2(0.0f * cutterScale + center.X, 10.0f * cutterScale + center.Y),
+                new Vector2(-7.07f * cutterScale + center.X, 7.07f * cutterScale + center.Y),
+                new Vector2(-10.0f * cutterScale + center.X, 0.0f * cutterScale + center.Y),
+                new Vector2(-7.07f * cutterScale + center.X, -7.07f * cutterScale + center.Y),
+                new Vector2(0.0f * cutterScale + center.X, -10.0f * cutterScale + center.Y),
+                new Vector2(7.07f * cutterScale + center.X, -7.07f * cutterScale + center.Y)
+            }
+            };
+
+            cutter.InsertVertexAtBack(0);
+            cutter.InsertVertexAtBack(1);
+            cutter.InsertVertexAtBack(2);
+            cutter.InsertVertexAtBack(3);
+            cutter.InsertVertexAtBack(4);
+            cutter.InsertVertexAtBack(5);
+            cutter.InsertVertexAtBack(6);
+            cutter.InsertVertexAtBack(7);
         }
     }
 }
