@@ -1011,8 +1011,8 @@ namespace PSDSystem
             surface = new SurfaceShape<T>();
             anchorVertices = null;
 
-            float scale = 32.0f; // scale must be either 1.0f or a base of 2
-            Vector2 offset = new Vector2(800.0f, 90); // offset.Y has to be a specific number
+            float scale = 1.0f; // scale must be either 1.0f or a base of 2
+            Vector2 offset = new Vector2(0, 0); // offset.Y has to be a specific number
 
             Polygon<T> polygon = new Polygon<T>()
             {

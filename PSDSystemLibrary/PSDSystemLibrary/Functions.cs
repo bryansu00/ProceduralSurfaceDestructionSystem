@@ -1172,19 +1172,26 @@ namespace PSDSystem
                 }
 
                 // Do the actual insertions
-                if (!IsNearlyEqual(distanceFromNodeToIntersection, 0.0f))
-                {
-                    int insertedVertexLocation = vertices.Count;
-                    vertices.Add(intersectionPoint);
-                    nodeAddedToPolygon = intersectedNode.Owner.InsertVertexAfter(intersectedNode, insertedVertexLocation);
-                    nodeAddedToPolygon.Data.IsAnAddedVertex = true;
-                }
-                else
+                if (IsNearlyEqual(distanceFromNodeToIntersection, 0.0f))
                 {
                     // intersectedNode is the intersection point if this code executes
                     // No need to add a intersection point
                     nodeAddedToPolygon = intersectedNode;
                     // NOTE: intersectedNode.Data.Cross may change, and if it does, it may affect the CombinePolygon() algorithms and cause undesirable result
+                }
+                else if (IsNearlyEqual(distanceFromNodeToIntersection, distanceFromNodeToNext))
+                {
+                    // intersectedNode.Next is the intersection point if this code executes
+                    // No need to add a intersection point
+                    nodeAddedToPolygon = intersectedNode.Next;
+                    // NOTE: intersectedNode.Next.Data.Cross may change, and if it does, it may affect the CombinePolygon() algorithms and cause undesirable result
+                }
+                else
+                {
+                    int insertedVertexLocation = vertices.Count;
+                    vertices.Add(intersectionPoint);
+                    nodeAddedToPolygon = intersectedNode.Owner.InsertVertexAfter(intersectedNode, insertedVertexLocation);
+                    nodeAddedToPolygon.Data.IsAnAddedVertex = true;
                 }
             }
 
