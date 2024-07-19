@@ -44,21 +44,11 @@ public partial class ProceduralSurface : Node3D
 
         // Initialize the surface and generate the initial meshes and collisions
         InitSurface();
-        GenerateMeshOfSurface();
-        GenerateCollision();
 
-        InitDamage();
-    }
-
-    private void InitDamage()
-    {
-        // Process the Surface with a cutter
-        Polygon<PolygonVertex> cutter = CreateCircle(new Vector2(5.0f, -1.3657429f), 0.05f);
-        PSD.CutSurfaceResult result = PSD.CutSurface<PolygonVertex, BooleanVertex>(_surface, cutter, _anchorPolygon);
-
-        // Generate the surface and collision
-        GenerateMeshOfSurface();
-        GenerateCollision();
+        if (Material1 != null)
+            _meshInstance.SetSurfaceOverrideMaterial(0, Material1);
+        if (Material2 != null)
+            _meshInstance.SetSurfaceOverrideMaterial(1, Material2);
     }
 
     public override void _Process(double delta)
@@ -89,10 +79,8 @@ public partial class ProceduralSurface : Node3D
         GD.Print(string.Format("Distance From Top Left: {0}, Position: {1}", 2.0f - cutter.Vertices[cutter.Head.Data.Index].Y, collisionPointOnPlane));
 
         // Generate the surface and collision
-        ArrayMesh? res = GPSD.ExtrudeSurface(_surface, _coordinateConverter, _originalVertices, _originalUvs, _depth);
-        if (res != null) _meshInstance.Mesh = res;
-
-        GenerateCollision();
+        GPSD.ExtrudeSurface(_meshInstance, _surface, _coordinateConverter, _originalVertices, _originalUvs, _depth);
+        GPSD.GenerateCollisionShape(_staticBody3D, _surface, _coordinateConverter, _depth);
 
         // Print the result of the CutSurface function
         GD.Print(result);
@@ -165,150 +153,8 @@ public partial class ProceduralSurface : Node3D
             new Vector2(1.0f, 0.0f),
             new Vector2(1.0f, 1.0f),
         };
-    }
 
-    private void GenerateMeshOfSurface()
-    {
-        ArrayMesh arrayMesh = new ArrayMesh();
-
-        // ------------------------------------------------------------------------------------------
-        // Generate Front Face
-
-        // Lists needed for the procedural mesh
-        List<Vector3> frontVerts;
-        List<Vector2>? frontUvs;
-        List<Vector3> frontNormals = new List<Vector3>();
-        List<int> frontIndices;
-
-        // Triangulate the surface
-        List<Vector2> verts2D;
-        PSD.TriangulateSurface(_surface, out frontIndices, out verts2D);
-        if (frontIndices == null || verts2D == null)
-        {
-            // Given surface cannot be triangulated,
-            // thus no mesh will be generated
-            _meshInstance.Mesh = arrayMesh;
-            return;
-        }
-
-        // Convert triangulation into 3D
-        frontVerts = _coordinateConverter.ConvertListTo3D(verts2D);
-        // Add the normals for the front face, it is Vector3.Back by default
-        for (int i = 0; i < frontVerts.Count; i++)
-        {
-            frontNormals.Add(Vector3.Back);
-        }
-
-        // Compute the UV coordinates of the front face
-        frontUvs = PSD.ComputeUVCoordinates(_originalVertices, _originalUvs, verts2D);
-        if (frontUvs == null) return;
-
-        // Create the arrays for mesh
-        var frontSurfaceArray = new Godot.Collections.Array();
-        frontSurfaceArray.Resize((int)Mesh.ArrayType.Max);
-
-        // Convert Lists to arrays and assign to surface array
-        frontSurfaceArray[(int)Mesh.ArrayType.Vertex] = frontVerts.ToArray();
-        frontSurfaceArray[(int)Mesh.ArrayType.TexUV] = frontUvs.ToArray();
-        frontSurfaceArray[(int)Mesh.ArrayType.Normal] = frontNormals.ToArray();
-        frontSurfaceArray[(int)Mesh.ArrayType.Index] = frontIndices.ToArray();
-
-        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, frontSurfaceArray);
-
-        // ------------------------------------------------------------------------------------------
-        // Generate Back Face
-
-        List<Vector3> backVerts = new List<Vector3>();
-        List<Vector2> backUvs = new List<Vector2>();
-        List<Vector3> backNormals = new List<Vector3>();
-        List<int> backIndices = new List<int>();
-
-        // Reuse the triangulation from prior computation to generate the backface
-        for (int i = 0; i < verts2D.Count; i++)
-        {
-            backVerts.Add(frontVerts[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
-            backNormals.Add(Vector3.Forward);
-        }
-
-        // Copy the front face UVs, (Should be recalculated using a different
-        // originalUVs list for the back face, else the texture will be flipped horizontally)
-        backUvs.AddRange(frontUvs);
-
-        // Add the indices of triangulation for the back face
-        for (int i = frontIndices.Count - 1; i >= 0; i--)
-        {
-            backIndices.Add(frontIndices[i]);
-        }
-
-        var backSurfaceArray = new Godot.Collections.Array();
-        backSurfaceArray.Resize((int)Mesh.ArrayType.Max);
-
-        backSurfaceArray[(int)Mesh.ArrayType.Vertex] = backVerts.ToArray();
-        backSurfaceArray[(int)Mesh.ArrayType.TexUV] = backUvs.ToArray();
-        backSurfaceArray[(int)Mesh.ArrayType.Normal] = backNormals.ToArray();
-        backSurfaceArray[(int)Mesh.ArrayType.Index] = backIndices.ToArray();
-
-        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, backSurfaceArray);
-
-        // ------------------------------------------------------------------------------------------
-        // Generate Side cap
-
-        List<Vector3> sideVerts = new List<Vector3>();
-        List<Vector2> sideUvs = new List<Vector2>();
-        List<Vector3> sideNormals = new List<Vector3>();
-        List<int> sideIndices = new List<int>();
-
-        PSD.CreateSideCapOfSurface(_surface, _coordinateConverter, Vector3.Back, _depth / 2.0f,
-            sideVerts, sideNormals, sideIndices, sideUvs);
-
-        var sideSurfaceArray = new Godot.Collections.Array();
-        sideSurfaceArray.Resize((int)Mesh.ArrayType.Max);
-
-        sideSurfaceArray[(int)Mesh.ArrayType.Vertex] = sideVerts.ToArray();
-        sideSurfaceArray[(int)Mesh.ArrayType.TexUV] = sideUvs.ToArray();
-        sideSurfaceArray[(int)Mesh.ArrayType.Normal] = sideNormals.ToArray();
-        sideSurfaceArray[(int)Mesh.ArrayType.Index] = sideIndices.ToArray();
-
-        arrayMesh.AddSurfaceFromArrays(Mesh.PrimitiveType.Triangles, sideSurfaceArray);
-
-        _meshInstance.Mesh = arrayMesh;
-
-        if (Material1 != null)
-            _meshInstance.SetSurfaceOverrideMaterial(0, Material1);
-        if (Material2 != null)
-            _meshInstance.SetSurfaceOverrideMaterial(1, Material2);
-    }
-
-    private void GenerateCollision()
-    {
-        // Find Convex groups of vertices in 2D
-        List<List<Vector2>>? convexVertices = PSD.FindConvexVerticesOfSurface(_surface);
-
-        // Clear nodes of collision from prior computation
-        foreach (Node child in _staticBody3D.GetChildren())
-        {
-            _staticBody3D.RemoveChild(child);
-            child.QueueFree();
-        }
-
-        if (convexVertices == null) return;
-
-        // Create Collision Shape from each convex group of vertices
-        foreach (List<Vector2> vertexGroup in convexVertices)
-        {
-            List<Vector3> vertices = _coordinateConverter.ConvertListTo3D(vertexGroup);
-            for (int i = vertices.Count - 1; i >= 0; i--)
-            {
-                vertices.Add(vertices[i] - new Vector3(0.0f, 0.0f, _depth / 2.0f));
-            }
-
-            ConvexPolygonShape3D shape = new ConvexPolygonShape3D();
-            shape.Points = vertices.ToArray();
-
-            CollisionShape3D collisionShape3D = new CollisionShape3D();
-            collisionShape3D.Shape = shape;
-
-            _staticBody3D.AddChild(collisionShape3D);
-        }
+        GPSD.ExtrudeSurface(_meshInstance, _surface, _coordinateConverter, _originalVertices, _originalUvs, _depth);
+        GPSD.GenerateCollisionShape(_staticBody3D, _surface, _coordinateConverter, _depth);
     }
 }

@@ -12,7 +12,8 @@ namespace PSDSystem
     /// </summary>
     public static class GPSD
     {
-        public static ArrayMesh? ExtrudeSurface<T>(SurfaceShape<T> surface, 
+        public static void ExtrudeSurface<T>(MeshInstance3D meshInstance,
+            SurfaceShape<T> surface, 
             CoordinateConverter coordinateConverter,
             List<Vector2> originalVertices,
             List<Vector2> originalUVs,
@@ -35,14 +36,14 @@ namespace PSDSystem
             {
                 // Given surface cannot be triangulated,
                 // thus no mesh will be generated
-                return null;
+                return;
             }
 
             // Convert triangulation into 3D
             frontVerts = coordinateConverter.ConvertListTo3D(verts2D);
             // Compute the UV coordinates of the front face
             frontUvs = PSD.ComputeUVCoordinates(originalVertices, originalUVs, verts2D);
-            if (frontUvs == null) return null;
+            if (frontUvs == null) return;
 
             // Add the normals for the front face, it is Vector3.Back by default
             for (int i = 0; i < frontVerts.Count; i++)
@@ -122,7 +123,40 @@ namespace PSDSystem
 
             #endregion
 
-            return arrayMesh;
+            meshInstance.Mesh = arrayMesh;
+        }
+
+        public static void GenerateCollisionShape<T>(StaticBody3D staticBody, SurfaceShape<T> surface, CoordinateConverter coordinateConverter, float extrusionDepth) where T : PolygonVertex
+        {
+            // Find Convex groups of vertices in 2D
+            List<List<Vector2>>? convexVertices = PSD.FindConvexVerticesOfSurface(surface);
+
+            // Clear nodes of collision from prior computation
+            foreach (Node child in staticBody.GetChildren())
+            {
+                staticBody.RemoveChild(child);
+                child.QueueFree();
+            }
+
+            if (convexVertices == null) return;
+
+            // Create Collision Shape from each convex group of vertices
+            foreach (List<Vector2> vertexGroup in convexVertices)
+            {
+                List<Vector3> vertices = coordinateConverter.ConvertListTo3D(vertexGroup);
+                for (int i = vertices.Count - 1; i >= 0; i--)
+                {
+                    vertices.Add(vertices[i] - new Vector3(0.0f, 0.0f, extrusionDepth / 2.0f));
+                }
+
+                ConvexPolygonShape3D shape = new ConvexPolygonShape3D();
+                shape.Points = vertices.ToArray();
+
+                CollisionShape3D collisionShape3D = new CollisionShape3D();
+                collisionShape3D.Shape = shape;
+
+                staticBody.AddChild(collisionShape3D);
+            }
         }
     }
 }
