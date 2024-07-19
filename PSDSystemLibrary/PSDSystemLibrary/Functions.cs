@@ -92,7 +92,11 @@ namespace PSDSystem
         /// <typeparam name="U">The polygon vertex containing properties needed for polygon boolean operations</typeparam>
         /// <param name="surface">The surface to be cut</param>
         /// <param name="cutter">The cutter polygon</param>
-        /// <param name="anchorPolygon">Polygon used to test whether a polygon should kept or not</param>
+        /// <param name="anchorPolygon">
+        /// If an anchorPolygon is provided, 
+        /// then any OuterPolygons that is NOT on the edge of the anchorPolygon after performing a boolean operation,
+        /// will be disposed of.
+        /// </param>
         /// <returns>Result of the surface being cut</returns>
         public static CutSurfaceResult CutSurface<T, U>(SurfaceShape<T> surface, Polygon<T> cutter, Polygon<T>? anchorPolygon = null)
             where T : PolygonVertex
@@ -185,7 +189,7 @@ namespace PSDSystem
                 if (polygonsProduced.Count == 1)
                 {
                     // Only one polygon was produced,
-                    // First, check to see if the outside polygon is 'achored' by the anchor polygon
+                    // First, check to see if the outside polygon is 'anchored' by the anchor polygon
                     if (anchorPolygon != null)
                     {
                         bool isAnchored = false;
@@ -1687,6 +1691,7 @@ namespace PSDSystem
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="node">The node to be checked</param>
+        /// <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
         /// <returns>True if the node is an ear tip, false otherwise</returns>
         private static bool IsAnEarTip<T>(VertexNode<T> node, bool includeZeroAngles = false) where T : PolygonVertex
         {
@@ -1730,6 +1735,7 @@ namespace PSDSystem
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="polygon">The polygon to find the ear tips for</param>
+        /// <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
         /// <returns>List of nodes that have been identified to be ear tips, null if no eartips was found, or is not possible</returns>
         private static List<VertexNode<T>>? FindEarTips<T>(Polygon<T> polygon, bool includeZeroAngles = false) where T : PolygonVertex
         {
@@ -1923,6 +1929,7 @@ namespace PSDSystem
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="node"></param>
+        /// <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
         /// <returns></returns>
         private static bool IsConvex<T>(VertexNode<T> node, bool includeZeroAngles = false) where T : PolygonVertex
         {
@@ -1942,7 +1949,7 @@ namespace PSDSystem
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <param name="c"></param>
-        /// <param name="includeZeroAngles"></param>
+        /// <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
         /// <returns></returns>
         private static bool IsConvex(Vector2 a, Vector2 b, Vector2 c, bool includeZeroAngles = false)
         {
