@@ -241,20 +241,6 @@
             <param name="surface">The surface to find convex groups of vertices</param>
             <returns>List of lists, where each list contains vertices that make up a convex groups</returns>
         </member>
-        <member name="M:PSDSystem.PSD.CreateSideCapOfSurface``1(PSDSystem.SurfaceShape{``0},PSDSystem.CoordinateConverter,Godot.Vector3,System.Single,System.Collections.Generic.List{Godot.Vector3},System.Collections.Generic.List{Godot.Vector3},System.Collections.Generic.List{System.Int32},System.Collections.Generic.List{Godot.Vector2})">
-            <summary>
-            Generate the values needed for the sides of the surfaces
-            </summary>
-            <typeparam name="T">The original polygon vertex type of polygon and surface</typeparam>
-            <param name="surface">The surface to create the sides for</param>
-            <param name="coordinateConverter">The CoordinateConverter needed for translating from 2D to 3D</param>
-            <param name="frontNormal">The normal of the front face of the surface, needed to determine the direction of the sides cap to extrude to</param>
-            <param name="depth">The depth of the sides</param>
-            <param name="vertices">List of vertices to append the new vertices into</param>
-            <param name="normals">List of normals to append the new normals into</param>
-            <param name="indices">List of triangles to append the new indices into</param>
-            <param name="uvs">List of UVs to append the new uvs into</param>
-        </member>
         <member name="M:PSDSystem.PSD.ComputeUVCoordinates(System.Collections.Generic.List{Godot.Vector2},System.Collections.Generic.List{Godot.Vector2},System.Collections.Generic.List{Godot.Vector2})">
             <summary>
             Compute UV coordinates for each of the given vertices list
