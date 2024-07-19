@@ -12,6 +12,9 @@ using System.Text;
 
 namespace PSDSystem
 {
+    /// <summary>
+    /// Contains all functions/methods needed to create holes onto a 2D surface.
+    /// </summary>
     public static class PSD
     {
         #region PUBLIC
@@ -20,10 +23,25 @@ namespace PSDSystem
         /// </summary>
         public enum IntersectionResult
         {
+            /// <summary>
+            /// Intersection test Failed
+            /// </summary>
             FAILED = -1,
+            /// <summary>
+            /// The two Polygons intersected
+            /// </summary>
             INTERSECTS = 0,
+            /// <summary>
+            /// No intersection, and the Cutter is inside of the Polygon.
+            /// </summary>
             CUTTER_IS_INSIDE = 1,
+            /// <summary>
+            /// No intersection, and the Polygon is inside of the Cutter.
+            /// </summary>
             POLYGON_IS_INSIDE = 2,
+            /// <summary>
+            /// No intersection, neither the Cutter nor the Polygon are inside of each other.
+            /// </summary>
             BOTH_OUTSIDE = 3
         }
 
@@ -32,12 +50,36 @@ namespace PSDSystem
         /// </summary>
         public enum CutSurfaceResult
         {
+            /// <summary>
+            /// Unknown error
+            /// </summary>
             UNKNOWN_ERROR = -2,
+            /// <summary>
+            /// Failed to cut.
+            /// </summary>
             FAILED = -1,
+            /// <summary>
+            /// The Cutter overlapped with an outer polygon, and boolean operations was performed.
+            /// </summary>
             OVERLAPPED_OUTER = 0,
+            /// <summary>
+            /// The Cutter is completely inside an outer AND an inner polygon. Thus no changes to the surface will be made.
+            /// </summary>
             CUTTER_INSIDE_OF_INNER = 1,
+            /// <summary>
+            /// The Cutter is completely inside an outer polygon, but does not overlapped with any of it's inner polygons.
+            /// Thus the cutter will simply be added to the InnerPolygon list with no boolean operations needed.
+            /// </summary>
             CUTTER_INSIDE_OUTER_BUT_NOT_INNERS = 2,
+            /// <summary>
+            /// The Cutter is completely inside an outer polygon and it overlaps with at least one inner polygons.
+            /// A boolean operation was done, and it replaced the inner polygon(s) with one new polygon.
+            /// </summary>
             CUTTER_INSIDE_OUTER_OVERLAPPED_INNER = 3,
+            /// <summary>
+            /// The Cutter is completely inside an outer polygon and it overlaps with at least one inner polygons.
+            /// A boolean operation was done...
+            /// </summary>
             CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI = 4
         }
 

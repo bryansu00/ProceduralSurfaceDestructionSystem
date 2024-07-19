@@ -14,6 +14,9 @@ namespace PSDSystem
         /// </summary>
         public List<PolygonGroup<T>> Polygons { get; }
 
+        /// <summary>
+        /// Construct a SurfaceShape.
+        /// </summary>
         public SurfaceShape()
         {
             Polygons = new List<PolygonGroup<T>>();
@@ -59,10 +62,21 @@ namespace PSDSystem
     /// <typeparam name="T"></typeparam>
     public class PolygonGroup<T> where T : PolygonVertex
     {
+        /// <summary>
+        /// The Polygon that is on the outside.
+        /// </summary>
         public Polygon<T> OuterPolygon { get; }
 
+        /// <summary>
+        /// The list of Polygons that are inside of the OuterPolygon.
+        /// </summary>
         public List<Polygon<T>> InnerPolygons { get; set; }
 
+        /// <summary>
+        /// Construct a PolygonGroup
+        /// </summary>
+        /// <param name="outerPolygon">The Polygon that is outside. If argument is null, then a new Polygon will be made.</param>
+        /// <param name="innerPolygons">The list of Polygons that is inside of the outerPolygon. If the outerPolygon does not have any Polygons inside it, then the argument should be null.</param>
         public PolygonGroup(Polygon<T>? outerPolygon, List<Polygon<T>>? innerPolygons = null)
         {
             if (outerPolygon != null) OuterPolygon = outerPolygon;

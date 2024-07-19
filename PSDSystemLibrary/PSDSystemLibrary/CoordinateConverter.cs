@@ -3,14 +3,32 @@ using Godot;
 
 namespace PSDSystem
 {
+    /// <summary>
+    /// Used to convert Vector3 to Vector2 and vice-versa.
+    /// </summary>
     public class CoordinateConverter
     {
+        /// <summary>
+        /// The origin point in 3D space.
+        /// </summary>
         public Vector3 Origin { get; }
 
+        /// <summary>
+        /// X-axis in 3D space
+        /// </summary>
         public Vector3 XAxis { get; }
 
+        /// <summary>
+        /// Y-axis in 3D space
+        /// </summary>
         public Vector3 YAxis { get; }
 
+        /// <summary>
+        /// Construct a CoordinateConverter
+        /// </summary>
+        /// <param name="origin">The origin point in 3D space.</param>
+        /// <param name="xAxis">X-axis in 3D space, recommended to be length of 1.0.</param>
+        /// <param name="yAxis">Y-axis in 3D space, recommended to be length of 1.0.</param>
         public CoordinateConverter(Vector3 origin, Vector3 xAxis, Vector3 yAxis)
         {
             Origin = origin;

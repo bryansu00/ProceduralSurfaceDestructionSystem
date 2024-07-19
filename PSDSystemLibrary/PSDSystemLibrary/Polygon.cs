@@ -15,12 +15,12 @@ namespace PSDSystem
     public class Polygon<T> where T : PolygonVertex
     {
         /// <summary>
-        /// The head node of a vertex of the polygon
+        /// The head node of a vertex of the Polygon. Returns null if the Polygon is empty.
         /// </summary>
         public VertexNode<T>? Head { get; private set; }
 
         /// <summary>
-        /// The right most vertex of the polygon
+        /// The right most vertex of the Polygon. Returns null if the Polygon is empty.
         /// </summary>
         public VertexNode<T>? RightMostVertex
         {
@@ -47,15 +47,18 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// The number of vertex in the polygon
+        /// The number of vertex in the Polygon
         /// </summary>
         public uint Count { get; private set; }
 
         /// <summary>
-        /// The list of vertices the polygon is referring to
+        /// The list of vertices the Polygon is referring to
         /// </summary>
         public List<Vector2>? Vertices { get; set; }
 
+        /// <summary>
+        /// Construct a Polygon without any vertices or shape
+        /// </summary>
         public Polygon()
         {
             Head = null;
@@ -63,6 +66,10 @@ namespace PSDSystem
             Vertices = null;
         }
 
+        /// <summary>
+        /// Construct a copy of the given Polygon
+        /// </summary>
+        /// <param name="polygon"></param>
         public Polygon(Polygon<T> polygon)
         {
             Count = 0;
@@ -91,7 +98,7 @@ namespace PSDSystem
         /// Inserts a vertex with the given index to the polygon
         /// </summary>
         /// <param name="index">The index that the vertex will refer to</param>
-        /// <returns>The vertex inserted at the back</returns>
+        /// <returns>The vertex inserted at the back.</returns>
         /// <exception cref="Exception">Failed to instantiate a Vertex</exception>
         public VertexNode<T> InsertVertexAtBack(int index)
         {
@@ -128,8 +135,8 @@ namespace PSDSystem
         /// Insert a vertex after the given node
         /// </summary>
         /// <param name="node">The node to insert a vertex after</param>
-        /// <param name="index">The index that the vertex will refer to</param>
-        /// <returns>The vertex inserted</returns>
+        /// <param name="index">The index that the inserted vertex will refer to</param>
+        /// <returns>The vertex inserted. Returns null if the given node is invalid.</returns>
         public VertexNode<T>? InsertVertexAfter(VertexNode<T> node, int index)
         {
             if (node == null || node.Owner != this) return null;
@@ -153,6 +160,12 @@ namespace PSDSystem
             return newNode;
         }
 
+        /// <summary>
+        /// Insert a vertex before the given node
+        /// </summary>
+        /// <param name="node">The node to insert a vertex before</param>
+        /// <param name="index">The index that the inserted vertex will refer to</param>
+        /// <returns>The vertex inserted. Returns null if the given node is invalid.</returns>
         public VertexNode<T>? InsertVertexBefore(VertexNode<T> node, int index)
         {
             if (node == null || node.Owner != this) return null;
@@ -179,8 +192,8 @@ namespace PSDSystem
         /// <summary>
         /// Remove the given node from the polygon
         /// </summary>
-        /// <param name="node">The node to remove</param>
-        /// <exception cref="InvalidOperationException">The vertex given belongs to a different polygon</exception>
+        /// <param name="node">The node to remove.</param>
+        /// <exception cref="InvalidOperationException">The vertex given belongs to a different polygon.</exception>
         public void ClipVertex(VertexNode<T> node)
         {
             if (node == null || node.Owner != this) throw new InvalidOperationException("Given node does not belong to the Polygon!");
@@ -204,6 +217,10 @@ namespace PSDSystem
             }
         }
 
+        /// <summary>
+        /// Remove all vertices with the given index from the Polygon.
+        /// </summary>
+        /// <param name="indexToRemove">The index of the vertices to remove.</param>
         public void RemoveVerticesWithIndex(int indexToRemove)
         {
             if (Head == null) return;
@@ -222,7 +239,7 @@ namespace PSDSystem
         }
 
         /// <summary>
-        /// Convert the polygon to list of indices referring to this.Vertices
+        /// Get the list of indices of this Polygon.
         /// </summary>
         /// <returns>List of indices</returns>
         public List<int> ToList()
@@ -240,6 +257,10 @@ namespace PSDSystem
             return toReturn;
         }
 
+        /// <summary>
+        /// Get the list of Vector2 of this Polygon.
+        /// </summary>
+        /// <returns>List of Vector2</returns>
         public List<Vector2> ToVerticesList()
         {
             List<Vector2> toReturn = new List<Vector2>();
@@ -275,6 +296,10 @@ namespace PSDSystem
             
         }
 
+        /// <summary>
+        /// Construct a PolygonVertex with the given index.
+        /// </summary>
+        /// <param name="index"></param>
         public PolygonVertex(int index)
         {
             Index = index;
@@ -287,14 +312,31 @@ namespace PSDSystem
     /// <typeparam name="T">The vertex that holds the data</typeparam>
     public class VertexNode<T> where T : PolygonVertex
     {
+        /// <summary>
+        /// The vertex data this VertexNode is holding onto.
+        /// </summary>
         public T Data { get; }
 
+        /// <summary>
+        /// Reference to the Next VertexNode
+        /// </summary>
         public VertexNode<T> Next { get; set; }
 
+        /// <summary>
+        /// Reference to the Previous VertexNode
+        /// </summary>
         public VertexNode<T> Previous { get; set; }
 
+        /// <summary>
+        /// The Polygon that the VertexNode belongs to
+        /// </summary>
         public Polygon<T> Owner { get; }
 
+        /// <summary>
+        /// Contruct a VertexNode with the given reference of the owner and the Vertex data
+        /// </summary>
+        /// <param name="owner">The Polygon that the VertexNode will be part of</param>
+        /// <param name="data">The Vertex data that the VertexNode will be holding onto</param>
         public VertexNode(Polygon<T> owner, T data)
         {
             Owner = owner;
