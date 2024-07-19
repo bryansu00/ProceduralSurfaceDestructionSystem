@@ -89,7 +89,9 @@ public partial class ProceduralSurface : Node3D
         GD.Print(string.Format("Distance From Top Left: {0}, Position: {1}", 2.0f - cutter.Vertices[cutter.Head.Data.Index].Y, collisionPointOnPlane));
 
         // Generate the surface and collision
-        GenerateMeshOfSurface();
+        ArrayMesh? res = GPSD.ExtrudeSurface(_surface, _coordinateConverter, _originalVertices, _originalUvs, _depth);
+        if (res != null) _meshInstance.Mesh = res;
+
         GenerateCollision();
 
         // Print the result of the CutSurface function

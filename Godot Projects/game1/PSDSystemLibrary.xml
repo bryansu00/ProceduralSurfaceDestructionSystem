@@ -4,6 +4,105 @@
         <name>PSDSystemLibrary</name>
     </assembly>
     <members>
+        <member name="T:PSDSystem.BooleanVertex">
+            <summary>
+            Class needed to perform boolean operations for between two or more Polygons.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.BooleanVertex.IsOutside">
+            <summary>
+            Whether or not the BooleanVertex is outside of the Polygon it is intersecting
+            </summary>
+        </member>
+        <member name="P:PSDSystem.BooleanVertex.Cross">
+            <summary>
+            Reference to another VertexNode belonging to the Polygon it is intersecting.
+            If the BooleanVertex is an intersection point, then Cross will NOT be null.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.BooleanVertex.Processed">
+            <summary>
+            Whether or not the BooleanVertex has been processed as part of the boolean operations.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.BooleanVertex.OnEdge">
+            <summary>
+            Whether or not the BooleanVertex is on the edge of the Polygon it is intersecting.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.BooleanVertex.IsAnAddedVertex">
+            <summary>
+            Whether the not the BooleanVertex is a Vertex created as part of the boolean operations.
+            </summary>
+        </member>
+        <member name="M:PSDSystem.BooleanVertex.#ctor(System.Int32)">
+            <summary>
+            Construct a BooleanVertex with the given index.
+            </summary>
+            <param name="index">The index the BooleanVertex is referring to.</param>
+        </member>
+        <member name="T:PSDSystem.IHasBooleanVertexProperties`1">
+            <summary>
+            An interface containing the required properties needed to execute the Boolean operations.
+            If a class is extended from this interface, then IsOutside = false, Cross = null, Processed = false, OnEdge = false, IsAnAddedVertex = false,
+            and the class must have a constructor that takes an integer as an argument.
+            </summary>
+            <typeparam name="T">Class that is a PolygonVertex.</typeparam>
+        </member>
+        <member name="P:PSDSystem.IHasBooleanVertexProperties`1.IsOutside">
+            <summary>
+            Whether or not the BooleanVertex is outside of the Polygon it is intersecting
+            </summary>
+        </member>
+        <member name="P:PSDSystem.IHasBooleanVertexProperties`1.Cross">
+            <summary>
+            Reference to another VertexNode belonging to the Polygon it is intersecting.
+            If the BooleanVertex is an intersection point, then Cross will NOT be null.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.IHasBooleanVertexProperties`1.Processed">
+            <summary>
+            Whether or not the BooleanVertex has been processed as part of the boolean operations.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.IHasBooleanVertexProperties`1.OnEdge">
+            <summary>
+            Whether or not the BooleanVertex is on the edge of the Polygon it is intersecting.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.IHasBooleanVertexProperties`1.IsAnAddedVertex">
+            <summary>
+            Whether the not the BooleanVertex is a Vertex created as part of the boolean operations.
+            </summary>
+        </member>
+        <member name="T:PSDSystem.CoordinateConverter">
+            <summary>
+            Used to convert Vector3 to Vector2 and vice-versa.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.CoordinateConverter.Origin">
+            <summary>
+            The origin point in 3D space.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.CoordinateConverter.XAxis">
+            <summary>
+            X-axis in 3D space
+            </summary>
+        </member>
+        <member name="P:PSDSystem.CoordinateConverter.YAxis">
+            <summary>
+            Y-axis in 3D space
+            </summary>
+        </member>
+        <member name="M:PSDSystem.CoordinateConverter.#ctor(Godot.Vector3,Godot.Vector3,Godot.Vector3)">
+            <summary>
+            Construct a CoordinateConverter
+            </summary>
+            <param name="origin">The origin point in 3D space.</param>
+            <param name="xAxis">X-axis in 3D space, recommended to be length of 1.0.</param>
+            <param name="yAxis">Y-axis in 3D space, recommended to be length of 1.0.</param>
+        </member>
         <member name="M:PSDSystem.CoordinateConverter.ConvertTo3D(Godot.Vector2)">
             <summary>
             Convert the given 2D vector to a 3D vector
@@ -32,14 +131,82 @@
             <param name="vectors">List of 3D vectors to convert</param>
             <returns>List of 2D vectors</returns>
         </member>
+        <member name="T:PSDSystem.PSD">
+            <summary>
+            Contains all functions/methods needed to create holes onto a 2D surface.
+            </summary>
+        </member>
         <member name="T:PSDSystem.PSD.IntersectionResult">
             <summary>
             Result of an intersection test between two polygons
             </summary>
         </member>
+        <member name="F:PSDSystem.PSD.IntersectionResult.FAILED">
+            <summary>
+            Intersection test Failed
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.IntersectionResult.INTERSECTS">
+            <summary>
+            The two Polygons intersected
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.IntersectionResult.CUTTER_IS_INSIDE">
+            <summary>
+            No intersection, and the Cutter is inside of the Polygon.
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.IntersectionResult.POLYGON_IS_INSIDE">
+            <summary>
+            No intersection, and the Polygon is inside of the Cutter.
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.IntersectionResult.BOTH_OUTSIDE">
+            <summary>
+            No intersection, neither the Cutter nor the Polygon are inside of each other.
+            </summary>
+        </member>
         <member name="T:PSDSystem.PSD.CutSurfaceResult">
             <summary>
             Result of the cut surface function
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.CutSurfaceResult.UNKNOWN_ERROR">
+            <summary>
+            Unknown error
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.CutSurfaceResult.FAILED">
+            <summary>
+            Failed to cut.
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.CutSurfaceResult.OVERLAPPED_OUTER">
+            <summary>
+            The Cutter overlapped with an outer polygon, and boolean operations was performed.
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.CutSurfaceResult.CUTTER_INSIDE_OF_INNER">
+            <summary>
+            The Cutter is completely inside an outer AND an inner polygon. Thus no changes to the surface will be made.
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.CutSurfaceResult.CUTTER_INSIDE_OUTER_BUT_NOT_INNERS">
+            <summary>
+            The Cutter is completely inside an outer polygon, but does not overlapped with any of it's inner polygons.
+            Thus the cutter will simply be added to the InnerPolygon list with no boolean operations needed.
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER">
+            <summary>
+            The Cutter is completely inside an outer polygon and it overlaps with at least one inner polygons.
+            A boolean operation was done, and it replaced the inner polygon(s) with one new polygon.
+            </summary>
+        </member>
+        <member name="F:PSDSystem.PSD.CutSurfaceResult.CUTTER_INSIDE_OUTER_OVERLAPPED_INNER_PRODUCE_MULTI">
+            <summary>
+            The Cutter is completely inside an outer polygon and it overlaps with at least one inner polygons.
+            A boolean operation was done...
             </summary>
         </member>
         <member name="M:PSDSystem.PSD.CutSurface``2(PSDSystem.SurfaceShape{``0},PSDSystem.Polygon{``0},PSDSystem.Polygon{``0})">
@@ -50,7 +217,11 @@
             <typeparam name="U">The polygon vertex containing properties needed for polygon boolean operations</typeparam>
             <param name="surface">The surface to be cut</param>
             <param name="cutter">The cutter polygon</param>
-            <param name="anchorPolygon">Polygon used to test whether a polygon should kept or not</param>
+            <param name="anchorPolygon">
+            If an anchorPolygon is provided, 
+            then any OuterPolygons that is NOT on the edge of the anchorPolygon after performing a boolean operation,
+            will be disposed of.
+            </param>
             <returns>Result of the surface being cut</returns>
         </member>
         <member name="M:PSDSystem.PSD.TriangulateSurface``1(PSDSystem.SurfaceShape{``0},System.Collections.Generic.List{System.Int32}@,System.Collections.Generic.List{Godot.Vector2}@)">
@@ -193,6 +364,7 @@
             </summary>
             <typeparam name="T"></typeparam>
             <param name="node">The node to be checked</param>
+            <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
             <returns>True if the node is an ear tip, false otherwise</returns>
         </member>
         <member name="M:PSDSystem.PSD.FindEarTips``1(PSDSystem.Polygon{``0},System.Boolean)">
@@ -201,6 +373,7 @@
             </summary>
             <typeparam name="T"></typeparam>
             <param name="polygon">The polygon to find the ear tips for</param>
+            <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
             <returns>List of nodes that have been identified to be ear tips, null if no eartips was found, or is not possible</returns>
         </member>
         <member name="M:PSDSystem.PSD.ConvertPolygonToBooleanList``2(PSDSystem.Polygon{``0})">
@@ -261,6 +434,7 @@
             </summary>
             <typeparam name="T"></typeparam>
             <param name="node"></param>
+            <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
             <returns></returns>
         </member>
         <member name="M:PSDSystem.PSD.IsConvex(Godot.Vector2,Godot.Vector2,Godot.Vector2,System.Boolean)">
@@ -270,7 +444,7 @@
             <param name="a"></param>
             <param name="b"></param>
             <param name="c"></param>
-            <param name="includeZeroAngles"></param>
+            <param name="includeZeroAngles">If true, then an angle of zero will be considered as convex.</param>
             <returns></returns>
         </member>
         <member name="M:PSDSystem.PSD.PartialLineIntersection(Godot.Vector2,Godot.Vector2,Godot.Vector2,Godot.Vector2,System.Single@,System.Single@)">
@@ -328,6 +502,34 @@
             <param name="epsilon">The threshold for comparison</param>
             <returns>True if they are nearly equal to each other, false otherwise</returns>
         </member>
+        <member name="T:PSDSystem.IntersectionPoints`1">
+            <summary>
+            Stores and keeps tracks of intersection points within the CutSurface() operation.
+            </summary>
+            <typeparam name="T">Class that is a PolygonVertex and IHasBooleanVertexProperties</typeparam>
+        </member>
+        <member name="P:PSDSystem.IntersectionPoints`1.Polygon">
+            <summary>
+            The Polygon that the Cutter is intersecting with.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.IntersectionPoints`1.Intersections">
+            <summary>
+            The intersection results.
+            Tuple 1 is the intersection point in Vector2.
+            Tuple 2 is a reference to a VertexNode of the Polygon it is intersecting.
+            Tuple 3 is the T value of the intersection done using the PartialLineIntersection() function.
+            Tuple 4 is a reference to a VertexNode of the Cutter.
+            Tuple 5 is the U value of the intersection done using the PartialLineIntersection() function.
+            </summary>
+        </member>
+        <member name="M:PSDSystem.IntersectionPoints`1.#ctor(PSDSystem.Polygon{`0},System.Collections.Generic.List{System.Tuple{Godot.Vector2,PSDSystem.VertexNode{`0},System.Single,PSDSystem.VertexNode{`0},System.Single}})">
+            <summary>
+            Construct IntersectionPoints.
+            </summary>
+            <param name="polygon">Reference to the Polygon it is intersecting.</param>
+            <param name="intersections">The list of intersections.</param>
+        </member>
         <member name="T:PSDSystem.Polygon`1">
             <summary>
             Class representing a 2D Polygon
@@ -336,30 +538,41 @@
         </member>
         <member name="P:PSDSystem.Polygon`1.Head">
             <summary>
-            The head node of a vertex of the polygon
+            The head node of a vertex of the Polygon. Returns null if the Polygon is empty.
             </summary>
         </member>
         <member name="P:PSDSystem.Polygon`1.RightMostVertex">
             <summary>
-            The right most vertex of the polygon
+            The right most vertex of the Polygon. Returns null if the Polygon is empty.
             </summary>
         </member>
         <member name="P:PSDSystem.Polygon`1.Count">
             <summary>
-            The number of vertex in the polygon
+            The number of vertex in the Polygon
             </summary>
         </member>
         <member name="P:PSDSystem.Polygon`1.Vertices">
             <summary>
-            The list of vertices the polygon is referring to
+            The list of vertices the Polygon is referring to
             </summary>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.#ctor">
+            <summary>
+            Construct a Polygon without any vertices or shape
+            </summary>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.#ctor(PSDSystem.Polygon{`0})">
+            <summary>
+            Construct a copy of the given Polygon
+            </summary>
+            <param name="polygon"></param>
         </member>
         <member name="M:PSDSystem.Polygon`1.InsertVertexAtBack(System.Int32)">
             <summary>
             Inserts a vertex with the given index to the polygon
             </summary>
             <param name="index">The index that the vertex will refer to</param>
-            <returns>The vertex inserted at the back</returns>
+            <returns>The vertex inserted at the back.</returns>
             <exception cref="T:System.Exception">Failed to instantiate a Vertex</exception>
         </member>
         <member name="M:PSDSystem.Polygon`1.InsertVertexAfter(PSDSystem.VertexNode{`0},System.Int32)">
@@ -367,21 +580,41 @@
             Insert a vertex after the given node
             </summary>
             <param name="node">The node to insert a vertex after</param>
-            <param name="index">The index that the vertex will refer to</param>
-            <returns>The vertex inserted</returns>
+            <param name="index">The index that the inserted vertex will refer to</param>
+            <returns>The vertex inserted. Returns null if the given node is invalid.</returns>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.InsertVertexBefore(PSDSystem.VertexNode{`0},System.Int32)">
+            <summary>
+            Insert a vertex before the given node
+            </summary>
+            <param name="node">The node to insert a vertex before</param>
+            <param name="index">The index that the inserted vertex will refer to</param>
+            <returns>The vertex inserted. Returns null if the given node is invalid.</returns>
         </member>
         <member name="M:PSDSystem.Polygon`1.ClipVertex(PSDSystem.VertexNode{`0})">
             <summary>
             Remove the given node from the polygon
             </summary>
-            <param name="node">The node to remove</param>
-            <exception cref="T:System.InvalidOperationException">The vertex given belongs to a different polygon</exception>
+            <param name="node">The node to remove.</param>
+            <exception cref="T:System.InvalidOperationException">The vertex given belongs to a different polygon.</exception>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.RemoveVerticesWithIndex(System.Int32)">
+            <summary>
+            Remove all vertices with the given index from the Polygon.
+            </summary>
+            <param name="indexToRemove">The index of the vertices to remove.</param>
         </member>
         <member name="M:PSDSystem.Polygon`1.ToList">
             <summary>
-            Convert the polygon to list of indices referring to this.Vertices
+            Get the list of indices of this Polygon.
             </summary>
             <returns>List of indices</returns>
+        </member>
+        <member name="M:PSDSystem.Polygon`1.ToVerticesList">
+            <summary>
+            Get the list of Vector2 of this Polygon.
+            </summary>
+            <returns>List of Vector2</returns>
         </member>
         <member name="T:PSDSystem.PolygonVertex">
             <summary>
@@ -399,11 +632,44 @@
             </summary>
             <param name="vertex">The vertex to copy data from</param>
         </member>
+        <member name="M:PSDSystem.PolygonVertex.#ctor(System.Int32)">
+            <summary>
+            Construct a PolygonVertex with the given index.
+            </summary>
+            <param name="index"></param>
+        </member>
         <member name="T:PSDSystem.VertexNode`1">
             <summary>
             Node to hold a vertex
             </summary>
             <typeparam name="T">The vertex that holds the data</typeparam>
+        </member>
+        <member name="P:PSDSystem.VertexNode`1.Data">
+            <summary>
+            The vertex data this VertexNode is holding onto.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.VertexNode`1.Next">
+            <summary>
+            Reference to the Next VertexNode
+            </summary>
+        </member>
+        <member name="P:PSDSystem.VertexNode`1.Previous">
+            <summary>
+            Reference to the Previous VertexNode
+            </summary>
+        </member>
+        <member name="P:PSDSystem.VertexNode`1.Owner">
+            <summary>
+            The Polygon that the VertexNode belongs to
+            </summary>
+        </member>
+        <member name="M:PSDSystem.VertexNode`1.#ctor(PSDSystem.Polygon{`0},`0)">
+            <summary>
+            Contruct a VertexNode with the given reference of the owner and the Vertex data
+            </summary>
+            <param name="owner">The Polygon that the VertexNode will be part of</param>
+            <param name="data">The Vertex data that the VertexNode will be holding onto</param>
         </member>
         <member name="T:PSDSystem.SurfaceShape`1">
             <summary>
@@ -415,6 +681,11 @@
             <summary>
             Each PolygonGroup in this variable represents an outer polygon and
             its groups of inner polygons
+            </summary>
+        </member>
+        <member name="M:PSDSystem.SurfaceShape`1.#ctor">
+            <summary>
+            Construct a SurfaceShape.
             </summary>
         </member>
         <member name="M:PSDSystem.SurfaceShape`1.AddOuterPolygon(PSDSystem.Polygon{`0})">
@@ -442,6 +713,23 @@
             Represent a group of polygons on a surface
             </summary>
             <typeparam name="T"></typeparam>
+        </member>
+        <member name="P:PSDSystem.PolygonGroup`1.OuterPolygon">
+            <summary>
+            The Polygon that is on the outside.
+            </summary>
+        </member>
+        <member name="P:PSDSystem.PolygonGroup`1.InnerPolygons">
+            <summary>
+            The list of Polygons that are inside of the OuterPolygon.
+            </summary>
+        </member>
+        <member name="M:PSDSystem.PolygonGroup`1.#ctor(PSDSystem.Polygon{`0},System.Collections.Generic.List{PSDSystem.Polygon{`0}})">
+            <summary>
+            Construct a PolygonGroup
+            </summary>
+            <param name="outerPolygon">The Polygon that is outside. If argument is null, then a new Polygon will be made.</param>
+            <param name="innerPolygons">The list of Polygons that is inside of the outerPolygon. If the outerPolygon does not have any Polygons inside it, then the argument should be null.</param>
         </member>
     </members>
 </doc>
