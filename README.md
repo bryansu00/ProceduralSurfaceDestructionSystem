@@ -13,5 +13,5 @@ To compile, open PSDSystemLibrary/PSDSystemLibrary.sln, set the solution configu
 
 To run the 2D implementation of this project, open 2D-Implementation/2D-Implementation.sln using Visual Studio 2022 and then simply hit the Run button.
 
-To open the Godot implementation of this project, download Godot Engine (.Net version) from [godotengine.org/](https://godotengine.org/). Then use Godot to open 
+To open the Godot implementation of this project, download Godot Engine (.Net version) (This project was created in 4.2.2) from [godotengine.org/](https://godotengine.org/). Then use Godot to open 
 Godot Projects/game1/project.godot, and then you should be able to run a 3D demo of the project.
