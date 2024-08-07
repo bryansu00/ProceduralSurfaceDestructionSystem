@@ -1,6 +1,6 @@
 [gd_scene load_steps=3 format=3 uid="uid://ba3oiu1856cl8"]
 
-[ext_resource type="Script" path="res://ProceduralSurface.cs" id="1_pwg00"]
+[ext_resource type="Script" path="res://scripts/ProceduralSurface.cs" id="1_pwg00"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_luya7"]
 size = Vector3(10, 4, 1)
